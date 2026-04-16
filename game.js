@@ -4,13 +4,16 @@
 import * as LJS from "./node_modules/littlejsengine/dist/littlejs.esm.js";
 const { vec2, rgb, rand, randInt, drawCircle, drawLine, drawTextScreen } = LJS;
 
+let input = {};
+
 let playerAngle = 0;
 let bullets = [];
 let enemies = [];
-let spawnTimer = 0;
 
-// --- SHOOTING COOLDOWN ---
-let shootCooldown = 10; // frames (CONFIGURABLE)
+// --- PLAYER CONFIG ---
+let playerRotationSpeed = 0.04;
+let radius = 8;
+let shootCooldown = 10; // frames
 let shootTimer = 0;
 
 // --- WAVE SYSTEM ---
@@ -20,7 +23,29 @@ let enemiesSpawned = 0;
 let waveTimer = 0;
 let waveClearedTimer = 0;
 
-const radius = 8;
+// --- PATTERN SPAWNING STATE ---
+let currentPattern = [];
+let patternIndex = 0;
+let patternTimer = 0;
+
+function createPattern() {
+  const count = 5 + randInt(6); // 5–10 enemies
+  const baseAngle = rand(0, 6.28);
+  const spacing = 0.4;
+
+  const type = randInt(3);
+  currentPattern = [];
+
+  for (let i = 0; i < count; i++) {
+    currentPattern.push({
+      type,
+      angle: baseAngle + (i - count / 2) * spacing,
+    });
+  }
+
+  patternIndex = 0;
+  patternTimer = 0;
+}
 
 function startWave() {
   enemiesToSpawn = 8 + wave * 4;
@@ -37,8 +62,17 @@ function gameInit() {
 }
 
 function gameUpdate() {
-  const input = LJS.keyDirection();
-  playerAngle -= input.x * 0.05;
+  input = LJS.keyDirection();
+  if (input.x != 0 || input.y != 0) {
+    const targetAngle = Math.atan2(input.x, input.y);
+    let diff = targetAngle - playerAngle;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    playerAngle += Math.max(
+      -playerRotationSpeed,
+      Math.min(playerRotationSpeed, diff),
+    );
+  }
 
   const playerPos = vec2().setAngle(playerAngle, radius);
 
@@ -61,29 +95,6 @@ function gameUpdate() {
   bullets = bullets.filter((b) => b.pos.length() > 0.5);
 
   // --- PATTERN SPAWNING ---
-  let currentPattern = [];
-  let patternIndex = 0;
-  let patternTimer = 0;
-
-  function createPattern() {
-    const count = 5 + randInt(6); // 5–10 enemies
-    const baseAngle = rand(0, 6.28);
-    const spacing = 0.4;
-
-    const type = randInt(3);
-    currentPattern = [];
-
-    for (let i = 0; i < count; i++) {
-      currentPattern.push({
-        type,
-        angle: baseAngle + (i - count / 2) * spacing,
-      });
-    }
-
-    patternIndex = 0;
-    patternTimer = 0;
-  }
-
   // spawn patterns instead of single enemies
   if (waveTimer > 0) waveTimer--;
   else {
@@ -191,6 +202,8 @@ function gameRenderPost() {
 
   if (waveClearedTimer > 0)
     drawTextScreen("WAVE CLEARED", LJS.mainCanvasSize.scale(0.5), 60);
+
+  drawTextScreen(`Input: ${input.x}, ${input.y}`, vec2(100, 100), 30);
 }
 
 LJS.engineInit(
