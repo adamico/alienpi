@@ -1,7 +1,32 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": []
+    "configurations": [
+        {
+            "name": "Python: HTTP Server (8080)",
+            "type": "python",
+            "request": "launch",
+            "module": "http.server",
+            "args": [
+                "8080"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Launch Game in Chrome",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:8080/alienpi.html",
+            "webRoot": "${workspaceFolder}"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Server + Game",
+            "configurations": [
+                "Python: HTTP Server (8080)",
+                "Launch Game in Chrome"
+            ]
+        }
+    ]
 }

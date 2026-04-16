@@ -1,5 +1,125 @@
-<!DOCTYPE html><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
-    <title>Alien Orbit Assault</title>
-</head><body>
-<script src=game.js type=module></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alien Orbit Assault | Arcade Defense</title>
+    <meta name="description" content="Defend the orbital station from waves of alien invaders in this high-octane arcade shooter.">
+    <style>
+        :root {
+            --primary: #32ff7e;
+            --secondary: #ff3838;
+            --accent: #18dcff;
+            --bg: #050510;
+            --surface: rgba(255, 255, 255, 0.05);
+            --glow: 0 0 20px rgba(50, 255, 126, 0.3);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: #fff;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            background: var(--surface);
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), var(--glow);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            max-width: 95vw;
+            max-height: 95vh;
+        }
+
+        canvas {
+            display: block;
+            border-radius: 8px;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
+            max-width: 100%;
+            height: auto !important;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            animation: breathe 2s infinite ease-in-out;
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 0.6; box-shadow: 0 0 5px var(--primary); }
+            50% { opacity: 1; box-shadow: 0 0 15px var(--primary); }
+        }
+
+        /* Ambient scanline effect */
+        #game-container::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            border-radius: 12px;
+        }
+
+        h1 {
+            position: fixed;
+            top: 20px;
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--accent);
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <h1>ALIEN ORBIT ASSAULT</h1>
+    
+    <div id="game-container">
+        <div class="ui-overlay">System Status: Active</div>
+        <div id="cors-warning" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(255,0,0,0.9); padding:20px; border-radius:10px; text-align:center; z-index:100; border:2px solid gold;">
+            <h2 style="margin-top:0;">⚠️ CORS Error Detected</h2>
+            <p>Modern browsers block ES modules when opened via <b>file://</b>.</p>
+            <p>Please use the local server URL provided in the terminal:</p>
+            <code style="background:#000; padding:5px 10px; display:block; margin:10px 0;">http://localhost:8080/alienpi.html</code>
+            <p style="font-size:0.8em; opacity:0.8;">Paste this into your integrated browser's address bar.</p>
+        </div>
+        <div class="controls-hint">ARROWS: ROTATE | SPACE: FIRE</div>
+    </div>
+
+    <script>
+        if (window.location.protocol === 'file:') {
+            document.getElementById('cors-warning').style.display = 'block';
+        }
+    </script>
+    <script src="game.js" type="module"></script>
+</body>
+</html>
