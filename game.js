@@ -26,6 +26,11 @@ const BULLET_DESPAWN_RADIUS = 0.5;
 const COLLISION_RADIUS = 0.6;
 
 // --- ENEMY & WAVE SETTINGS ---
+const ENEMY_TYPE_LINEAR = 0;
+const ENEMY_TYPE_CENTER = 1;
+const ENEMY_TYPE_SPIRAL = 2;
+const ENEMY_TYPE_COUNT = 3;
+
 const ENEMY_SPAWN_RADIUS = 12;
 const ENEMY_DESPAWN_RADIUS = 20;
 const ENEMY_SPEED_BASE_T0 = 0.02;
@@ -44,6 +49,9 @@ const PATTERN_SPACING = 8;
 const WAVE_START_DELAY = 120;
 const WAVE_CLEAR_DELAY = 120;
 
+const WAVE_BASE_ENEMIES = 8;
+const WAVE_ENEMIES_GROWTH = 4;
+
 // --- RENDER SETTINGS ---
 const CORE_RADIUS = 2;
 const PLAYER_RENDER_SIZE = 1;
@@ -51,6 +59,27 @@ const PLAYER_TIP_LENGTH = 1.5;
 const PLAYER_LINE_WIDTH = 0.2;
 const BULLET_RENDER_SIZE = 0.3;
 const ENEMY_RENDER_SIZE = 0.8;
+
+// --- COLOR PALETTE ---
+const COLOR_CORE = rgb(1, 0.5, 0);
+const COLOR_ORBIT = rgb(0.2, 0.2, 0.2);
+const COLOR_PLAYER = rgb(0.3, 1, 0.3);
+const COLOR_PLAYER_TIP = rgb(0.6, 1, 0.6);
+const COLOR_BULLET = rgb(1, 1, 0);
+const COLOR_ENEMY = rgb(1, 0.2, 0.2);
+
+// --- UI SETTINGS ---
+const UI_POS_WAVE = vec2(100, 64);
+const UI_SIZE_WAVE = 40;
+
+const UI_POS_REMAINING = vec2(180, 128);
+const UI_SIZE_REMAINING = 30;
+
+const UI_SIZE_CLEARED = 60;
+
+const UI_POS_DEBUG = vec2(1700, 64);
+const UI_SIZE_DEBUG = 30;
+const UI_COLOR_DEBUG = rgb(1, 0, 0);
 
 // --- STATE ---
 let playerAngle = 0;
@@ -77,7 +106,7 @@ function createPattern() {
     randInt(PATTERN_MAX_ENEMIES - PATTERN_MIN_ENEMIES + 1);
   const baseAngle = rand(0, PATTERN_ANGLE_RANGE);
 
-  const type = randInt(3);
+  const type = randInt(ENEMY_TYPE_COUNT);
   currentPattern = [];
 
   for (let i = 0; i < count; i++) {
@@ -92,7 +121,7 @@ function createPattern() {
 }
 
 function startWave() {
-  enemiesToSpawn = 8 + wave * 4;
+  enemiesToSpawn = WAVE_BASE_ENEMIES + wave * WAVE_ENEMIES_GROWTH;
   enemiesSpawned = 0;
   waveTimer = WAVE_START_DELAY;
   waveClearedTimer = 0;
@@ -177,16 +206,16 @@ function gameUpdate() {
 
         const angle = data.angle;
 
-        if (data.type === 0) {
+        if (data.type === ENEMY_TYPE_LINEAR) {
           const pos = vec2().setAngle(angle, ENEMY_SPAWN_RADIUS);
           const speed = ENEMY_SPEED_BASE_T0 + wave * ENEMY_SPEED_WAVE_SCALE;
           enemies.push({ pos, vel: pos.normalize(-speed) });
-        } else if (data.type === 1) {
+        } else if (data.type === ENEMY_TYPE_CENTER) {
           const pos = vec2(0, 0);
           const speed = ENEMY_SPEED_BASE_T1 + wave * ENEMY_SPEED_WAVE_SCALE;
           const vel = vec2().setAngle(angle, speed);
           enemies.push({ pos, vel });
-        } else {
+        } else if (data.type === ENEMY_TYPE_SPIRAL) {
           const pos = vec2().setAngle(angle, ENEMY_SPAWN_RADIUS);
           const speed = ENEMY_SPEED_BASE_T2 + wave * ENEMY_SPEED_WAVE_SCALE;
           const vel = pos.normalize(-speed);
@@ -236,26 +265,24 @@ function gameUpdate() {
 function gameUpdatePost() {}
 
 function gameRender() {
-  drawCircle(vec2(0, 0), CORE_RADIUS, rgb(1, 0.5, 0));
+  drawCircle(vec2(0, 0), CORE_RADIUS, COLOR_CORE);
 
   const playerPos = vec2().setAngle(playerAngle, PLAYER_ORBIT_RADIUS);
 
-  drawCircle(vec2(0, 0), PLAYER_ORBIT_RADIUS * 2, rgb(0.2, 0.2, 0.2));
+  drawCircle(vec2(0, 0), PLAYER_ORBIT_RADIUS * 2, COLOR_ORBIT);
 
-  drawCircle(playerPos, PLAYER_RENDER_SIZE, rgb(0.3, 1, 0.3));
+  drawCircle(playerPos, PLAYER_RENDER_SIZE, COLOR_PLAYER);
 
   const centerDir = playerPos.normalize(-1);
   const tip = playerPos.add(centerDir.scale(PLAYER_TIP_LENGTH));
-  drawLine(playerPos, tip, PLAYER_LINE_WIDTH, rgb(0.6, 1, 0.6));
+  drawLine(playerPos, tip, PLAYER_LINE_WIDTH, COLOR_PLAYER_TIP);
 
-  bullets.forEach((b) => drawCircle(b.pos, BULLET_RENDER_SIZE, rgb(1, 1, 0)));
-  enemies.forEach((e) =>
-    drawCircle(e.pos, ENEMY_RENDER_SIZE, rgb(1, 0.2, 0.2)),
-  );
+  bullets.forEach((b) => drawCircle(b.pos, BULLET_RENDER_SIZE, COLOR_BULLET));
+  enemies.forEach((e) => drawCircle(e.pos, ENEMY_RENDER_SIZE, COLOR_ENEMY));
 }
 
-function gameRenderPost() {
-  drawTextScreen(`Wave ${wave}`, vec2(100, 50), 40);
+function drawUI() {
+  drawTextScreen(`Wave ${wave}`, UI_POS_WAVE, UI_SIZE_WAVE);
 
   const remaining = Math.max(
     0,
@@ -266,13 +293,37 @@ function gameRenderPost() {
     waveTimer <= 0 &&
     !(enemiesSpawned >= enemiesToSpawn && enemies.length === 0)
   ) {
-    drawTextScreen(`Enemies Remaining: ${remaining}`, vec2(180, 120), 30);
+    drawTextScreen(
+      `Enemies Remaining: ${remaining}`,
+      UI_POS_REMAINING,
+      UI_SIZE_REMAINING,
+    );
   }
 
   if (waveClearedTimer > 0)
-    drawTextScreen("WAVE CLEARED", LJS.mainCanvasSize.scale(0.5), 60);
+    drawTextScreen(
+      "WAVE CLEARED",
+      LJS.mainCanvasSize.scale(0.5),
+      UI_SIZE_CLEARED,
+    );
 
-  drawTextScreen(`Input: ${input.x}, ${input.y}`, vec2(100, 100), 30);
+  drawTextScreen(
+    `Debug Input: ${input.x}, ${input.y}`,
+    UI_POS_DEBUG,
+    UI_SIZE_DEBUG,
+    UI_COLOR_DEBUG,
+  );
+
+  drawTextScreen(
+    `Debug Player Angle: ${playerAngle.toFixed(2)}`,
+    UI_POS_DEBUG.add(vec2(0, 32)),
+    UI_SIZE_DEBUG,
+    UI_COLOR_DEBUG,
+  );
+}
+
+function gameRenderPost() {
+  drawUI();
 }
 
 LJS.engineInit(
