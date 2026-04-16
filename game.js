@@ -6,17 +6,57 @@ const { vec2, rgb, rand, randInt, drawCircle, drawLine, drawTextScreen } = LJS;
 
 let input = {};
 
+// --- SYSTEM CONFIG ---
+const CANVAS_SIZE = vec2(1920, 1080);
+const CAMERA_SCALE = 60;
+
+// --- PLAYER SETTINGS ---
+const PLAYER_ORBIT_RADIUS = 8;
+const PLAYER_MAX_SPEED = 0.04;
+const PLAYER_ACCEL = 0.005;
+const PLAYER_FRICTION = 0.8;
+const PLAYER_DAMP_THRESHOLD = 0.1;
+const PLAYER_DAMP_FACTOR = 0.8;
+const PLAYER_SNAP_THRESHOLD = 0.01;
+const SHOOT_COOLDOWN = 20;
+
+// --- COMBAT SETTINGS ---
+const BULLET_SPEED = 0.3;
+const BULLET_DESPAWN_RADIUS = 0.5;
+const COLLISION_RADIUS = 0.6;
+
+// --- ENEMY & WAVE SETTINGS ---
+const ENEMY_SPAWN_RADIUS = 12;
+const ENEMY_DESPAWN_RADIUS = 20;
+const ENEMY_SPEED_BASE_T0 = 0.02;
+const ENEMY_SPEED_BASE_T1 = 0.05;
+const ENEMY_SPEED_BASE_T2 = 0.015;
+const ENEMY_SPEED_WAVE_SCALE = 0.002;
+const ENEMY_SPIN_SPEED = 0.03;
+const ENEMY_SPIRAL_INTENSITY = 0.02;
+
+const PATTERN_MIN_ENEMIES = 5;
+const PATTERN_MAX_ENEMIES = 10;
+const PATTERN_ANGLE_RANGE = 6.28;
+const PATTERN_ENEMY_OFFSET = 0.4;
+
+const PATTERN_SPACING = 8;
+const WAVE_START_DELAY = 120;
+const WAVE_CLEAR_DELAY = 120;
+
+// --- RENDER SETTINGS ---
+const CORE_RADIUS = 2;
+const PLAYER_RENDER_SIZE = 1;
+const PLAYER_TIP_LENGTH = 1.5;
+const PLAYER_LINE_WIDTH = 0.2;
+const BULLET_RENDER_SIZE = 0.3;
+const ENEMY_RENDER_SIZE = 0.8;
+
+// --- STATE ---
 let playerAngle = 0;
+let playerAngleVel = 0;
 let bullets = [];
 let enemies = [];
-
-// --- PLAYER CONFIG ---
-let playerMaxRotationSpeed = 0.06;
-let playerRotationAccel = 0.005;
-let playerRotationFriction = 0.8;
-let playerAngleVel = 0;
-let radius = 8;
-let shootCooldown = 10; // frames
 let shootTimer = 0;
 
 // --- WAVE SYSTEM ---
@@ -32,9 +72,10 @@ let patternIndex = 0;
 let patternTimer = 0;
 
 function createPattern() {
-  const count = 5 + randInt(6); // 5–10 enemies
-  const baseAngle = rand(0, 6.28);
-  const spacing = 0.4;
+  const count =
+    PATTERN_MIN_ENEMIES +
+    randInt(PATTERN_MAX_ENEMIES - PATTERN_MIN_ENEMIES + 1);
+  const baseAngle = rand(0, PATTERN_ANGLE_RANGE);
 
   const type = randInt(3);
   currentPattern = [];
@@ -42,7 +83,7 @@ function createPattern() {
   for (let i = 0; i < count; i++) {
     currentPattern.push({
       type,
-      angle: baseAngle + (i - count / 2) * spacing,
+      angle: baseAngle + (i - count / 2) * PATTERN_ENEMY_OFFSET,
     });
   }
 
@@ -53,14 +94,14 @@ function createPattern() {
 function startWave() {
   enemiesToSpawn = 8 + wave * 4;
   enemiesSpawned = 0;
-  waveTimer = 120;
+  waveTimer = WAVE_START_DELAY;
   waveClearedTimer = 0;
 }
 
 function gameInit() {
-  LJS.setCanvasFixedSize(vec2(1920, 1080));
+  LJS.setCanvasFixedSize(CANVAS_SIZE);
   LJS.setCameraPos(vec2(0, 0));
-  LJS.setCameraScale(60);
+  LJS.setCameraScale(CAMERA_SCALE);
   startWave();
 }
 
@@ -74,29 +115,29 @@ function gameUpdate() {
 
     // accelerate toward target angle
     const accelDir = Math.sign(diff);
-    if (Math.abs(diff) > 0.1) {
-      playerAngleVel += accelDir * playerRotationAccel;
+    if (Math.abs(diff) > PLAYER_DAMP_THRESHOLD) {
+      playerAngleVel += accelDir * PLAYER_ACCEL;
     } else {
       // close enough, damp velocity to avoid overshooting
-      playerAngleVel *= 0.8;
-      if (Math.abs(diff) < 0.01) {
+      playerAngleVel *= PLAYER_DAMP_FACTOR;
+      if (Math.abs(diff) < PLAYER_SNAP_THRESHOLD) {
         playerAngle = targetAngle;
         playerAngleVel = 0;
       }
     }
   } else {
     // no input, decelerate smoothly
-    playerAngleVel *= playerRotationFriction;
+    playerAngleVel *= PLAYER_FRICTION;
   }
 
   // clamp to max speed and apply velocity
   playerAngleVel = Math.max(
-    -playerMaxRotationSpeed,
-    Math.min(playerMaxRotationSpeed, playerAngleVel),
+    -PLAYER_MAX_SPEED,
+    Math.min(PLAYER_MAX_SPEED, playerAngleVel),
   );
   playerAngle += playerAngleVel;
 
-  const playerPos = vec2().setAngle(playerAngle, radius);
+  const playerPos = vec2().setAngle(playerAngle, PLAYER_ORBIT_RADIUS);
 
   // update shoot timer
   if (shootTimer > 0) shootTimer--;
@@ -106,15 +147,15 @@ function gameUpdate() {
     const dirToCenter = playerPos.normalize(-1);
     bullets.push({
       pos: playerPos.copy(),
-      vel: dirToCenter.scale(0.3),
+      vel: dirToCenter.scale(BULLET_SPEED),
     });
 
-    shootTimer = shootCooldown; // reset cooldown
+    shootTimer = SHOOT_COOLDOWN; // reset cooldown
   }
 
   // bullets
   bullets.forEach((b) => (b.pos = b.pos.add(b.vel)));
-  bullets = bullets.filter((b) => b.pos.length() > 0.5);
+  bullets = bullets.filter((b) => b.pos.length() > BULLET_DESPAWN_RADIUS);
 
   // --- PATTERN SPAWNING ---
   // spawn patterns instead of single enemies
@@ -129,7 +170,7 @@ function gameUpdate() {
     if (currentPattern.length && patternIndex < currentPattern.length) {
       patternTimer--;
       if (patternTimer <= 0) {
-        patternTimer = 8; // spacing between enemies in pattern
+        patternTimer = PATTERN_SPACING; // spacing between enemies in pattern
 
         const data = currentPattern[patternIndex++];
         enemiesSpawned++;
@@ -137,16 +178,20 @@ function gameUpdate() {
         const angle = data.angle;
 
         if (data.type === 0) {
-          const pos = vec2().setAngle(angle, 12);
-          enemies.push({ pos, vel: pos.normalize(-(0.02 + wave * 0.002)) });
+          const pos = vec2().setAngle(angle, ENEMY_SPAWN_RADIUS);
+          const speed = ENEMY_SPEED_BASE_T0 + wave * ENEMY_SPEED_WAVE_SCALE;
+          enemies.push({ pos, vel: pos.normalize(-speed) });
         } else if (data.type === 1) {
           const pos = vec2(0, 0);
-          const vel = vec2().setAngle(angle, 0.05 + wave * 0.002);
+          const speed = ENEMY_SPEED_BASE_T1 + wave * ENEMY_SPEED_WAVE_SCALE;
+          const vel = vec2().setAngle(angle, speed);
           enemies.push({ pos, vel });
         } else {
-          const pos = vec2().setAngle(angle, 12);
-          const vel = pos.normalize(-(0.015 + wave * 0.002));
-          enemies.push({ pos, vel, angle, spin: 0.03 + wave * 0.002 });
+          const pos = vec2().setAngle(angle, ENEMY_SPAWN_RADIUS);
+          const speed = ENEMY_SPEED_BASE_T2 + wave * ENEMY_SPEED_WAVE_SCALE;
+          const vel = pos.normalize(-speed);
+          const spin = ENEMY_SPIN_SPEED + wave * ENEMY_SPEED_WAVE_SCALE;
+          enemies.push({ pos, vel, angle, spin });
         }
       }
     }
@@ -156,7 +201,7 @@ function gameUpdate() {
   enemies.forEach((e) => {
     if (e.spin) {
       e.angle += e.spin;
-      const spiral = vec2().setAngle(e.angle, 0.02);
+      const spiral = vec2().setAngle(e.angle, ENEMY_SPIRAL_INTENSITY);
       e.pos = e.pos.add(e.vel).add(spiral);
     } else e.pos = e.pos.add(e.vel);
   });
@@ -164,12 +209,12 @@ function gameUpdate() {
   // collisions
   enemies = enemies.filter((e) => {
     for (let b of bullets) {
-      if (e.pos.distance(b.pos) < 0.6) return false;
+      if (e.pos.distance(b.pos) < COLLISION_RADIUS) return false;
     }
     return true;
   });
 
-  enemies = enemies.filter((e) => e.pos.length() < 20);
+  enemies = enemies.filter((e) => e.pos.length() < ENEMY_DESPAWN_RADIUS);
 
   // --- WAVE CLEAR CHECK ---
   if (
@@ -177,7 +222,7 @@ function gameUpdate() {
     enemies.length === 0 &&
     waveTimer <= 0
   ) {
-    if (waveClearedTimer <= 0) waveClearedTimer = 120;
+    if (waveClearedTimer <= 0) waveClearedTimer = WAVE_CLEAR_DELAY;
 
     waveClearedTimer--;
 
@@ -191,20 +236,22 @@ function gameUpdate() {
 function gameUpdatePost() {}
 
 function gameRender() {
-  drawCircle(vec2(0, 0), 2, rgb(1, 0.5, 0));
+  drawCircle(vec2(0, 0), CORE_RADIUS, rgb(1, 0.5, 0));
 
-  const playerPos = vec2().setAngle(playerAngle, radius);
+  const playerPos = vec2().setAngle(playerAngle, PLAYER_ORBIT_RADIUS);
 
-  drawCircle(vec2(0, 0), radius * 2, rgb(0.2, 0.2, 0.2));
+  drawCircle(vec2(0, 0), PLAYER_ORBIT_RADIUS * 2, rgb(0.2, 0.2, 0.2));
 
-  drawCircle(playerPos, 1, rgb(0.3, 1, 0.3));
+  drawCircle(playerPos, PLAYER_RENDER_SIZE, rgb(0.3, 1, 0.3));
 
   const centerDir = playerPos.normalize(-1);
-  const tip = playerPos.add(centerDir.scale(1.5));
-  drawLine(playerPos, tip, 0.2, rgb(0.6, 1, 0.6));
+  const tip = playerPos.add(centerDir.scale(PLAYER_TIP_LENGTH));
+  drawLine(playerPos, tip, PLAYER_LINE_WIDTH, rgb(0.6, 1, 0.6));
 
-  bullets.forEach((b) => drawCircle(b.pos, 0.3, rgb(1, 1, 0)));
-  enemies.forEach((e) => drawCircle(e.pos, 0.8, rgb(1, 0.2, 0.2)));
+  bullets.forEach((b) => drawCircle(b.pos, BULLET_RENDER_SIZE, rgb(1, 1, 0)));
+  enemies.forEach((e) =>
+    drawCircle(e.pos, ENEMY_RENDER_SIZE, rgb(1, 0.2, 0.2)),
+  );
 }
 
 function gameRenderPost() {
