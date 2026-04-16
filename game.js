@@ -11,7 +11,10 @@ let bullets = [];
 let enemies = [];
 
 // --- PLAYER CONFIG ---
-let playerRotationSpeed = 0.04;
+let playerMaxRotationSpeed = 0.06;
+let playerRotationAccel = 0.005;
+let playerRotationFriction = 0.8;
+let playerAngleVel = 0;
 let radius = 8;
 let shootCooldown = 10; // frames
 let shootTimer = 0;
@@ -68,11 +71,30 @@ function gameUpdate() {
     let diff = targetAngle - playerAngle;
     while (diff < -Math.PI) diff += Math.PI * 2;
     while (diff > Math.PI) diff -= Math.PI * 2;
-    playerAngle += Math.max(
-      -playerRotationSpeed,
-      Math.min(playerRotationSpeed, diff),
-    );
+
+    // accelerate toward target angle
+    const accelDir = Math.sign(diff);
+    if (Math.abs(diff) > 0.1) {
+      playerAngleVel += accelDir * playerRotationAccel;
+    } else {
+      // close enough, damp velocity to avoid overshooting
+      playerAngleVel *= 0.8;
+      if (Math.abs(diff) < 0.01) {
+        playerAngle = targetAngle;
+        playerAngleVel = 0;
+      }
+    }
+  } else {
+    // no input, decelerate smoothly
+    playerAngleVel *= playerRotationFriction;
   }
+
+  // clamp to max speed and apply velocity
+  playerAngleVel = Math.max(
+    -playerMaxRotationSpeed,
+    Math.min(playerMaxRotationSpeed, playerAngleVel),
+  );
+  playerAngle += playerAngleVel;
 
   const playerPos = vec2().setAngle(playerAngle, radius);
 
