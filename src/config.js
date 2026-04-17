@@ -28,9 +28,6 @@ export const player = {
   damping: 0.5,
   focusSpeedScale: 0.5,
   shootCooldown: 10,
-  // Cannon muzzle positions in atlas-pixel coords (top-left origin), as you'd
-  // measure on the sprite image. Converted to world offsets at fire time, so
-  // they stay anchored to the artwork when worldScale changes.
   cannonOffsets: [vec2(22, 70), vec2(78, 70)],
 };
 
