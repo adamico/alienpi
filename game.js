@@ -1,19 +1,52 @@
-"use strict";
+'use strict';
 
 // import LittleJS module
 import * as LJS from "./node_modules/littlejsengine/dist/littlejs.esm.js";
 
 const {
-  vec2,
-  rgb,
+  drawCircle,
+  drawTextScreen,
+  drawTile,
+  EngineObject,
   rand,
   randInt,
-  drawCircle,
-  drawLine,
-  drawTextScreen,
+  rgb,
   Sound,
-  EngineObject,
+  vec2,
+  TileInfo,
+  setTileDefaultSize,
 } = LJS;
+
+const G = {
+  width: 20,
+  height: 20,
+  tileSize: 16,
+  spritesheet: ['public/assets/sheet.png'],
+}
+
+// Global sprite registry
+const sprites = new Map();
+
+async function loadSprites(url) {
+  const response = await fetch(url);
+  const text = await response.text();
+  
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(text, 'text/xml');
+  const subTextures = xml.getElementsByTagName('SubTexture');
+
+  for (let i = 0; i < subTextures.length; i++) {
+    const st = subTextures[i];
+    const name = st.getAttribute('name');
+    const x = parseFloat(st.getAttribute('x'));
+    const y = parseFloat(st.getAttribute('y'));
+    const w = parseFloat(st.getAttribute('width'));
+    const h = parseFloat(st.getAttribute('height'));
+    
+    // Use coordinates directly (LittleJS expect Top-Left Y-down for TileInfo pos)
+    sprites.set(name, new TileInfo(vec2(x, y), vec2(w, h), LJS.textureInfos[0]));
+  }
+}
 
 // --- SYSTEM CONFIG ---
 const CANVAS_SIZE = vec2(1920, 1080);
@@ -31,7 +64,6 @@ const SHOOT_COOLDOWN = 20;
 // --- COMBAT SETTINGS ---
 const BULLET_SPEED = 0.3;
 const BULLET_DESPAWN_RADIUS = 0.5;
-const COLLISION_RADIUS = 0.6;
 
 // --- ENEMY & WAVE SETTINGS ---
 const ENEMY_TYPE_LINEAR = 0;
@@ -61,18 +93,15 @@ const WAVE_BASE_ENEMIES = 8;
 const WAVE_ENEMIES_GROWTH = 4;
 
 // --- RENDER SETTINGS ---
-const CORE_RADIUS = 2;
-const PLAYER_RENDER_SIZE = 1;
-const PLAYER_TIP_LENGTH = 1.5;
-const PLAYER_LINE_WIDTH = 0.2;
-const BULLET_RENDER_SIZE = 0.6;
-const ENEMY_RENDER_SIZE = 0.8;
+const WORLD_SCALE = 0.015;
+const MIN_COLLISION_RADIUS = 0.4;
+
+const CORE_RADIUS = 2; // Still used for background ring, sprite is scaled by WORLD_SCALE
 
 // --- COLOR PALETTE ---
 const COLOR_CORE = rgb(1, 0.5, 0);
 const COLOR_ORBIT = rgb(0.2, 0.2, 0.2);
 const COLOR_PLAYER = rgb(0.3, 1, 0.3);
-const COLOR_PLAYER_TIP = rgb(0.6, 1, 0.6);
 const COLOR_BULLET = rgb(1, 1, 0);
 const COLOR_ENEMY = rgb(1, 0.2, 0.2);
 
@@ -145,10 +174,12 @@ const soundShoot = new Sound([.2,,165,.02,.13,.08,5,1.8,20,23,,,,,,,.07,.88,.06]
 
 class Player extends EngineObject {
   constructor() {
-    super(vec2(0, PLAYER_ORBIT_RADIUS), vec2(PLAYER_RENDER_SIZE));
+    const tile = sprites.get('playerShip1_blue.png');
+    super(vec2(0, PLAYER_ORBIT_RADIUS), tile.size.scale(WORLD_SCALE));
     this.angle = 0;
     this.angleVel = 0;
     this.shootTimer = 0;
+    this.facingAngle = this.angle + Math.PI;
     this.setCollision(true);
   }
 
@@ -191,28 +222,39 @@ class Player extends EngineObject {
     if (LJS.keyIsDown("Space") && this.shootTimer <= 0) {
       soundShoot.play();
       const dirToCenter = this.pos.normalize(-1);
-      const spawnPos = this.pos.add(dirToCenter.scale(PLAYER_RENDER_SIZE));
-      new Bullet(spawnPos, dirToCenter.scale(BULLET_SPEED));
+      const spawnPos = this.pos.add(dirToCenter.scale(this.size.y / 2));
+      // Use facingAngle as the single source of truth
+      new Bullet(spawnPos, dirToCenter.scale(BULLET_SPEED), this.facingAngle);
       this.shootTimer = SHOOT_COOLDOWN;
     }
+
+    // Update facing angle (toward center) as the single source of truth
+    this.facingAngle = this.angle + Math.PI;
 
     super.update();
   }
 
   render() {
-    drawCircle(this.pos, PLAYER_RENDER_SIZE, COLOR_PLAYER);
-    const centerDir = this.pos.normalize(-1);
-    const tip = this.pos.add(centerDir.scale(PLAYER_TIP_LENGTH));
-    drawLine(this.pos, tip, PLAYER_LINE_WIDTH, COLOR_PLAYER_TIP);
+    const tile = sprites.get('playerShip1_blue.png');
+    if (tile) {
+      // Draw ship sprite using the cached facingAngle
+      drawTile(this.pos, this.size, tile, undefined, this.facingAngle);
+    } else {
+      drawCircle(this.pos, this.size.x, COLOR_PLAYER);
+    }
   }
 }
 
 class Bullet extends EngineObject {
-  constructor(pos, vel) {
-    super(pos, vec2(BULLET_RENDER_SIZE), undefined, 0, COLOR_BULLET);
+  constructor(pos, vel, angle) {
+    const tile = sprites.get('laserBlue01.png');
+    super(pos, tile.size.scale(WORLD_SCALE));
     this.velocity = vel;
+    this.angle = angle;
     this.renderOrder = 10;
     this.setCollision(true);
+    // Ensure small bullets are still easy to hit
+    this.collisionRadius = Math.max(this.size.length() * 0.5, MIN_COLLISION_RADIUS);
   }
 
   update() {
@@ -223,25 +265,34 @@ class Bullet extends EngineObject {
   }
 
   render() {
-    drawCircle(this.pos, BULLET_RENDER_SIZE, COLOR_BULLET);
+    const tile = sprites.get('laserBlue01.png');
+    if (tile) {
+      // Use this.angle for both visual and collision alignment
+      drawTile(this.pos, this.size, tile, undefined, this.angle);
+    } else {
+      drawCircle(this.pos, this.size.x, COLOR_BULLET);
+    }
   }
 }
 
 class Enemy extends EngineObject {
   constructor(pos, vel, type, data = {}) {
-    super(pos, vec2(COLLISION_RADIUS * 2), undefined, 0, COLOR_ENEMY);
+    const tile = sprites.get('enemyBlack1.png');
+    super(pos, tile.size.scale(WORLD_SCALE));
     this.velocity = vel;
     this.enemyType = type;
     this.spin = data.spin;
-    this.angle = data.angle;
+    this.angle = data.angle || 0;
     this.setCollision(true);
+    // Adjust collision radius for ship proportions
+    this.collisionRadius = Math.max(this.size.length() * 0.5, MIN_COLLISION_RADIUS);
   }
 
   update() {
     if (this.spin) {
       this.angle += this.spin;
       const spiral = vec2().setAngle(this.angle, ENEMY_SPIRAL_INTENSITY);
-      this.pos = this.pos.add(spiral); // spiral is addition on top of base velocity
+      this.pos = this.pos.add(spiral);
     }
 
     if (this.pos.length() > ENEMY_DESPAWN_RADIUS) {
@@ -251,7 +302,14 @@ class Enemy extends EngineObject {
   }
 
   render() {
-    drawCircle(this.pos, ENEMY_RENDER_SIZE, COLOR_ENEMY);
+    const tile = sprites.get('enemyBlack1.png');
+    if (tile) {
+      // Point enemy ship toward center
+      const angleToCenter = this.pos.angle();
+      drawTile(this.pos, this.size, tile, undefined, angleToCenter);
+    } else {
+      drawCircle(this.pos, this.size.x, COLOR_ENEMY);
+    }
   }
 
   collideWithObject(other) {
@@ -355,6 +413,13 @@ async function gameInit() {
   LJS.setCanvasFixedSize(CANVAS_SIZE);
   LJS.setCameraPos(vec2(0, 0));
   LJS.setCameraScale(CAMERA_SCALE);
+  
+  // Set tile size to 1 to work with pixel coordinates directly
+  setTileDefaultSize(vec2(1));
+  
+  // Load spritesheet descriptors
+  await loadSprites('public/assets/sheet.xml');
+  
   player = new Player();
   startWave();
 }
@@ -419,7 +484,14 @@ function gameUpdate() {
 function gameUpdatePost() {}
 
 function gameRender() {
-  drawCircle(vec2(0, 0), CORE_RADIUS, COLOR_CORE);
+  const coreTile = sprites.get('ufoBlue.png');
+  if (coreTile) {
+    const coreSize = coreTile.size.scale(WORLD_SCALE);
+    drawTile(vec2(0, 0), coreSize, coreTile);
+  } else {
+    drawCircle(vec2(0, 0), CORE_RADIUS, COLOR_CORE);
+  }
+  
   drawCircle(vec2(0, 0), PLAYER_ORBIT_RADIUS * 2, COLOR_ORBIT);
 }
 
@@ -433,4 +505,5 @@ LJS.engineInit(
   gameUpdatePost,
   gameRender,
   gameRenderPost,
+  G.spritesheet
 );
