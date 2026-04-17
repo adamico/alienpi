@@ -152,8 +152,7 @@ const soundShoot = new Sound([
 
 // --- CLASSES ---
 
-let player = null; // Declare player variable for global access if needed
-
+export let player = null;
 class Player extends EngineObject {
   constructor() {
     const tile = sprites.get(G.playerSprite);
