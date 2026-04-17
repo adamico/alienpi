@@ -9,4 +9,9 @@ export default defineConfig([
     extends: ["js/recommended"],
     languageOptions: { globals: globals.browser },
   },
+  {
+    // game.js sprays LittleJS exports onto globalThis at runtime; skip no-undef.
+    files: ["game.js"],
+    rules: { "no-undef": "off" },
+  },
 ]);

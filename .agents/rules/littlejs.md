@@ -11,8 +11,6 @@ Follow these rules strictly when working on LittleJS projects. Optimize for mini
 
 - **One File Only:** Use `index.html` exclusively. No build steps, no external JS/CSS files.
 - **JS Only:** Do not modify HTML or CSS. Write all logic in JavaScript.
-- **No External Assets:** No images, spritesheets, or audio files.
-- **Untextured Rendering:** Use solid-color primitives only (`drawRect`, `drawCircle`, `drawLine`). Do not use texture/sprite APIs.
 - **Synthesized Audio:** Use the `SoundGenerator` class (ZZFX) for all audio. Do not write raw audio code.
 
 ## 2. Engine Lifecycle & Structure
