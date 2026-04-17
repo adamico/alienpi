@@ -16,7 +16,7 @@
             "name": "Launch Game in Chrome",
             "type": "chrome",
             "request": "launch",
-            "url": "http://localhost:8080/alienpi.html",
+            "url": "http://localhost:8080/index.html",
             "webRoot": "${workspaceFolder}"
         }
     ],
