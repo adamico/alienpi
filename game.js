@@ -253,11 +253,6 @@ class Enemy extends EngineObject {
   }
 }
 
-// --- STATE ---
-let player;
-
-function startWave() {}
-
 function drawUI() {
   const input = keyDirection();
   drawTextScreen(
