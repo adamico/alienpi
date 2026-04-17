@@ -15,6 +15,7 @@ import {
   setCanvasFixedSize,
   setCameraPos,
   setTileDefaultSize,
+  setObjectMaxSpeed,
   engineInit,
 } from "./node_modules/littlejsengine/dist/littlejs.esm.js";
 
@@ -30,8 +31,13 @@ const G = {
   cameraPos: LEVEL_SIZE.scale(0.5),
   spriteSheet: [`${SPRITE_SHEET_PATH}.png`],
   playerSprite: "spaceShips_008.png",
+  playerAccel: 0.3,
+  playerDamping: 0.5,
+  objectMaxSpeed: 0.4,
+  focusSpeedScale: 0.5,
   playerBulletSprite: "spaceMissiles_001.png",
   shootKey: "Space",
+  focusKey: "ShiftLeft",
 };
 
 // Global sprite registry
@@ -161,11 +167,21 @@ class Player extends EngineObject {
     this.shootTimer = 0;
     this.setCollision(true);
     this.mass = 0;
+    this.damping = G.playerDamping;
   }
 
   update() {
     // angular input logic
     const input = keyDirection();
+
+    if (input.length() > 0)
+      this.velocity = this.velocity.add(input.normalize().scale(G.playerAccel));
+
+    const maxSpeed = keyIsDown(G.focusKey)
+      ? G.objectMaxSpeed * G.focusSpeedScale
+      : G.objectMaxSpeed;
+    if (this.velocity.length() > maxSpeed)
+      this.velocity = this.velocity.normalize().scale(maxSpeed);
 
     // shooting
     if (this.shootTimer > 0) this.shootTimer--;
@@ -272,6 +288,7 @@ async function gameInit() {
 
   // Set tile size to 1 to work with pixel coordinates directly
   setTileDefaultSize(vec2(1));
+  setObjectMaxSpeed(G.objectMaxSpeed);
 
   // Load spritesheet descriptors
   await loadSprites();
