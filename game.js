@@ -66,6 +66,8 @@ const SHOOT_COOLDOWN = 10;
 const BULLET_SPEED = 0.3;
 const BULLET_DESPAWN_RADIUS = 0.5;
 
+// Removed unused global player variable
+
 // --- RENDER SETTINGS ---
 const WORLD_SCALE = 0.02;
 const MIN_COLLISION_RADIUS = 0.4;
@@ -150,6 +152,8 @@ const soundShoot = new Sound([
 
 // --- CLASSES ---
 
+let player = null; // Declare player variable for global access if needed
+
 class Player extends EngineObject {
   constructor() {
     const tile = sprites.get(G.playerSprite);
@@ -157,6 +161,7 @@ class Player extends EngineObject {
     this.sprite = tile;
     this.shootTimer = 0;
     this.setCollision(true);
+    this.mass = 0;
   }
 
   update() {
@@ -167,10 +172,9 @@ class Player extends EngineObject {
     if (this.shootTimer > 0) this.shootTimer--;
     if (keyIsDown(G.shootKey) && this.shootTimer <= 0) {
       soundShoot.play();
-      const shootOffset = vec2(0.5, 0.1);
+      const shootOffset = vec2(0.5, -0.1);
       const bulletSpawnPos1 = this.pos.add(
-        vec2(-this.size.x / 2 + shootOffset.x,
-          this.size.y / 2 + shootOffset.y),
+        vec2(-this.size.x / 2 + shootOffset.x, this.size.y / 2 + shootOffset.y),
       );
       const bulletSpawnPos2 = this.pos.add(
         vec2(this.size.x / 2 - shootOffset.x, this.size.y / 2 + shootOffset.y),
@@ -273,6 +277,7 @@ async function gameInit() {
   // Load spritesheet descriptors
   await loadSprites();
 
+  // Create player instance (local variable, not assigned globally)
   player = new Player();
 }
 
