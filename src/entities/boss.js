@@ -17,10 +17,10 @@ import { Bullet } from "./bullet.js";
  */
 export class BossOrbiter extends EngineObject {
   constructor(boss, angle) {
-    const tile = sprites.get(orbCfg.sprite, orbCfg.sheet);
-    super(boss.pos.copy(), orbCfg.size);
+    const size = sprites.getSize(orbCfg.sprite, orbCfg.sheet, orbCfg.size);
+    super(boss.pos.copy(), size);
     this.boss = boss;
-    this.sprite = tile;
+    this.sprite = sprites.get(orbCfg.sprite, orbCfg.sheet);
     this.angleOffset = angle;
     this.hp = orbCfg.hp;
     this.color = orbCfg.color.copy();
@@ -66,10 +66,10 @@ export class BossOrbiter extends EngineObject {
  */
 export class Boss extends EngineObject {
   constructor(pos) {
-    const tile = sprites.get(bossCfg.sprite, bossCfg.sheet);
-    super(pos, bossCfg.size);
+    const size = sprites.getSize(bossCfg.sprite, bossCfg.sheet, bossCfg.size);
+    super(pos, size);
     
-    this.sprite = tile;
+    this.sprite = sprites.get(bossCfg.sprite, bossCfg.sheet);
     this.hp = bossCfg.hp;
     this.maxHp = bossCfg.hp;
     this.color = bossCfg.color.copy();

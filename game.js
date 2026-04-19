@@ -13,6 +13,10 @@ import {
   rand,
   drawText,
   WHITE,
+  glSetAntialias,
+  setCanvasPixelated,
+  setTilesPixelated,
+  PostProcessPlugin,
 } from "./node_modules/littlejsengine/dist/littlejs.esm.js";
 
 import { system, engine } from "./src/config.js";
@@ -27,6 +31,22 @@ let bossSpawned = false;
 let currentBoss = null;
 
 async function gameInit() {
+  const sharpenShader = `
+  void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+      vec2 uv = fragCoord.xy / iResolution.xy;
+      vec2 step = 1.0 / iResolution.xy;
+      
+      vec4 tex0 = texture(iChannel0, uv);
+      vec4 tex1 = texture(iChannel0, uv + vec2(step.x, 0.0));
+      vec4 tex2 = texture(iChannel0, uv + vec2(-step.x, 0.0));
+      vec4 tex3 = texture(iChannel0, uv + vec2(0.0, step.y));
+      vec4 tex4 = texture(iChannel0, uv + vec2(0.0, -step.y));
+      
+      // Simple 5-tap sharpening kernel
+      fragColor = tex0 * 5.0 - (tex1 + tex2 + tex3 + tex4);
+  }`;
+  new PostProcessPlugin(sharpenShader);
+
   setCanvasFixedSize(system.canvasSize);
   setCameraPos(system.cameraPos);
   setTileDefaultSize(vec2(1));
@@ -106,6 +126,9 @@ function gameRenderPost() {
   drawUI();
 }
 
+glSetAntialias(true);
+setCanvasPixelated(false);
+setTilesPixelated(false);
 engineInit(
   gameInit,
   gameUpdate,

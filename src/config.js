@@ -40,9 +40,9 @@ export const player = {
 
 export const bullet = {
   sheet: SPRITE_SHEET2_NAME,
-  sprite: "laserRed07.png",
+  sprite: "laserRed04.png",
   speed: 0.3,
-  size: vec2(0.3, 0.8),
+  size: vec2(0.2, 0.2),
   despawnRadius: 0.5,
 };
 
@@ -94,7 +94,7 @@ export const boss = {
   sprite: "spaceShips_007.png",
   hp: 200,
   speed: 0.05,
-  size: vec2(5, 7),
+  size: vec2(5, 5),
   color: rgb(0.6, 1, 0.6),
   pulseRate: 180,
   fireLocations: [

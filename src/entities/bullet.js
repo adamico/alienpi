@@ -10,10 +10,11 @@ import { sprites } from "../sprites.js";
 export class Bullet extends EngineObject {
   constructor(pos, vel, isEnemy = false) {
     const cfg = isEnemy ? enemyBulletCfg : bulletCfg;
-    const tile = sprites.get(cfg.sprite, cfg.sheet);
-    super(pos, cfg.size);
+    const size = sprites.getSize(cfg.sprite, cfg.sheet, cfg.size);
     
-    this.sprite = tile;
+    super(pos, size);
+    
+    this.sprite = sprites.get(cfg.sprite, cfg.sheet);
     this.velocity = vel;
     this.angle = vel.angle();
     this.renderOrder = 10;
