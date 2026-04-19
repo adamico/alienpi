@@ -27,7 +27,7 @@ export async function loadSprites(sheetPath, textureIndex) {
   const subTextures = xml.getElementsByTagName("SubTexture");
 
   // Get sheet name from path for the key
-  const sheetName = sheetPath.split('/').pop();
+  const sheetName = sheetPath.split("/").pop();
 
   for (let i = 0; i < subTextures.length; i++) {
     const st = subTextures[i];
@@ -40,9 +40,9 @@ export async function loadSprites(sheetPath, textureIndex) {
     // Add a tiny 2px shrink to prevent bleeding from adjacent sprites
     const bleedShrink = 2;
     const tile = new TileInfo(
-      vec2(x + bleedShrink, y + bleedShrink), 
-      vec2(w - bleedShrink * 2, h - bleedShrink * 2), 
-      textureInfos[textureIndex]
+      vec2(x + bleedShrink, y + bleedShrink),
+      vec2(w - bleedShrink * 2, h - bleedShrink * 2),
+      textureInfos[textureIndex],
     );
     spritesMap.set(`${sheetName}:${name}`, tile);
   }
@@ -63,17 +63,17 @@ export const sprites = {
 
   /**
    * Returns a vec2 size that respects the sprite's aspect ratio
-   * @param {string} name 
-   * @param {string} sheet 
+   * @param {string} name
+   * @param {string} sheet
    * @param {number|Vector2} baseSize Width or size vector to use as base
    * @returns {Vector2} Corrected size
    */
   getSize: (name, sheet, baseSize) => {
     const sprite = sprites.get(name, sheet);
     if (!sprite) return vec2(1);
-    
-    const width = (typeof baseSize === 'number') ? baseSize : baseSize.x;
+
+    const width = typeof baseSize === "number" ? baseSize : baseSize.x;
     const aspect = sprite.size.y / sprite.size.x;
     return vec2(width, width * aspect);
-  }
+  },
 };

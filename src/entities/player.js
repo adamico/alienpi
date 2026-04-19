@@ -1,9 +1,7 @@
 import {
   vec2,
-  EngineObject,
   keyDirection,
   keyIsDown,
-  drawTile,
   Color,
   WHITE,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
@@ -13,27 +11,26 @@ import {
   player as playerCfg,
   bullet as bulletCfg,
 } from "../config.js";
-import { sprites } from "../sprites.js";
 import { soundShoot } from "../sounds.js";
 import { Bullet } from "./bullet.js";
 import { Enemy } from "./enemy.js";
+import { BaseEntity } from "./baseEntity.js";
 
 export let player = null;
 
-export class Player extends EngineObject {
+export class Player extends BaseEntity {
   constructor() {
-    const tile = sprites.get(playerCfg.sprite, playerCfg.sheet);
-    const visualSize = tile.size.scale(engine.worldScale);
-    const hitboxScale = 0.25;
-
     super(
       vec2(system.levelSize.x / 2, 1),
-      visualSize.scale(hitboxScale),
+      playerCfg.sprite,
+      playerCfg.sheet,
+      playerCfg.hitboxScale,
+      null, // customSize
+      playerCfg.mirrorX,
+      playerCfg.mirrorY,
     );
-    
-    this.visualSize = visualSize;
+
     this.hp = playerCfg.hp;
-    this.sprite = tile;
     this.shootTimer = 0;
     this.setCollision(true, true);
     this.mass = 1;
@@ -59,22 +56,25 @@ export class Player extends EngineObject {
     if (this.shootTimer > 0) this.shootTimer--;
     if (keyIsDown(system.shootKey) && this.shootTimer <= 0) {
       soundShoot.play();
-      const halfSprite = this.sprite.size.scale(0.5);
+      const visualSize = this.visualSize;
+      const center = visualSize.scale(0.5);
       for (const muzzle of playerCfg.cannonOffsets) {
-        const offset = muzzle.subtract(halfSprite).scale(engine.worldScale);
-        new Bullet(this.pos.add(offset), vec2(0, bulletCfg.speed), 'player');
+        // muzzle is in pixel coordinates, convert to world units
+        const muzzleWorld = muzzle.scale(engine.worldScale);
+
+        // Offset from center in world space (Y-up)
+        // Pixels are Y-down, so we negate the Y difference
+        const offset = vec2(
+          muzzleWorld.x - center.x,
+          -(muzzleWorld.y - center.y),
+        );
+
+        new Bullet(this.pos.add(offset), vec2(0, bulletCfg.speed), "player");
       }
       this.shootTimer = playerCfg.shootCooldown;
     }
 
     super.update();
-
-  }
-
-  render() {
-    if (this.sprite) {
-      drawTile(this.pos, vec2(this.visualSize.x, -this.visualSize.y), this.sprite, this.color);
-    }
   }
 
   collideWithObject(other) {
@@ -82,8 +82,8 @@ export class Player extends EngineObject {
       this.hp--;
       other.destroy();
       this.color = new Color(1, 0, 0); // Flash red
-      setTimeout(() => this.color = WHITE.copy(), 100);
-      
+      setTimeout(() => (this.color = WHITE.copy()), 100);
+
       if (this.hp <= 0) {
         // Simple game over: restart
         location.reload();

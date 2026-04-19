@@ -1,31 +1,35 @@
 import {
   vec2,
-  EngineObject,
-  drawTile,
   engineObjects,
   Color,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
-import { system, engine, enemy as enemyCfg } from "../config.js";
-import { sprites } from "../sprites.js";
+import { system, enemy as enemyCfg } from "../config.js";
 import { Bullet } from "./bullet.js";
 import { player } from "./player.js";
+import { BaseEntity } from "./baseEntity.js";
 
-export class Enemy extends EngineObject {
+export class Enemy extends BaseEntity {
   constructor(pos, typeKey) {
     const cfg = enemyCfg.swarm[typeKey];
-    const tile = sprites.get(cfg.sprite, cfg.sheet);
-    super(pos, tile.size.scale(engine.worldScale));
-    
+    super(
+      pos,
+      cfg.sprite,
+      cfg.sheet,
+      cfg.hitboxScale,
+      null,
+      cfg.mirrorX,
+      cfg.mirrorY,
+    );
+
     this.typeKey = typeKey;
     this.cfg = cfg;
-    this.sprite = tile;
     this.hp = cfg.hp;
     this.color = cfg.color.copy();
-    
+
     this.setCollision(true);
     this.mass = 1;
     this.damping = 0.95;
-    
+
     this.fireTimer = 0;
     this.isDiving = false;
   }
@@ -44,30 +48,43 @@ export class Enemy extends EngineObject {
     let alignment = vec2(0);
     let count = 0;
 
-    const others = engineObjects.filter(o => o instanceof Enemy && o !== this);
-    
+    const others = engineObjects.filter(
+      (o) => o instanceof Enemy && o !== this,
+    );
+
     for (const other of others) {
       const dist = this.pos.distance(other.pos);
       if (dist < 5) {
         cohesion = cohesion.add(other.pos);
         alignment = alignment.add(other.velocity);
         if (dist < 1.5) {
-          separation = separation.add(this.pos.subtract(other.pos).scale(1 / (dist + 0.1)));
+          separation = separation.add(
+            this.pos.subtract(other.pos).scale(1 / (dist + 0.1)),
+          );
         }
         count++;
       }
     }
 
     if (count > 0) {
-      cohesion = cohesion.scale(1 / count).subtract(this.pos).scale(enemyCfg.flocking.cohesion);
+      cohesion = cohesion
+        .scale(1 / count)
+        .subtract(this.pos)
+        .scale(enemyCfg.flocking.cohesion);
       alignment = alignment.scale(1 / count).scale(enemyCfg.flocking.alignment);
       separation = separation.scale(enemyCfg.flocking.separation);
-      
-      this.velocity = this.velocity.add(cohesion).add(alignment).add(separation);
+
+      this.velocity = this.velocity
+        .add(cohesion)
+        .add(alignment)
+        .add(separation);
     }
 
     // Player attraction
-    const toPlayer = player.pos.subtract(this.pos).normalize().scale(enemyCfg.flocking.playerAttraction);
+    const toPlayer = player.pos
+      .subtract(this.pos)
+      .normalize()
+      .scale(enemyCfg.flocking.playerAttraction);
     this.velocity = this.velocity.add(toPlayer);
 
     // Limit speed
@@ -84,7 +101,10 @@ export class Enemy extends EngineObject {
       const dist = this.pos.distance(player.pos);
       // Distance themselves more
       if (dist < 12) {
-        this.velocity = this.pos.subtract(player.pos).normalize().scale(this.cfg.speed); // Back away
+        this.velocity = this.pos
+          .subtract(player.pos)
+          .normalize()
+          .scale(this.cfg.speed); // Back away
         this.fireTimer++;
       } else if (dist < 15) {
         this.velocity = this.velocity.scale(0.8); // Hover/Slow down
@@ -103,13 +123,19 @@ export class Enemy extends EngineObject {
       const dist = this.pos.distance(player.pos);
       if (dist < 8 && !this.isDiving) {
         this.isDiving = true;
-        this.velocity = player.pos.subtract(this.pos).normalize().scale(this.cfg.speed * 2.5);
+        this.velocity = player.pos
+          .subtract(this.pos)
+          .normalize()
+          .scale(this.cfg.speed * 2.5);
       }
     }
 
     // Level boundaries
     const margin = 0.5;
-    this.pos.x = Math.max(margin, Math.min(system.levelSize.x - margin, this.pos.x));
+    this.pos.x = Math.max(
+      margin,
+      Math.min(system.levelSize.x - margin, this.pos.x),
+    );
     // Keep enemies from flying below the player area unless diving
     if (!this.cfg.diving || !this.isDiving) {
       this.pos.y = Math.max(5, this.pos.y); // Don't let them go too low
@@ -117,14 +143,8 @@ export class Enemy extends EngineObject {
   }
 
   fireBullet() {
-    const b = new Bullet(this.pos.copy(), vec2(0, -0.3), 'enemy');
+    const b = new Bullet(this.pos.copy(), vec2(0, -0.3), "enemy");
     b.color = this.color.copy();
-  }
-
-  render() {
-    if (this.sprite) {
-      drawTile(this.pos, vec2(this.size.x, -this.size.y), this.sprite, this.color);
-    }
   }
 
   collideWithObject(other) {
@@ -132,8 +152,8 @@ export class Enemy extends EngineObject {
       this.hp--;
       other.destroy();
       this.color = new Color(1, 1, 1); // Flash white
-      setTimeout(() => this.color = this.cfg.color.copy(), 50);
-      
+      setTimeout(() => (this.color = this.cfg.color.copy()), 50);
+
       if (this.hp <= 0) {
         this.destroy();
       }
