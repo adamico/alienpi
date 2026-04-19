@@ -110,6 +110,8 @@ export class Boss extends EngineObject {
   initOrbiters() {
     this.orbiters.push(new BossOrbiter(this, 0));
     this.orbiters.push(new BossOrbiter(this, PI));
+    this.orbiters.push(new BossOrbiter(this, PI/2));
+    this.orbiters.push(new BossOrbiter(this, 3*PI/2));
   }
 
   update() {
@@ -121,7 +123,7 @@ export class Boss extends EngineObject {
 
   updateMovement() {
     // Wander logic
-    const moveScale = this.hp < 40 ? 1.5 : 1;
+    const moveScale = this.hp < (this.maxHp / 5) ? 1.5 : 1;
     this.moveTimer -= moveScale;
     const margin = orbCfg.radius + 1.5;
     if (this.moveTimer <= 0) {
@@ -141,7 +143,7 @@ export class Boss extends EngineObject {
   }
 
   updateAttacks() {
-    const rateScale = this.hp < 40 ? 2 : 1;
+    const rateScale = this.hp < (this.maxHp / 5) ? 2 : 1;
     this.pulseTimer += rateScale;
     if (this.pulseTimer >= bossCfg.pulseRate) {
       this.pulseTimer = 0;
@@ -168,17 +170,18 @@ export class Boss extends EngineObject {
   }
 
   updateVisuals() {
+    const step = this.maxHp / 5;
     for (const ef of this.fireEmitters) {
       ef.emitter.pos = this.pos.add(ef.offset);
-      
       const idx = this.fireEmitters.indexOf(ef);
-      if (this.hp < 40) {
+      
+      if (this.hp < step) {
         ef.emitter.emitRate = 100;
-      } else if (this.hp < 80) {
+      } else if (this.hp < step * 2) {
         ef.emitter.emitRate = (idx < 3) ? 80 : 0;
-      } else if (this.hp < 120) {
+      } else if (this.hp < step * 3) {
         ef.emitter.emitRate = (idx < 2) ? 60 : 0;
-      } else if (this.hp < 160) {
+      } else if (this.hp < step * 4) {
         ef.emitter.emitRate = (idx < 1) ? 40 : 0;
       } else {
         ef.emitter.emitRate = 0;
