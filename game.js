@@ -11,6 +11,8 @@ import {
   engineInit,
   Timer,
   rand,
+  drawText,
+  WHITE,
 } from "./node_modules/littlejsengine/dist/littlejs.esm.js";
 
 import { system, engine } from "./src/config.js";
@@ -22,6 +24,7 @@ import { Boss } from "./src/entities/boss.js";
 let waveTimer = new Timer();
 let waveIndex = 0;
 let bossSpawned = false;
+let currentBoss = null;
 
 async function gameInit() {
   setCanvasFixedSize(system.canvasSize);
@@ -33,9 +36,15 @@ async function gameInit() {
 
   spawnPlayer();
   waveTimer.set(3);
+  
+  // Straight to boss level
+  currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
+  bossSpawned = true;
 }
 
 function gameUpdate() {
+  if (bossSpawned) return; // Disable swarmers in boss level
+
   if (waveTimer.elapsed()) {
     spawnWave();
     waveTimer.set(5); 
@@ -98,4 +107,8 @@ engineInit(
   system.spriteSheet,
 );
 
-function drawUI() {}
+function drawUI() {
+  if (currentBoss) {
+    drawText(`BOSS HP: ${currentBoss.hp}`, vec2(system.levelSize.x / 2, system.levelSize.y - 1), 1, WHITE);
+  }
+}

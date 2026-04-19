@@ -29,11 +29,11 @@ export class Boss extends EngineObject {
   initEmitters() {
     for (const offset of bossCfg.fireLocations) {
       const emitter = new ParticleEmitter(
-        this.pos.add(offset), 0, 0.2, 0.1, 50, Math.PI, // pos, angle, emitSize, emitTime, emitRate, emitCone
+        this.pos.add(offset), 0, 0.2, 0, 50, Math.PI, // pos, angle, emitSize, emitTime(0=infinite), emitRate, emitCone
         undefined, // tileInfo
         rgb(1, 0.5, 0), rgb(1, 0.2, 0), // colorStartA, colorStartB
         rgb(1, 0.5, 0, 0), rgb(1, 0.2, 0, 0), // colorEndA, colorEndB
-        0.5, 0.1, 0.2, 0.05, 0.05, // particleTime, sizeStart, sizeEnd, speed, angleSpeed
+        0.5, 0.2, 0.5, 0.05, 0.05, // particleTime, sizeStart, sizeEnd, speed, angleSpeed
         0.95, 1, 1, Math.PI, 0.1, // damping, angleDamping, gravityScale, particleCone, fadeRate
         0.2, false, true // randomness, collide, additive
       );
@@ -51,20 +51,15 @@ export class Boss extends EngineObject {
       ef.emitter.pos = this.pos.add(ef.offset);
       
       // HP thresholds for fire
-      const hpRatio = this.hp / this.maxHp;
-      if (hpRatio < 0.25) {
-        ef.emitter.emitRate = 100;
-      } else if (hpRatio < 0.5) {
-        // Only some segments if < 1/2? 
-        // User said "four locations Signifying the boss is at <3/4, <1/2 and <1/4 health"
-        // Let's interpret as: 
-        // < 3/4 -> 1 fire? No, maybe intensity increases.
-        // Let's do: 1 fire at 3/4, 2 at 1/2, 4 at 1/4.
-        const idx = this.fireEmitters.indexOf(ef);
-        if (idx < 2) ef.emitter.emitRate = 50;
-      } else if (hpRatio < 0.75) {
-        const idx = this.fireEmitters.indexOf(ef);
-        if (idx < 1) ef.emitter.emitRate = 30;
+      const idx = this.fireEmitters.indexOf(ef);
+      if (this.hp < 40) {
+        ef.emitter.emitRate = 100; // All 4 fires high intensity
+      } else if (this.hp < 80) {
+        ef.emitter.emitRate = (idx < 3) ? 80 : 0; // 3 fires
+      } else if (this.hp < 120) {
+        ef.emitter.emitRate = (idx < 2) ? 60 : 0; // 2 fires
+      } else if (this.hp < 160) {
+        ef.emitter.emitRate = (idx < 1) ? 40 : 0; // 1 fire
       } else {
         ef.emitter.emitRate = 0;
       }
