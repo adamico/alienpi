@@ -34,7 +34,7 @@ export const player = {
   damping: 0.5,
   focusSpeedScale: 0.5,
   shootCooldown: 8,
-  cannonOffsets: [vec2(22, 30), vec2(85, 30)],
+  cannonOffsets: [vec2(22, 40), vec2(85, 40)],
   hp: 5,
   hitboxScale: 0.25,
   mirrorX: false,

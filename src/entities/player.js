@@ -33,6 +33,7 @@ export class Player extends BaseEntity {
     this.hp = playerCfg.hp;
     this.shootTimer = 0;
     this.setCollision(true, true);
+    this.isPlayer = true;
     this.mass = 1;
     this.damping = playerCfg.damping;
   }

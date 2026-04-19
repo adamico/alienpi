@@ -25,9 +25,10 @@ export class Bullet extends BaseEntity {
     );
 
     this.velocity = vel;
-    this.angle = vel.angle();
+    this.angle = type === "player" ? 0 : vel.angle();
     this.renderOrder = 10;
-    this.setCollision(true);
+    this.setCollision(true, false); // Trigger only, not solid
+    this.mass = 0; // Projectiles shouldn't have mass-based physics response
     this.type = type;
     this.isEnemy = type !== "player";
     this.mirrorY = cfg.mirrorY !== undefined ? cfg.mirrorY : true;
@@ -35,7 +36,7 @@ export class Bullet extends BaseEntity {
 
     // Ensure small bullets are still easy to hit
     this.collisionRadius = Math.max(
-      this.size.length() * 0.5,
+      this.visualSize.length() * 0.5,
       engine.minCollisionRadius,
     );
   }
@@ -59,7 +60,9 @@ export class Bullet extends BaseEntity {
 
   collideWithObject(other) {
     if (other instanceof Bullet) return false;
-    if (other.isBoundary) return false; // Ignore physical collision with boundaries
+    if (other.isBoundary) return false;
+    // Player bullets shouldn't "hit" the player (physics or logic)
+    if (this.type === "player" && other.isPlayer) return false;
     return true;
   }
 }
