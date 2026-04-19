@@ -44,4 +44,9 @@ export class Bullet extends EngineObject {
       drawTile(this.pos, this.size, this.sprite, this.color, this.angle);
     }
   }
+
+  collideWithObject(other) {
+    if (other instanceof Bullet) return false;
+    return true;
+  }
 }
