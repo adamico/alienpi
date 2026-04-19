@@ -17,6 +17,7 @@ import {
   setCanvasPixelated,
   setTilesPixelated,
   PostProcessPlugin,
+  EngineObject,
 } from "./node_modules/littlejsengine/dist/littlejs.esm.js";
 
 import { system, engine } from "./src/config.js";
@@ -29,6 +30,18 @@ let waveTimer = new Timer();
 let waveIndex = 0;
 let bossSpawned = false;
 let currentBoss = null;
+const boundaries = [];
+
+class Boundary extends EngineObject {
+  constructor(pos, size, isKillZone = false) {
+    super(pos, size);
+    this.isKillZone = isKillZone;
+    this.isBoundary = true;
+    this.setCollision(true, !isKillZone); // Always a collider, only solid if not a kill zone
+    this.mass = 0;
+  }
+  render() {} // Invisible
+}
 
 async function gameInit() {
   const sharpenShader = `
@@ -64,6 +77,21 @@ async function gameInit() {
   // Straight to boss level
   currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
   bossSpawned = true;
+
+  // Setup level boundaries
+  const wallThick = 2;
+  const { x: lx, y: ly } = system.levelSize;
+  const margin = 1; // Align with visual playfield
+  
+  // -- SOLID WALLS (for Player) --
+  // Left
+  boundaries.push(new Boundary(vec2(-margin - wallThick/2, ly/2), vec2(wallThick, ly * 3)));
+  // Right
+  boundaries.push(new Boundary(vec2(lx + margin + wallThick/2, ly/2), vec2(wallThick, ly * 3)));
+  // Top
+  boundaries.push(new Boundary(vec2(lx/2, ly + margin + wallThick/2), vec2(lx * 2, wallThick)));
+  // Bottom
+  boundaries.push(new Boundary(vec2(lx/2, -wallThick/2), vec2(lx * 2, wallThick)));
 }
 
 function gameUpdate() {
@@ -75,7 +103,7 @@ function gameUpdate() {
     waveIndex++;
     
     if (waveIndex > 10 && !bossSpawned) {
-      new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
+      currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
       bossSpawned = true;
     }
   }
@@ -103,17 +131,19 @@ function drawPlayField() {
   const playFieldColor = rgb(0.01, 0.01, 0.02);
   
   // Background
+  const margin = 1;
   drawRect(system.cameraPos, vec2(100), marqueeColor);
   drawRect(
     system.cameraPos,
-    vec2(system.levelSize.x, system.levelSize.y * 2),
+    vec2(system.levelSize.x + margin * 2, system.levelSize.y * 2),
     playFieldColor,
   );
   
   // Vibrant scrolling starfield
   for (let i = 0; i < 40; i++) {
     const speed = (i % 5 + 1) * 2;
-    const x = ((Math.sin(i * 1337) * 0.5 + 0.5) * system.levelSize.x);
+    // Spread stars across the entire width including margins
+    const x = ((Math.sin(i * 1337) * 0.5 + 0.5) * (system.levelSize.x + margin * 2)) - margin;
     const time = performance.now() * 0.001;
     const y = (system.levelSize.y * 2 - (time * speed + i * 2) % (system.levelSize.y * 2));
     
@@ -123,6 +153,7 @@ function drawPlayField() {
 }
 
 function gameRenderPost() {
+  drawMarquee();
   drawUI();
 }
 
@@ -137,6 +168,25 @@ engineInit(
   gameRenderPost,
   system.spriteSheetLists,
 );
+
+function drawMarquee() {
+  const marqueeColor = rgb(0.05, 0.05, 0.1);
+  const { x: lx, y: ly } = system.levelSize;
+  const margin = 1;
+
+  const maskSize = 100;
+  const maskReach = lx * 5;
+
+  // Mask off areas outside the visible playfield
+  // Left Mask
+  drawRect(vec2(-maskSize / 2 - margin, ly), vec2(maskSize, ly * 3), marqueeColor);
+  // Right Mask
+  drawRect(vec2(lx + maskSize / 2 + margin, ly), vec2(maskSize, ly * 3), marqueeColor);
+  // Top Mask
+  drawRect(vec2(lx / 2, ly + margin + maskSize / 2), vec2(maskReach, maskSize), marqueeColor);
+  // Bottom Mask
+  drawRect(vec2(lx / 2, -margin - maskSize / 2), vec2(maskReach, maskSize), marqueeColor);
+}
 
 function drawUI() {
   if (currentBoss) {

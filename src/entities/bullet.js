@@ -32,8 +32,17 @@ export class Bullet extends EngineObject {
   }
 
   update() {
-    // Despawn if outside level
-    if (this.pos.y > system.levelSize.y * 2 || this.pos.y < -system.levelSize.y) {
+    // Despawn if way outside
+    const lx = system.levelSize.x;
+    const ly = system.levelSize.y;
+    const killMargin = 5;
+    
+    if (
+      this.pos.x < -killMargin || 
+      this.pos.x > lx + killMargin || 
+      this.pos.y < -killMargin || 
+      this.pos.y > ly + killMargin
+    ) {
       this.destroy();
     }
     super.update();
@@ -47,6 +56,7 @@ export class Bullet extends EngineObject {
 
   collideWithObject(other) {
     if (other instanceof Bullet) return false;
+    if (other.isBoundary) return false; // Ignore physical collision with boundaries
     return true;
   }
 }

@@ -121,7 +121,8 @@ export class Boss extends EngineObject {
 
   updateMovement() {
     // Wander logic
-    this.moveTimer--;
+    const moveScale = this.hp < 40 ? 1.5 : 1;
+    this.moveTimer -= moveScale;
     const margin = orbCfg.radius + 1.5;
     if (this.moveTimer <= 0) {
       this.targetPos = vec2(
@@ -134,13 +135,14 @@ export class Boss extends EngineObject {
     // Smooth move toward target
     const toTarget = this.targetPos.subtract(this.pos);
     if (toTarget.length() > 0.1) {
-      this.velocity = this.velocity.add(toTarget.normalize().scale(bossCfg.speed * 0.1));
+      this.velocity = this.velocity.add(toTarget.normalize().scale(bossCfg.speed * 0.1 * moveScale));
     }
     this.velocity = this.velocity.scale(0.95); // Damping
   }
 
   updateAttacks() {
-    this.pulseTimer++;
+    const rateScale = this.hp < 40 ? 2 : 1;
+    this.pulseTimer += rateScale;
     if (this.pulseTimer >= bossCfg.pulseRate) {
       this.pulseTimer = 0;
       this.novaPulse();
@@ -148,9 +150,17 @@ export class Boss extends EngineObject {
   }
 
   novaPulse() {
+    this.fireNovaSalve(0);
+    setTimeout(() => {
+      if (!this.destroyed) this.fireNovaSalve(0.5 / 24);
+    }, 200); // 0.2 sec delay
+  }
+
+  fireNovaSalve(offsetFactor) {
     const pulseCount = 24;
+    const offset = offsetFactor * PI * 2;
     for (let i = 0; i < pulseCount; i++) {
-      const angle = (i / pulseCount) * PI * 2;
+      const angle = (i / pulseCount) * PI * 2 + offset;
       const bulletVel = vec2(Math.cos(angle), Math.sin(angle)).scale(0.2);
       const b = new Bullet(this.pos.copy(), bulletVel, 'boss');
       b.color = rgb(1, 0.2, 0.2);

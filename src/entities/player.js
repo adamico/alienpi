@@ -17,21 +17,26 @@ import { sprites } from "../sprites.js";
 import { soundShoot } from "../sounds.js";
 import { Bullet } from "./bullet.js";
 import { Enemy } from "./enemy.js";
-import { Boss } from "./boss.js";
 
 export let player = null;
 
 export class Player extends EngineObject {
   constructor() {
     const tile = sprites.get(playerCfg.sprite, playerCfg.sheet);
+    const visualSize = tile.size.scale(engine.worldScale);
+    const hitboxScale = 0.25;
+
     super(
-      vec2(system.levelSize.x / 2, 0.5),
-      tile.size.scale(engine.worldScale),
+      vec2(system.levelSize.x / 2, 1),
+      visualSize.scale(hitboxScale),
     );
+    
+    this.visualSize = visualSize;
+    this.hp = playerCfg.hp;
     this.sprite = tile;
     this.shootTimer = 0;
-    this.setCollision(true);
-    this.mass = 0;
+    this.setCollision(true, true);
+    this.mass = 1;
     this.damping = playerCfg.damping;
   }
 
@@ -64,20 +69,16 @@ export class Player extends EngineObject {
 
     super.update();
 
-    // Clamp to screen
-    const margin = 0.5;
-    this.pos.x = Math.max(margin, Math.min(system.levelSize.x - margin, this.pos.x));
-    this.pos.y = Math.max(margin, Math.min(15, this.pos.y)); // Keep in bottom half-ish
   }
 
   render() {
     if (this.sprite) {
-      drawTile(this.pos, vec2(this.size.x, -this.size.y), this.sprite, this.color);
+      drawTile(this.pos, vec2(this.visualSize.x, -this.visualSize.y), this.sprite, this.color);
     }
   }
 
   collideWithObject(other) {
-    if (other instanceof Enemy || other instanceof Boss || (other instanceof Bullet && other.isEnemy)) {
+    if (other instanceof Enemy || (other instanceof Bullet && other.isEnemy)) {
       this.hp--;
       other.destroy();
       this.color = new Color(1, 0, 0); // Flash red
@@ -89,7 +90,7 @@ export class Player extends EngineObject {
       }
       return false;
     }
-    return false;
+    return true;
   }
 }
 

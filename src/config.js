@@ -10,7 +10,7 @@ export const SPRITE_SHEET_PATHS = [
 ];
 
 const CANVAS_SIZE = vec2(1280, 720);
-const LEVEL_SIZE = vec2(20, 20);
+const LEVEL_SIZE = vec2(22, 22);
 
 export const system = {
   canvasSize: CANVAS_SIZE,
