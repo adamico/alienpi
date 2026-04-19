@@ -46,20 +46,20 @@ export const enemy = {
       speed: 0.1,
       stopToFire: true,
       fireRate: 60,
-      color: rgb(0.5, 1, 0.5), // Sickly green
+      color: rgb(0.5, 1, 0.5),
     },
     type2: {
       sprite: "spaceShips_005.png",
       hp: 3,
       speed: 0.05,
-      color: rgb(0.8, 0.5, 1), // Purple
+      color: rgb(0.8, 0.5, 1),
     },
     type3: {
       sprite: "spaceShips_001.png",
       hp: 2,
       speed: 0.2,
       diving: true,
-      color: rgb(1, 0.5, 0.5), // Reddish
+      color: rgb(1, 0.5, 0.5),
     }
   },
   flocking: {
@@ -73,15 +73,25 @@ export const enemy = {
 export const boss = {
   sprite: "spaceStation_024.png",
   hp: 200,
-  speed: 0.02,
+  speed: 0.05,
   size: vec2(5, 7),
   color: rgb(0.6, 1, 0.6),
+  pulseRate: 180,
   fireLocations: [
     vec2(-1.5, 2),
     vec2(1.5, 2),
     vec2(-1.5, -2),
     vec2(1.5, -2),
   ],
+};
+
+export const orbiter = {
+  sprite: "spaceShips_005.png",
+  hp: 100,
+  radius: 5,
+  speed: 0.03,
+  size: vec2(1.5),
+  color: rgb(0.4, 0.8, 1),
 };
 
 export const ui = {
