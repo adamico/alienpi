@@ -23,7 +23,7 @@ export let player = null;
 
 export class Player extends EngineObject {
   constructor() {
-    const tile = sprites.get(playerCfg.sprite);
+    const tile = sprites.get(playerCfg.sprite, playerCfg.sheet);
     super(
       vec2(system.levelSize.x / 2, 0.5),
       tile.size.scale(engine.worldScale),

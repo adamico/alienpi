@@ -2,7 +2,12 @@ import { vec2, rgb } from "../node_modules/littlejsengine/dist/littlejs.esm.js";
 
 const ASSET_PATH = "public/assets/";
 const SPRITE_SHEET_NAME = "spaceShooter2_spritesheet";
-export const SPRITE_SHEET_PATH = `${ASSET_PATH}${SPRITE_SHEET_NAME}`;
+const SPRITE_SHEET2_NAME = "sheet";
+
+export const SPRITE_SHEET_PATHS = [
+  `${ASSET_PATH}${SPRITE_SHEET_NAME}`,
+  `${ASSET_PATH}${SPRITE_SHEET2_NAME}`
+];
 
 const CANVAS_SIZE = vec2(1280, 720);
 const LEVEL_SIZE = vec2(20, 20);
@@ -11,7 +16,7 @@ export const system = {
   canvasSize: CANVAS_SIZE,
   levelSize: LEVEL_SIZE,
   cameraPos: LEVEL_SIZE.scale(0.5),
-  spriteSheet: [`${SPRITE_SHEET_PATH}.png`],
+  spriteSheetLists: SPRITE_SHEET_PATHS.map(p => `${p}.png`),
   shootKey: "Space",
   focusKey: "ShiftLeft",
 };
@@ -23,6 +28,7 @@ export const engine = {
 };
 
 export const player = {
+  sheet: SPRITE_SHEET_NAME,
   sprite: "spaceShips_008.png",
   accel: 0.3,
   damping: 0.5,
@@ -33,14 +39,25 @@ export const player = {
 };
 
 export const bullet = {
+  sheet: SPRITE_SHEET2_NAME,
+  sprite: "laserRed07.png",
+  speed: 0.3,
+  size: vec2(0.3, 0.8),
+  despawnRadius: 0.5,
+};
+
+export const enemyBullet = {
+  sheet: SPRITE_SHEET_NAME,
   sprite: "spaceMissiles_001.png",
   speed: 0.3,
+  size: vec2(0.3, 0.5),
   despawnRadius: 0.5,
 };
 
 export const enemy = {
   swarm: {
     type1: {
+      sheet: SPRITE_SHEET_NAME,
       sprite: "spaceShips_002.png",
       hp: 1,
       speed: 0.1,
@@ -49,12 +66,14 @@ export const enemy = {
       color: rgb(0.5, 1, 0.5),
     },
     type2: {
+      sheet: SPRITE_SHEET_NAME,
       sprite: "spaceShips_005.png",
       hp: 3,
       speed: 0.05,
       color: rgb(0.8, 0.5, 1),
     },
     type3: {
+      sheet: SPRITE_SHEET_NAME,
       sprite: "spaceShips_001.png",
       hp: 2,
       speed: 0.2,
@@ -71,7 +90,8 @@ export const enemy = {
 };
 
 export const boss = {
-  sprite: "spaceStation_024.png",
+  sheet: SPRITE_SHEET_NAME,
+  sprite: "spaceShips_007.png",
   hp: 200,
   speed: 0.05,
   size: vec2(5, 7),
@@ -86,6 +106,7 @@ export const boss = {
 };
 
 export const orbiter = {
+  sheet: SPRITE_SHEET_NAME,
   sprite: "spaceShips_005.png",
   hp: 100,
   radius: 5,

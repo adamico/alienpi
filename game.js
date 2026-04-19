@@ -32,7 +32,11 @@ async function gameInit() {
   setTileDefaultSize(vec2(1));
   setObjectMaxSpeed(engine.objectMaxSpeed);
 
-  await loadSprites();
+  // Load all spritesheets defined in config
+  for (let i = 0; i < system.spriteSheetLists.length; i++) {
+    const fullPath = system.spriteSheetLists[i].replace(".png", "");
+    await loadSprites(fullPath, i);
+  }
 
   spawnPlayer();
   waveTimer.set(3);
@@ -86,11 +90,15 @@ function drawPlayField() {
     playFieldColor,
   );
   
-  // Simple stars or grid?
-  for (let i = 0; i < 20; i++) {
-    const starPos = vec2((Math.sin(i * 1234.5) * 0.5 + 0.5) * system.levelSize.x, 
-                         (performance.now() * 0.001 * (i % 5 + 1) + i * 10) % (system.levelSize.y * 2));
-    drawRect(starPos, vec2(0.05), rgb(1, 1, 1, 0.2));
+  // Vibrant scrolling starfield
+  for (let i = 0; i < 40; i++) {
+    const speed = (i % 5 + 1) * 2;
+    const x = ((Math.sin(i * 1337) * 0.5 + 0.5) * system.levelSize.x);
+    const time = performance.now() * 0.001;
+    const y = (system.levelSize.y * 2 - (time * speed + i * 2) % (system.levelSize.y * 2));
+    
+    const size = 0.05 + (i % 3) * 0.03;
+    drawRect(vec2(x, y), vec2(size), rgb(1, 1, 1, 0.4));
   }
 }
 
@@ -104,7 +112,7 @@ engineInit(
   gameUpdatePost,
   gameRender,
   gameRenderPost,
-  system.spriteSheet,
+  system.spriteSheetLists,
 );
 
 function drawUI() {

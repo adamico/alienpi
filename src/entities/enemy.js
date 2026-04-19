@@ -13,7 +13,7 @@ import { player } from "./player.js";
 export class Enemy extends EngineObject {
   constructor(pos, typeKey) {
     const cfg = enemyCfg.swarm[typeKey];
-    const tile = sprites.get(cfg.sprite);
+    const tile = sprites.get(cfg.sprite, cfg.sheet);
     super(pos, tile.size.scale(engine.worldScale));
     
     this.typeKey = typeKey;
@@ -117,9 +117,8 @@ export class Enemy extends EngineObject {
   }
 
   fireBullet() {
-    const b = new Bullet(this.pos.copy(), vec2(0, -0.3)); // Shot straight down
+    const b = new Bullet(this.pos.copy(), vec2(0, -0.3), true);
     b.color = this.color.copy();
-    b.isEnemy = true;
   }
 
   render() {

@@ -17,7 +17,7 @@ import { Bullet } from "./bullet.js";
  */
 export class BossOrbiter extends EngineObject {
   constructor(boss, angle) {
-    const tile = sprites.get(orbCfg.sprite);
+    const tile = sprites.get(orbCfg.sprite, orbCfg.sheet);
     super(boss.pos.copy(), orbCfg.size);
     this.boss = boss;
     this.sprite = tile;
@@ -66,7 +66,7 @@ export class BossOrbiter extends EngineObject {
  */
 export class Boss extends EngineObject {
   constructor(pos) {
-    const tile = sprites.get(bossCfg.sprite);
+    const tile = sprites.get(bossCfg.sprite, bossCfg.sheet);
     super(pos, bossCfg.size);
     
     this.sprite = tile;
@@ -122,10 +122,11 @@ export class Boss extends EngineObject {
   updateMovement() {
     // Wander logic
     this.moveTimer--;
+    const margin = orbCfg.radius + 1.5;
     if (this.moveTimer <= 0) {
       this.targetPos = vec2(
-        rand(2, system.levelSize.x - 2),
-        rand(system.levelSize.y / 2, system.levelSize.y - 4)
+        rand(margin, system.levelSize.x - margin),
+        rand(system.levelSize.y - margin - 3, system.levelSize.y - margin)
       );
       this.moveTimer = rand(120, 300);
     }
@@ -151,8 +152,7 @@ export class Boss extends EngineObject {
     for (let i = 0; i < pulseCount; i++) {
       const angle = (i / pulseCount) * PI * 2;
       const bulletVel = vec2(Math.cos(angle), Math.sin(angle)).scale(0.2);
-      const b = new Bullet(this.pos.copy(), bulletVel);
-      b.isEnemy = true;
+      const b = new Bullet(this.pos.copy(), bulletVel, true);
       b.color = rgb(1, 0.2, 0.2);
     }
   }

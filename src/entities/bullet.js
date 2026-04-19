@@ -4,18 +4,21 @@ import {
   drawTile,
   WHITE,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
-import { engine, bullet as bulletCfg, system } from "../config.js";
+import { engine, bullet as bulletCfg, enemyBullet as enemyBulletCfg, system } from "../config.js";
 import { sprites } from "../sprites.js";
 
 export class Bullet extends EngineObject {
-  constructor(pos, vel) {
-    const tile = sprites.get(bulletCfg.sprite);
-    super(pos, tile.size.scale(engine.worldScale));
+  constructor(pos, vel, isEnemy = false) {
+    const cfg = isEnemy ? enemyBulletCfg : bulletCfg;
+    const tile = sprites.get(cfg.sprite, cfg.sheet);
+    super(pos, cfg.size);
+    
     this.sprite = tile;
     this.velocity = vel;
+    this.angle = vel.angle();
     this.renderOrder = 10;
     this.setCollision(true);
-    this.isEnemy = false;
+    this.isEnemy = isEnemy;
     this.color = WHITE.copy();
     
     // Ensure small bullets are still easy to hit
@@ -35,8 +38,7 @@ export class Bullet extends EngineObject {
 
   render() {
     if (this.sprite) {
-      const drawSize = this.isEnemy ? vec2(this.size.x, -this.size.y) : vec2(this.size.x, this.size.y);
-      drawTile(this.pos, drawSize, this.sprite, this.color);
+      drawTile(this.pos, this.size, this.sprite, this.color, this.angle);
     }
   }
 }
