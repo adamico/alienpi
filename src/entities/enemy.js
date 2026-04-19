@@ -5,7 +5,7 @@ import {
   engineObjects,
   Color,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
-import { engine, enemy as enemyCfg } from "../config.js";
+import { system, engine, enemy as enemyCfg } from "../config.js";
 import { sprites } from "../sprites.js";
 import { Bullet } from "./bullet.js";
 import { player } from "./player.js";
@@ -82,13 +82,20 @@ export class Enemy extends EngineObject {
 
     if (this.cfg.stopToFire) {
       const dist = this.pos.distance(player.pos);
-      if (dist < 10) {
-        this.velocity = this.velocity.scale(0.9); // Slow down
+      // Distance themselves more
+      if (dist < 12) {
+        this.velocity = this.pos.subtract(player.pos).normalize().scale(this.cfg.speed); // Back away
         this.fireTimer++;
-        if (this.fireTimer >= this.cfg.fireRate) {
-          this.fireTimer = 0;
-          this.fireBullet();
-        }
+      } else if (dist < 15) {
+        this.velocity = this.velocity.scale(0.8); // Hover/Slow down
+        this.fireTimer++;
+      } else {
+        this.fireTimer = 0;
+      }
+
+      if (this.fireTimer >= this.cfg.fireRate) {
+        this.fireTimer = 0;
+        this.fireBullet();
       }
     }
 
@@ -96,8 +103,16 @@ export class Enemy extends EngineObject {
       const dist = this.pos.distance(player.pos);
       if (dist < 8 && !this.isDiving) {
         this.isDiving = true;
-        this.velocity = player.pos.subtract(this.pos).normalize().scale(this.cfg.speed * 2);
+        this.velocity = player.pos.subtract(this.pos).normalize().scale(this.cfg.speed * 2.5);
       }
+    }
+
+    // Level boundaries
+    const margin = 0.5;
+    this.pos.x = Math.max(margin, Math.min(system.levelSize.x - margin, this.pos.x));
+    // Keep enemies from flying below the player area unless diving
+    if (!this.cfg.diving || !this.isDiving) {
+      this.pos.y = Math.max(5, this.pos.y); // Don't let them go too low
     }
   }
 
