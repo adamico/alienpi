@@ -102,8 +102,7 @@ export class Enemy extends EngineObject {
   }
 
   fireBullet() {
-    const bulletVel = player.pos.subtract(this.pos).normalize().scale(0.2);
-    const b = new Bullet(this.pos.copy(), bulletVel);
+    const b = new Bullet(this.pos.copy(), vec2(0, -0.3)); // Shot straight down
     b.color = this.color.copy();
     b.isEnemy = true;
   }

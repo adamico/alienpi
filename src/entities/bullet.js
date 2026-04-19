@@ -35,7 +35,8 @@ export class Bullet extends EngineObject {
 
   render() {
     if (this.sprite) {
-      drawTile(this.pos, vec2(this.size.x, this.size.y), this.sprite, this.color);
+      const drawSize = this.isEnemy ? vec2(this.size.x, -this.size.y) : vec2(this.size.x, this.size.y);
+      drawTile(this.pos, drawSize, this.sprite, this.color);
     }
   }
 }
