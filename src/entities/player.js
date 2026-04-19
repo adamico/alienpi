@@ -4,6 +4,8 @@ import {
   keyDirection,
   keyIsDown,
   drawTile,
+  Color,
+  WHITE,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   system,
@@ -14,6 +16,8 @@ import {
 import { sprites } from "../sprites.js";
 import { soundShoot } from "../sounds.js";
 import { Bullet } from "./bullet.js";
+import { Enemy } from "./enemy.js";
+import { Boss } from "./boss.js";
 
 export let player = null;
 
@@ -34,10 +38,11 @@ export class Player extends EngineObject {
   update() {
     const input = keyDirection();
 
-    if (input.length() > 0)
+    if (input.length() > 0) {
       this.velocity = this.velocity.add(
         input.normalize().scale(playerCfg.accel),
       );
+    }
 
     const maxSpeed = keyIsDown(system.focusKey)
       ? engine.objectMaxSpeed * playerCfg.focusSpeedScale
@@ -58,12 +63,33 @@ export class Player extends EngineObject {
     }
 
     super.update();
+
+    // Clamp to screen
+    const margin = 0.5;
+    this.pos.x = Math.max(margin, Math.min(system.levelSize.x - margin, this.pos.x));
+    this.pos.y = Math.max(margin, Math.min(15, this.pos.y)); // Keep in bottom half-ish
   }
 
   render() {
     if (this.sprite) {
-      drawTile(this.pos, vec2(this.size.x, -this.size.y), this.sprite);
+      drawTile(this.pos, vec2(this.size.x, -this.size.y), this.sprite, this.color);
     }
+  }
+
+  collideWithObject(other) {
+    if (other instanceof Enemy || other instanceof Boss || (other instanceof Bullet && other.isEnemy)) {
+      this.hp--;
+      other.destroy();
+      this.color = new Color(1, 0, 0); // Flash red
+      setTimeout(() => this.color = WHITE.copy(), 100);
+      
+      if (this.hp <= 0) {
+        // Simple game over: restart
+        location.reload();
+      }
+      return false;
+    }
+    return false;
   }
 }
 

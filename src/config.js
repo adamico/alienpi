@@ -27,8 +27,9 @@ export const player = {
   accel: 0.3,
   damping: 0.5,
   focusSpeedScale: 0.5,
-  shootCooldown: 10,
+  shootCooldown: 8,
   cannonOffsets: [vec2(22, 70), vec2(78, 70)],
+  hp: 5,
 };
 
 export const bullet = {
@@ -38,7 +39,49 @@ export const bullet = {
 };
 
 export const enemy = {
-  sprite: "enemyBlack1.png",
+  swarm: {
+    type1: {
+      sprite: "spaceShips_002.png",
+      hp: 1,
+      speed: 0.1,
+      stopToFire: true,
+      fireRate: 60,
+      color: rgb(0.5, 1, 0.5), // Sickly green
+    },
+    type2: {
+      sprite: "spaceShips_005.png",
+      hp: 3,
+      speed: 0.05,
+      color: rgb(0.8, 0.5, 1), // Purple
+    },
+    type3: {
+      sprite: "spaceShips_001.png",
+      hp: 2,
+      speed: 0.2,
+      diving: true,
+      color: rgb(1, 0.5, 0.5), // Reddish
+    }
+  },
+  flocking: {
+    cohesion: 0.01,
+    separation: 0.05,
+    alignment: 0.02,
+    playerAttraction: 0.005,
+  }
+};
+
+export const boss = {
+  sprite: "spaceStation_024.png",
+  hp: 200,
+  speed: 0.02,
+  size: vec2(5, 7),
+  color: rgb(0.6, 1, 0.6),
+  fireLocations: [
+    vec2(-1.5, 2),
+    vec2(1.5, 2),
+    vec2(-1.5, -2),
+    vec2(1.5, -2),
+  ],
 };
 
 export const ui = {
