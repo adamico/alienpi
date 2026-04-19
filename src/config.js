@@ -54,6 +54,14 @@ export const enemyBullet = {
   despawnRadius: 0.5,
 };
 
+export const bossBullet = {
+  sheet: SPRITE_SHEET2_NAME,
+  sprite: "laserRed08.png",
+  speed: 0.2,
+  size: vec2(0.8),
+  despawnRadius: 0.5,
+};
+
 export const enemy = {
   swarm: {
     type1: {

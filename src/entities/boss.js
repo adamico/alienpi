@@ -148,11 +148,11 @@ export class Boss extends EngineObject {
   }
 
   novaPulse() {
-    const pulseCount = 12;
+    const pulseCount = 24;
     for (let i = 0; i < pulseCount; i++) {
       const angle = (i / pulseCount) * PI * 2;
       const bulletVel = vec2(Math.cos(angle), Math.sin(angle)).scale(0.2);
-      const b = new Bullet(this.pos.copy(), bulletVel, true);
+      const b = new Bullet(this.pos.copy(), bulletVel, 'boss');
       b.color = rgb(1, 0.2, 0.2);
     }
   }

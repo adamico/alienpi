@@ -57,7 +57,7 @@ export class Player extends EngineObject {
       const halfSprite = this.sprite.size.scale(0.5);
       for (const muzzle of playerCfg.cannonOffsets) {
         const offset = muzzle.subtract(halfSprite).scale(engine.worldScale);
-        new Bullet(this.pos.add(offset), vec2(0, bulletCfg.speed));
+        new Bullet(this.pos.add(offset), vec2(0, bulletCfg.speed), 'player');
       }
       this.shootTimer = playerCfg.shootCooldown;
     }

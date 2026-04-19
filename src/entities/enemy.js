@@ -117,7 +117,7 @@ export class Enemy extends EngineObject {
   }
 
   fireBullet() {
-    const b = new Bullet(this.pos.copy(), vec2(0, -0.3), true);
+    const b = new Bullet(this.pos.copy(), vec2(0, -0.3), 'enemy');
     b.color = this.color.copy();
   }
 
