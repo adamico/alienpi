@@ -15,9 +15,9 @@ import { sprites } from "../sprites.js";
  * Defensive pods that orbit the boss
  */
 export class BossOrbiter extends BaseEntity {
-  constructor(boss, angle) {
+  constructor(initialAngle) {
     super(
-      boss.pos.copy(),
+      vec2(), // pos overridden by parent transform
       orbCfg.sprite,
       orbCfg.sheet,
       orbCfg.hitboxScale,
@@ -25,8 +25,7 @@ export class BossOrbiter extends BaseEntity {
       orbCfg.mirrorX,
       orbCfg.mirrorY,
     );
-    this.boss = boss;
-    this.angleOffset = angle;
+    this.angleOffset = initialAngle;
     this.hp = orbCfg.hp;
     this.color = orbCfg.color.copy();
     this.setCollision(true);
@@ -34,20 +33,10 @@ export class BossOrbiter extends BaseEntity {
   }
 
   update() {
-    if (this.boss.destroyed) {
-      this.destroy();
-      return;
-    }
-
-    // Maintain orbit
     this.angleOffset += orbCfg.speed;
-    this.angle = this.angleOffset;
-    const orbitPos = vec2(
-      Math.cos(this.angleOffset),
-      Math.sin(this.angleOffset),
-    ).scale(orbCfg.radius);
-    this.pos = this.boss.pos.add(orbitPos);
-
+    // localPos/localAngle are used by the engine to compute world pos/angle via parent transform
+    this.localAngle = this.angleOffset;
+    this.localPos = vec2(Math.cos(this.angleOffset), Math.sin(this.angleOffset)).scale(orbCfg.radius);
     super.update();
   }
 
@@ -55,10 +44,7 @@ export class BossOrbiter extends BaseEntity {
     if (other instanceof Bullet && !other.isEnemy) {
       this.hp--;
       other.destroy();
-      this.applyHitEffect({
-        flashColor: new Color(1, 1, 1),
-        duration: 0.05,
-      });
+      this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
       if (this.hp <= 0) this.destroy();
       return false;
     }
@@ -67,7 +53,7 @@ export class BossOrbiter extends BaseEntity {
 }
 
 /**
- * Enhanced Boss with dynamic movement and pulse attacks
+ * Boss with dynamic movement, fire emitters, and pulse attacks
  */
 export class Boss extends BaseEntity {
   constructor(pos) {
@@ -84,18 +70,13 @@ export class Boss extends BaseEntity {
     this.hp = bossCfg.hp;
     this.maxHp = bossCfg.hp;
     this.color = bossCfg.color.copy();
-
     this.setCollision(true);
-    this.mass = 1; // Needs mass > 0 to process collisions against mass=0 bullets
+    this.mass = 1;
 
-    // Movement
     this.targetPos = pos.copy();
     this.moveTimer = 0;
-
-    // Attacks
     this.pulseTimer = 0;
 
-    // Sub-entities
     this.fireEmitters = [];
     this.orbiters = [];
     this.initFireEmitters();
@@ -109,7 +90,7 @@ export class Boss extends BaseEntity {
         0, // angle
         0.2, // emitSize
         0, // emitTime (loop)
-        0, // emitRate (starts off, set dynamically)
+        0, // emitRate (starts off, driven by updateVisuals)
         PI, // emitConeAngle
         sprites.get("fire_02.png", system.particleSheetName),
         rgb(1, 0.5, 0), // colorStartA
@@ -139,10 +120,11 @@ export class Boss extends BaseEntity {
   }
 
   initOrbiters() {
-    this.orbiters.push(new BossOrbiter(this, 0));
-    this.orbiters.push(new BossOrbiter(this, PI));
-    this.orbiters.push(new BossOrbiter(this, PI / 2));
-    this.orbiters.push(new BossOrbiter(this, (3 * PI) / 2));
+    for (const angle of [0, PI, PI / 2, (3 * PI) / 2]) {
+      const orbiter = new BossOrbiter(angle);
+      this.addChild(orbiter);
+      this.orbiters.push(orbiter);
+    }
   }
 
   update() {
@@ -153,9 +135,9 @@ export class Boss extends BaseEntity {
   }
 
   updateMovement() {
-    // Wander logic
     const moveScale = this.hp < this.maxHp / 5 ? 1.5 : 1;
     this.moveTimer -= moveScale;
+
     const margin = orbCfg.radius + 1.5;
     if (this.moveTimer <= 0) {
       this.targetPos = vec2(
@@ -165,14 +147,13 @@ export class Boss extends BaseEntity {
       this.moveTimer = rand(120, 300);
     }
 
-    // Smooth move toward target
     const toTarget = this.targetPos.subtract(this.pos);
     if (toTarget.length() > 0.1) {
       this.velocity = this.velocity.add(
         toTarget.normalize().scale(bossCfg.speed * 0.1 * moveScale),
       );
     }
-    this.velocity = this.velocity.scale(0.95); // Damping
+    this.velocity = this.velocity.scale(0.95);
   }
 
   updateAttacks() {
@@ -188,7 +169,7 @@ export class Boss extends BaseEntity {
     this.fireNovaSalve(0);
     setTimeout(() => {
       if (!this.destroyed) this.fireNovaSalve(0.5 / 24);
-    }, 200); // 0.2 sec delay
+    }, 200);
   }
 
   fireNovaSalve(offsetFactor) {
@@ -203,15 +184,15 @@ export class Boss extends BaseEntity {
   }
 
   updateVisuals() {
+    // Progressively activate fire emitters as hp drops
     const step = this.maxHp / 5;
-    // emitRate thresholds: more emitters active as hp drops
     for (let i = 0; i < this.fireEmitters.length; i++) {
       const emitter = this.fireEmitters[i];
-      if (this.hp < step)           emitter.emitRate = 100;
-      else if (this.hp < step * 2)  emitter.emitRate = i < 3 ? 80 : 0;
-      else if (this.hp < step * 3)  emitter.emitRate = i < 2 ? 60 : 0;
-      else if (this.hp < step * 4)  emitter.emitRate = i < 1 ? 40 : 0;
-      else                          emitter.emitRate = 0;
+      if (this.hp < step) emitter.emitRate = 100;
+      else if (this.hp < step * 2) emitter.emitRate = i < 3 ? 80 : 0;
+      else if (this.hp < step * 3) emitter.emitRate = i < 2 ? 60 : 0;
+      else if (this.hp < step * 4) emitter.emitRate = i < 1 ? 40 : 0;
+      else emitter.emitRate = 0;
     }
   }
 
@@ -219,14 +200,8 @@ export class Boss extends BaseEntity {
     if (other instanceof Bullet && !other.isEnemy) {
       this.hp--;
       other.destroy();
-      this.applyHitEffect({
-        flashColor: new Color(1, 1, 1),
-        duration: 0.05,
-      });
-
-      if (this.hp <= 0) {
-        this.destroy(); // also destroys all children, including fireEmitters
-      }
+      this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
+      if (this.hp <= 0) this.destroy(); // cascades to all child emitters
       return false;
     }
     return false;
