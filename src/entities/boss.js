@@ -105,13 +105,13 @@ export class Boss extends BaseEntity {
   initFireEmitters() {
     for (const offset of bossCfg.fireLocations) {
       const emitter = new ParticleEmitter(
-        this.pos.add(offset), // pos
+        this.pos,
         0, // angle
         0.2, // emitSize
-        0, // emitTime
-        50, // emitRate
+        0, // emitTime (loop)
+        0, // emitRate (starts off, set dynamically)
         PI, // emitConeAngle
-        sprites.get("fire_02.png", system.particleSheetName), // tileInfo
+        sprites.get("fire_02.png", system.particleSheetName),
         rgb(1, 0.5, 0), // colorStartA
         rgb(1, 0.2, 0), // colorStartB
         rgb(1, 0.5, 0, 0), // colorEndA
@@ -129,9 +129,12 @@ export class Boss extends BaseEntity {
         0.2, // randomness
         false, // collideTiles
         true, // additive
+        false, // randomColorLinear
+        0, // renderOrder
+        true, // localSpace
       );
-      emitter.emitRate = 0;
-      this.fireEmitters.push({ offset, emitter });
+      this.addChild(emitter, offset);
+      this.fireEmitters.push(emitter);
     }
   }
 
@@ -201,21 +204,14 @@ export class Boss extends BaseEntity {
 
   updateVisuals() {
     const step = this.maxHp / 5;
-    for (const ef of this.fireEmitters) {
-      ef.emitter.pos = this.pos.add(ef.offset);
-      const idx = this.fireEmitters.indexOf(ef);
-
-      if (this.hp < step) {
-        ef.emitter.emitRate = 100;
-      } else if (this.hp < step * 2) {
-        ef.emitter.emitRate = idx < 3 ? 80 : 0;
-      } else if (this.hp < step * 3) {
-        ef.emitter.emitRate = idx < 2 ? 60 : 0;
-      } else if (this.hp < step * 4) {
-        ef.emitter.emitRate = idx < 1 ? 40 : 0;
-      } else {
-        ef.emitter.emitRate = 0;
-      }
+    // emitRate thresholds: more emitters active as hp drops
+    for (let i = 0; i < this.fireEmitters.length; i++) {
+      const emitter = this.fireEmitters[i];
+      if (this.hp < step)           emitter.emitRate = 100;
+      else if (this.hp < step * 2)  emitter.emitRate = i < 3 ? 80 : 0;
+      else if (this.hp < step * 3)  emitter.emitRate = i < 2 ? 60 : 0;
+      else if (this.hp < step * 4)  emitter.emitRate = i < 1 ? 40 : 0;
+      else                          emitter.emitRate = 0;
     }
   }
 
@@ -229,8 +225,7 @@ export class Boss extends BaseEntity {
       });
 
       if (this.hp <= 0) {
-        this.destroy();
-        for (const ef of this.fireEmitters) ef.emitter.destroy();
+        this.destroy(); // also destroys all children, including fireEmitters
       }
       return false;
     }

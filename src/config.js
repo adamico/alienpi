@@ -63,9 +63,9 @@ export const player = {
   mirrorX: false,
   mirrorY: true,
   exhaust: {
-    emitRateBase: 60,   // neutral emitRate
-    emitRateRange: 60,  // ±range added/subtracted by vertical input
-    sizeStart: 1,       // particle size at birth
+    emitRateBase: 60, // neutral emitRate
+    emitRateRange: 60, // ±range added/subtracted by vertical input
+    sizeStart: 1, // particle size at birth
     sizeStartBoost: 0.5, // extra size added when thrusting up
   },
 };
@@ -144,7 +144,7 @@ export const boss = {
   size: vec2(5, 5),
   color: rgb(1, 1, 1),
   pulseRate: 180,
-  fireLocations: [vec2(-1.5, 2), vec2(1.5, 2), vec2(-1.5, -2), vec2(1.5, -2)],
+  fireLocations: [vec2(-1.5, 2), vec2(1.5, 2), vec2(-1.5, -1), vec2(1.5, -1)],
   hitboxScale: 0.8,
   mirrorY: true,
 };
