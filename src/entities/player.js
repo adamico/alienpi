@@ -6,7 +6,6 @@ import {
   ParticleEmitter,
   PI,
   rgb,
-  time,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   system,
@@ -41,14 +40,15 @@ export class Player extends BaseEntity {
     this.mass = 1;
     this.damping = playerCfg.damping;
 
-    // Jet exhaust
+    // Jet exhaust — parented to the Player via addChild so the engine
+    // automatically transforms its world pos from localPos every frame.
     this.exhaustEmitter = new ParticleEmitter(
-      this.pos.add(vec2(0, -2)), // pos
-      PI, // angle (pointing down)
+      this.pos, // initial pos (doesn't matter, overridden by parent transform)
+      0, // angle
       0.1, // emitSize
       0, // emitTime (0 = loop forever)
       60, // emitRate
-      0, // emitConeAngle
+      0.3, // emitConeAngle
       sprites.get("muzzle_02.png", system.particleSheetName), // tileInfo
       rgb(1, 1, 1), // colorStartA
       rgb(1, 1, 1), // colorStartB
@@ -56,10 +56,10 @@ export class Player extends BaseEntity {
       rgb(1, 0, 0, 0), // colorEndB
       0.15, // particleTime
       1, // sizeStart
-      0.2, // sizeEnd
-      0, // speed
+      0, // sizeEnd
+      0.05, // speed
       0, // angleSpeed
-      0, // damping
+      0.8, // damping
       0, // angleDamping
       0, // gravityScale
       0, // particleConeAngle
@@ -69,49 +69,25 @@ export class Player extends BaseEntity {
       true, // additive
       true, // randomColorLinear
       -2, // renderOrder
-      true, // localSpace
+      true,
     );
 
-    // Override the emitter's render to anchor the exhaust at its base (upside down)
-    this.exhaustEmitter.render = function () {
-      for (const p of this.particles) {
-        const originalY = p.pos.y;
-        const p1 =
-          p.lifeTime > 0 ? Math.min((time - p.spawnTime) / p.lifeTime, 1) : 1;
-        const p2 = 1 - p1;
-        const dynamicRadius = p2 * p.sizeStart + p1 * p.sizeEnd;
-
-        // Since angle is PI, the original base is rotated to the top of the quad.
-        // Shift drawing center DOWN by half of size.
-        p.pos.y -= dynamicRadius / 2;
-        p.render();
-        p.pos.y = originalY; // Restore
-      }
-    };
+    // Attach emitter as a child at the engine's nozzle offset (local space)
+    // The engine will call updateTransforms() automatically each frame.
+    this.addChild(this.exhaustEmitter, vec2(0, -0.7), PI);
   }
 
   update() {
     this.updateMoving();
     this.updateShooting();
 
+    // Dynamic emitRate based on movement input
     if (this.exhaustEmitter) {
-      // Keep exhaust fixed to the bottom of the ship
-      this.exhaustEmitter.pos = this.pos.add(vec2(0, -1.2));
-
-      // Scale emission based on input to create dynamic engine reaction
       const isMoving = keyDirection().length() > 0;
       this.exhaustEmitter.emitRate = isMoving ? 120 : 60;
     }
 
     super.update();
-  }
-
-  destroy() {
-    if (this.exhaustEmitter) {
-      this.exhaustEmitter.destroy();
-      this.exhaustEmitter = null;
-    }
-    super.destroy();
   }
 
   updateMoving() {
@@ -149,9 +125,9 @@ export class Player extends BaseEntity {
         const spawnPos = this.pos.add(offset);
         new Bullet(spawnPos, vec2(0, bulletCfg.speed), "player");
 
-        // Muzzle flash particle
-        const emitter = new ParticleEmitter(
-          spawnPos.add(vec2(0, -0.3)), // pos tightly attached to the muzzle
+        // Muzzle flash particle — parented to the player at the cannon offset
+        const flashEmitter = new ParticleEmitter(
+          this.pos, // initial pos (overridden by parent transform)
           0, // angle
           0, // emitSize
           0.6, // emitTime
@@ -180,24 +156,8 @@ export class Player extends BaseEntity {
           true, // localSpace
         );
 
-        // Override the emitter's render to anchor the particle at its base
-        emitter.render = function () {
-          for (const p of this.particles) {
-            const originalY = p.pos.y;
-            // The Particle class recalculates its radius internally, so we accurately reproduce it
-            // here to push the geometric quad perfectly upwards on every draw frame!
-            const p1 =
-              p.lifeTime > 0
-                ? Math.min((time - p.spawnTime) / p.lifeTime, 1)
-                : 1;
-            const p2 = 1 - p1;
-            const dynamicRadius = p2 * p.sizeStart + p1 * p.sizeEnd;
-
-            p.pos.y += dynamicRadius / 2;
-            p.render();
-            p.pos.y = originalY; // Restore
-          }
-        };
+        // Attach to player at the cannon's local offset, rotated PI (pointing up = muzzle direction)
+        this.addChild(flashEmitter, offset.add(vec2(0, 1)));
       }
       this.shootTimer = playerCfg.shootCooldown;
     }
