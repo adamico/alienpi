@@ -26,7 +26,7 @@ export class Bullet extends BaseEntity {
 
     this.velocity = vel;
     this.angle = type === "player" ? 0 : vel.angle();
-    this.renderOrder = 10;
+    this.renderOrder = type === "player" ? -1 : 10;
     this.setCollision(true, false); // Trigger only, not solid
     this.mass = 0; // Projectiles shouldn't have mass-based physics response
     this.type = type;
