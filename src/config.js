@@ -39,6 +39,7 @@ export const system = {
     "smoke_08.png",
     "smoke_09.png",
     "smoke_10.png",
+    "circle_01.png",
   ].map((p) => `public/assets/particles/${p}`),
   shootKey: "Space",
   focusKey: "ShiftLeft",

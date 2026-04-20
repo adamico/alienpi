@@ -1,4 +1,8 @@
-import { WHITE } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
+import {
+  WHITE,
+  ParticleEmitter,
+  rgb,
+} from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   engine,
   bullet as bulletCfg,
@@ -7,6 +11,7 @@ import {
   system,
 } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
+import { sprites } from "../sprites.js";
 
 export class Bullet extends BaseEntity {
   constructor(pos, vel, type = "player") {
@@ -61,8 +66,37 @@ export class Bullet extends BaseEntity {
   collideWithObject(other) {
     if (other instanceof Bullet) return false;
     if (other.isBoundary) return false;
-    // Player bullets shouldn't "hit" the player (physics or logic)
     if (this.type === "player" && other.isPlayer) return false;
+
+    if (this.type === "player") {
+      new ParticleEmitter(
+        this.pos,
+        0, // angle
+        0.1, // emitSize
+        0.1, // emitTime
+        20, // emitRate
+        Math.PI, // emitConeAngle
+        sprites.get("circle_01.png", system.particleSheetName),
+        rgb(1, 1, 1), // colorStartA
+        rgb(1, 1, 1), // colorStartB
+        rgb(0.2, 0.2, 0.2, 0), // colorEndA
+        rgb(0.1, 0.1, 0.1, 0), // colorEndB
+        0.2, // particleTime
+        1.5, // sizeStart
+        0.1, // sizeEnd
+        0.05, // speed
+        0.1, // angleSpeed
+        0.85, // damping
+        0.8, // angleDamping
+        0, // gravityScale
+        Math.PI, // particleConeAngle
+        0.2, // fadeRate
+        0.3, // randomness
+        false, // collideTiles
+        true, // additive
+      );
+    }
+
     return true;
   }
 }
