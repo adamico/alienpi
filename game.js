@@ -78,9 +78,9 @@ async function gameInit() {
   player = spawnPlayer();
   waveTimer.set(3);
 
-  // Straight to boss level
-  currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
-  bossSpawned = true;
+  // // Straight to boss level
+  // currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
+  // bossSpawned = true;
 
   // Setup level boundaries
   const wallThick = 2;

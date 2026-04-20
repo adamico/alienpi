@@ -5,6 +5,7 @@ import {
   rgb,
   rand,
   PI,
+  engineObjectsCallback,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import { system, boss as bossCfg, orbiter as orbCfg } from "../config.js";
 import { Bullet } from "./bullet.js";
@@ -34,10 +35,18 @@ export class BossOrbiter extends BaseEntity {
 
   update() {
     this.angleOffset += orbCfg.speed;
-    // localPos/localAngle are used by the engine to compute world pos/angle via parent transform
     this.localAngle = this.angleOffset;
     this.localPos = vec2(Math.cos(this.angleOffset), Math.sin(this.angleOffset)).scale(orbCfg.radius);
     super.update();
+
+    // The engine skips collision for child objects (o.parent check in the collision loop).
+    // We manually check nearby objects and call both sides, matching engine behavior.
+    engineObjectsCallback(this.pos, this.size, (o) => {
+      if (!o.destroyed && o !== this && this.isOverlappingObject(o)) {
+        this.collideWithObject(o);
+        o.collideWithObject(this); // triggers bullet's impact particle effect
+      }
+    });
   }
 
   collideWithObject(other) {
