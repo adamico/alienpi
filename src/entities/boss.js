@@ -43,7 +43,12 @@ export class BossOrbiter extends BaseEntity {
   }
 
   update() {
-    this.angleOffset += orbCfg.speed;
+    if (!this.parent) return;
+    const healthPercent = this.parent.hp / this.parent.maxHp;
+    const stage = Math.min(4, Math.floor((1 - healthPercent) * 5));
+    const speedScale = 1 + stage * 0.25; // Gradual: 1.0, 1.25, 1.5, 1.75, 2.0
+
+    this.angleOffset += orbCfg.speed * speedScale;
     this.localAngle = this.angleOffset;
     this.localPos = vec2(
       Math.cos(this.angleOffset),
@@ -79,9 +84,10 @@ export class BossOrbiter extends BaseEntity {
 export class BossMissile extends BaseEntity {
   /**
    * @param {Vector2} pos
-   * @param {Vector2} initialVel  Small initial kick so they clear the boss immediately
+   * @param {Vector2} initialVel
+   * @param {number} [lifetime]
    */
-  constructor(pos, initialVel) {
+  constructor(pos, initialVel, lifetime) {
     super(
       pos,
       missileCfg.sprite,
@@ -93,11 +99,11 @@ export class BossMissile extends BaseEntity {
     );
     this.hp = missileCfg.hp;
     this.velocity = initialVel;
-    this.setCollision(true, false); // trigger, not solid
+    this.setCollision(true, false, false);
     this.mass = 0;
     this.isEnemy = true; // so player bullets recognise it
     this.renderOrder = 8;
-    this.lifeTimer = new Timer(missileCfg.lifetime);
+    this.lifeTimer = new Timer(lifetime ?? missileCfg.lifetime);
   }
 
   update() {
@@ -339,7 +345,9 @@ export class Boss extends BaseEntity {
   }
 
   updateMovement() {
-    const moveScale = this.hp < this.maxHp / 5 ? 1.5 : 1;
+    const healthPercent = this.hp / this.maxHp;
+    const stage = Math.min(4, Math.floor((1 - healthPercent) * 5));
+    const moveScale = 1 + stage * 0.125; // Gradual: 1.0, 1.125, 1.25, 1.375, 1.5
 
     if (this.isEntering) {
       // Glide toward the entry position; clear flag once arrived
@@ -377,7 +385,9 @@ export class Boss extends BaseEntity {
   }
 
   updateAttacks() {
-    const rateScale = this.hp < this.maxHp / 5 ? 2 : 1;
+    const healthPercent = this.hp / this.maxHp;
+    const stage = Math.min(4, Math.floor((1 - healthPercent) * 5));
+    const rateScale = 1 + stage * 0.25; // Gradual: 1.0, 1.25, 1.5, 1.75, 2.0
     this.pulseTimer += rateScale;
     if (this.pulseTimer >= bossCfg.pulseRate) {
       this.pulseTimer = 0;
@@ -401,6 +411,10 @@ export class Boss extends BaseEntity {
   }
 
   fireMissiles() {
+    const healthPercent = this.hp / this.maxHp;
+    const stage = Math.min(4, Math.floor((1 - healthPercent) * 5));
+    const missileLifetime = missileCfg.lifetime - stage * 1.0;
+
     // Offsets relative to boss centre (world units)
     // Front = top of ship (positive Y), Back = bottom (negative Y)
     const spawnOffsets = [
@@ -419,7 +433,7 @@ export class Boss extends BaseEntity {
         offset.y < 0
           ? vec2(Math.sign(offset.x) * kickSpeed * 0.3, kickSpeed) // up + slight lateral
           : offset.normalize().scale(kickSpeed);
-      new BossMissile(spawnPos, kick);
+      new BossMissile(spawnPos, kick, missileLifetime);
     }
   }
 
