@@ -9,6 +9,7 @@ import {
 import { system, boss as bossCfg, orbiter as orbCfg } from "../config.js";
 import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
+import { sprites } from "../sprites.js";
 
 /**
  * Defensive pods that orbit the boss
@@ -97,37 +98,37 @@ export class Boss extends BaseEntity {
     // Sub-entities
     this.fireEmitters = [];
     this.orbiters = [];
-    this.initEmitters();
+    this.initFireEmitters();
     this.initOrbiters();
   }
 
-  initEmitters() {
+  initFireEmitters() {
     for (const offset of bossCfg.fireLocations) {
       const emitter = new ParticleEmitter(
-        this.pos.add(offset),
-        0,
-        0.2,
-        0,
-        50,
-        PI,
-        undefined,
-        rgb(1, 0.5, 0),
-        rgb(1, 0.2, 0),
-        rgb(1, 0.5, 0, 0),
-        rgb(1, 0.2, 0, 0),
-        0.5,
-        0.2,
-        0.5,
-        0.05,
-        0.05,
-        0.95,
-        1,
-        1,
-        PI,
-        0.1,
-        0.2,
-        false,
-        true,
+        this.pos.add(offset), // pos
+        0, // angle
+        0.2, // emitSize
+        0, // emitTime
+        50, // emitRate
+        PI, // emitConeAngle
+        sprites.get("fire_02.png", system.particleSheetName), // tileInfo
+        rgb(1, 0.5, 0), // colorStartA
+        rgb(1, 0.2, 0), // colorStartB
+        rgb(1, 0.5, 0, 0), // colorEndA
+        rgb(1, 0.2, 0, 0), // colorEndB
+        0.5, // particleTime
+        2, // sizeStart
+        0.5, // sizeEnd
+        0.05, // speed
+        0.05, // angleSpeed
+        0.95, // damping
+        1, // angleDamping
+        1, // gravityScale
+        PI, // particleConeAngle
+        0.1, // fadeRate
+        0.2, // randomness
+        false, // collideTiles
+        true, // additive
       );
       emitter.emitRate = 0;
       this.fireEmitters.push({ offset, emitter });

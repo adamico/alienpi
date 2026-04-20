@@ -54,6 +54,9 @@ export class BaseEntity extends EngineObject {
 
     this.hitEffectTimer = new Timer();
     this.hitConfig = null;
+
+    this.invulnerable = false;
+    this.invulnerableTimer = new Timer();
   }
 
   /**
@@ -72,6 +75,16 @@ export class BaseEntity extends EngineObject {
       ...config,
     };
     this.hitEffectTimer.set(this.hitConfig.duration);
+  }
+
+  /**
+   * Starts invulnerability
+   * @param {Object} config
+   * @param {number} [config.duration=1] - Duration in seconds
+   */
+  startInvulnerability({ duration = 1 } = {}) {
+    this.invulnerable = true;
+    this.invulnerableTimer.set(duration);
   }
 
   update() {
@@ -93,9 +106,16 @@ export class BaseEntity extends EngineObject {
       }
       this.hitConfig = null;
     }
+
+    if (this.invulnerable && this.invulnerableTimer.elapsed()) {
+      this.invulnerable = false;
+    }
   }
 
   render() {
+    // Blink the sprite on and off (e.g., flashes 10 times a second)
+    if (this.invulnerable && Math.floor(this.invulnerableTimer.get() * 15) % 2 === 0) return;
+
     if (this.sprite) {
       // LittleJS drawTile reflects across Y (horizontal flip) if mirror is true.
       // We manually reflect across X (vertical flip) by negating the Y component.

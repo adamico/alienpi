@@ -78,6 +78,8 @@ export class Player extends BaseEntity {
   }
 
   collideWithObject(other) {
+    if (this.invulnerable) return;
+
     if (other instanceof Enemy || (other instanceof Bullet && other.isEnemy)) {
       this.hp--;
       other.destroy();
@@ -86,6 +88,8 @@ export class Player extends BaseEntity {
         duration: 0.1,
         screenShake: 0.3,
       });
+
+      this.startInvulnerability({ duration: 2 });
 
       if (this.hp <= 0) {
         // Simple game over: restart

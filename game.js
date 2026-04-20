@@ -21,7 +21,7 @@ import {
 } from "./node_modules/littlejsengine/dist/littlejs.esm.js";
 
 import { system, engine } from "./src/config.js";
-import { loadSprites } from "./src/sprites.js";
+import { loadSprites, loadDynamicSpritesheet } from "./src/sprites.js";
 import { spawnPlayer } from "./src/entities/player.js";
 import { Enemy } from "./src/entities/enemy.js";
 import { Boss } from "./src/entities/boss.js";
@@ -30,6 +30,7 @@ let waveTimer = new Timer();
 let waveIndex = 0;
 let bossSpawned = false;
 let currentBoss = null;
+let player = null;
 const boundaries = [];
 
 class Boundary extends EngineObject {
@@ -71,7 +72,10 @@ async function gameInit() {
     await loadSprites(fullPath, i);
   }
 
-  spawnPlayer();
+  // Generate dynamic particle sprite sheet
+  await loadDynamicSpritesheet(system.particleLists, system.particleSheetName);
+
+  player = spawnPlayer();
   waveTimer.set(3);
 
   // Straight to boss level
@@ -236,4 +240,5 @@ function drawUI() {
       WHITE,
     );
   }
+  drawTextScreen(`HP: ${player.hp}`, vec2(50, 50), 32, WHITE);
 }
