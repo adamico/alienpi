@@ -113,9 +113,6 @@ export class BaseEntity extends EngineObject {
   }
 
   render() {
-    // Blink the sprite on and off (e.g., flashes 10 times a second)
-    if (this.invulnerable && Math.floor(this.invulnerableTimer.get() * 15) % 2 === 0) return;
-
     if (this.sprite) {
       // LittleJS drawTile reflects across Y (horizontal flip) if mirror is true.
       // We manually reflect across X (vertical flip) by negating the Y component.

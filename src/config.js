@@ -62,6 +62,12 @@ export const player = {
   hitboxScale: 0.25,
   mirrorX: false,
   mirrorY: true,
+  exhaust: {
+    emitRateBase: 60,   // neutral emitRate
+    emitRateRange: 60,  // ±range added/subtracted by vertical input
+    sizeStart: 1,       // particle size at birth
+    sizeStartBoost: 0.5, // extra size added when thrusting up
+  },
 };
 
 export const bullet = {

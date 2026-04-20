@@ -28,7 +28,7 @@ export class Player extends BaseEntity {
       playerCfg.sprite,
       playerCfg.sheet,
       playerCfg.hitboxScale,
-      null, // customSize
+      null,
       playerCfg.mirrorX,
       playerCfg.mirrorY,
     );
@@ -40,22 +40,21 @@ export class Player extends BaseEntity {
     this.mass = 1;
     this.damping = playerCfg.damping;
 
-    // Jet exhaust — parented to the Player via addChild so the engine
-    // automatically transforms its world pos from localPos every frame.
+    // Jet exhaust emitter — parented so the engine syncs its position automatically
     this.exhaustEmitter = new ParticleEmitter(
-      this.pos, // initial pos (doesn't matter, overridden by parent transform)
+      this.pos,
       0, // angle
       0.1, // emitSize
-      0, // emitTime (0 = loop forever)
-      60, // emitRate
+      0, // emitTime (0 = loop)
+      playerCfg.exhaust.emitRateBase, // emitRate
       0.3, // emitConeAngle
-      sprites.get("muzzle_02.png", system.particleSheetName), // tileInfo
+      sprites.get("muzzle_02.png", system.particleSheetName),
       rgb(1, 1, 1), // colorStartA
       rgb(1, 1, 1), // colorStartB
       rgb(1, 0.2, 0, 0), // colorEndA
       rgb(1, 0, 0, 0), // colorEndB
       0.15, // particleTime
-      1, // sizeStart
+      playerCfg.exhaust.sizeStart, // sizeStart
       0, // sizeEnd
       0.05, // speed
       0, // angleSpeed
@@ -69,25 +68,48 @@ export class Player extends BaseEntity {
       true, // additive
       true, // randomColorLinear
       -2, // renderOrder
-      true,
+      true, // localSpace
     );
-
-    // Attach emitter as a child at the engine's nozzle offset (local space)
-    // The engine will call updateTransforms() automatically each frame.
     this.addChild(this.exhaustEmitter, vec2(0, -0.7), PI);
   }
 
   update() {
     this.updateMoving();
     this.updateShooting();
+    this.updateExhaust();
+    super.update();
+  }
 
-    // Dynamic emitRate based on movement input
-    if (this.exhaustEmitter) {
-      const isMoving = keyDirection().length() > 0;
-      this.exhaustEmitter.emitRate = isMoving ? 120 : 60;
+  updateExhaust() {
+    if (!this.exhaustEmitter) return;
+    const input = keyDirection();
+    const { emitRateBase, emitRateRange, sizeStart, sizeStartBoost } =
+      playerCfg.exhaust;
+    this._exhaustEmitRate = emitRateBase + input.y * emitRateRange;
+    this.exhaustEmitter.emitRate = this._exhaustEmitRate;
+    this.exhaustEmitter.sizeStart =
+      sizeStart + Math.max(0, input.y) * sizeStartBoost;
+  }
+
+  render() {
+    const blinkHide =
+      this.invulnerable &&
+      Math.floor(this.invulnerableTimer.get() * 15) % 2 === 0;
+
+    if (blinkHide) {
+      if (this.exhaustEmitter) {
+        this.exhaustEmitter.emitRate = 0;
+        for (const p of this.exhaustEmitter.particles) p.destroy();
+      }
+      return;
     }
 
-    super.update();
+    if (this.exhaustEmitter) {
+      this.exhaustEmitter.emitRate =
+        this._exhaustEmitRate ?? playerCfg.exhaust.emitRateBase;
+    }
+
+    super.render();
   }
 
   updateMoving() {
@@ -107,60 +129,55 @@ export class Player extends BaseEntity {
 
   updateShooting() {
     if (this.shootTimer > 0) this.shootTimer--;
-    if (keyIsDown(system.shootKey) && this.shootTimer <= 0) {
-      soundShoot.play();
-      const visualSize = this.visualSize;
-      const center = visualSize.scale(0.5);
-      for (const muzzle of playerCfg.cannonOffsets) {
-        // muzzle is in pixel coordinates, convert to world units
-        const muzzleWorld = muzzle.scale(engine.worldScale);
+    if (!keyIsDown(system.shootKey) || this.shootTimer > 0) return;
 
-        // Offset from center in world space (Y-up)
-        // Pixels are Y-down, so we negate the Y difference
-        const offset = vec2(
-          muzzleWorld.x - center.x,
-          -(muzzleWorld.y - center.y),
-        );
+    soundShoot.play();
+    const center = this.visualSize.scale(0.5);
 
-        const spawnPos = this.pos.add(offset);
-        new Bullet(spawnPos, vec2(0, bulletCfg.speed), "player");
+    for (const muzzle of playerCfg.cannonOffsets) {
+      // Convert muzzle from pixel coords (Y-down) to world offset (Y-up)
+      const muzzleWorld = muzzle.scale(engine.worldScale);
+      const offset = vec2(
+        muzzleWorld.x - center.x,
+        -(muzzleWorld.y - center.y),
+      );
 
-        // Muzzle flash particle — parented to the player at the cannon offset
-        const flashEmitter = new ParticleEmitter(
-          this.pos, // initial pos (overridden by parent transform)
-          0, // angle
-          0, // emitSize
-          0.6, // emitTime
-          1, // emitRate
-          0, // emitConeAngle
-          sprites.get("muzzle_05.png", system.particleSheetName), // tileInfo
-          rgb(1, 1, 1), // colorStartA
-          rgb(1, 1, 1), // colorStartB
-          rgb(1, 0.2, 0, 0), // colorEndA
-          rgb(1, 0, 0, 0), // colorEndB
-          0.15, // particleTime
-          3.5, // sizeStart
-          0.2, // sizeEnd
-          0, // speed
-          0, // angleSpeed
-          0, // damping
-          0, // angleDamping
-          0, // gravityScale
-          0, // particleConeAngle
-          0.1, // fadeRate
-          0.1, // randomness
-          false, // collideTiles
-          true, // additive
-          true, // randomColorLinear
-          -1, // renderOrder
-          true, // localSpace
-        );
+      new Bullet(this.pos.add(offset), vec2(0, bulletCfg.speed), "player");
 
-        // Attach to player at the cannon's local offset, rotated PI (pointing up = muzzle direction)
-        this.addChild(flashEmitter, offset.add(vec2(0, 1)));
-      }
-      this.shootTimer = playerCfg.shootCooldown;
+      // Muzzle flash — short-lived emitter parented at the cannon's local offset
+      const flashEmitter = new ParticleEmitter(
+        this.pos,
+        0, // angle
+        0, // emitSize
+        0.6, // emitTime
+        1, // emitRate
+        0, // emitConeAngle
+        sprites.get("muzzle_05.png", system.particleSheetName),
+        rgb(1, 1, 1), // colorStartA
+        rgb(1, 1, 1), // colorStartB
+        rgb(1, 0.2, 0, 0), // colorEndA
+        rgb(1, 0, 0, 0), // colorEndB
+        0.15, // particleTime
+        3.5, // sizeStart
+        0.2, // sizeEnd
+        0, // speed
+        0, // angleSpeed
+        0, // damping
+        0, // angleDamping
+        0, // gravityScale
+        0, // particleConeAngle
+        0.1, // fadeRate
+        0.1, // randomness
+        false, // collideTiles
+        true, // additive
+        true, // randomColorLinear
+        -1, // renderOrder
+        true, // localSpace
+      );
+      this.addChild(flashEmitter, offset.add(vec2(0, 1)));
     }
+
+    this.shootTimer = playerCfg.shootCooldown;
   }
 
   collideWithObject(other) {
@@ -174,13 +191,9 @@ export class Player extends BaseEntity {
         duration: 0.1,
         screenShake: 0.3,
       });
-
       this.startInvulnerability({ duration: 2 });
 
-      if (this.hp <= 0) {
-        // Simple game over: restart
-        location.reload();
-      }
+      if (this.hp <= 0) location.reload();
       return false;
     }
     return true;
