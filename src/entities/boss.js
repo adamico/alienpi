@@ -83,7 +83,7 @@ export class Boss extends BaseEntity {
     this.color = bossCfg.color.copy();
 
     this.setCollision(true);
-    this.mass = 0;
+    this.mass = 1; // Needs mass > 0 to process collisions against mass=0 bullets
 
     // Movement
     this.targetPos = pos.copy();
