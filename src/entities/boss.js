@@ -54,8 +54,10 @@ export class BossOrbiter extends BaseEntity {
     if (other instanceof Bullet && !other.isEnemy) {
       this.hp--;
       other.destroy();
-      this.color = new Color(1, 1, 1);
-      setTimeout(() => (this.color = orbCfg.color.copy()), 50);
+      this.applyHitEffect({
+        flashColor: new Color(1, 1, 1),
+        duration: 0.05,
+      });
       if (this.hp <= 0) this.destroy();
       return false;
     }
@@ -220,8 +222,10 @@ export class Boss extends BaseEntity {
     if (other instanceof Bullet && !other.isEnemy) {
       this.hp--;
       other.destroy();
-      this.color = new Color(1, 1, 1);
-      setTimeout(() => (this.color = bossCfg.color.copy()), 50);
+      this.applyHitEffect({
+        flashColor: new Color(1, 1, 1),
+        duration: 0.05,
+      });
 
       if (this.hp <= 0) {
         this.destroy();

@@ -3,7 +3,6 @@ import {
   keyDirection,
   keyIsDown,
   Color,
-  WHITE,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   system,
@@ -82,8 +81,11 @@ export class Player extends BaseEntity {
     if (other instanceof Enemy || (other instanceof Bullet && other.isEnemy)) {
       this.hp--;
       other.destroy();
-      this.color = new Color(1, 0, 0); // Flash red
-      setTimeout(() => (this.color = WHITE.copy()), 100);
+      this.applyHitEffect({
+        flashColor: new Color(1, 0, 0),
+        duration: 0.1,
+        screenShake: 0.3,
+      });
 
       if (this.hp <= 0) {
         // Simple game over: restart

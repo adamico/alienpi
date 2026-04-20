@@ -2,8 +2,12 @@ import {
   vec2,
   EngineObject,
   drawTile,
+  Timer,
+  rand,
+  setCameraPos,
+  setBlendMode,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
-import { engine } from "../config.js";
+import { engine, system } from "../config.js";
 import { sprites } from "../sprites.js";
 
 /**
@@ -47,6 +51,48 @@ export class BaseEntity extends EngineObject {
     this.hitboxScale = hitboxScale;
     this.mirrorX = mirrorX;
     this.mirrorY = mirrorY;
+
+    this.hitEffectTimer = new Timer();
+    this.hitConfig = null;
+  }
+
+  /**
+   * Applies a universal hit effect
+   * @param {Object} config
+   * @param {Color} [config.flashColor] - Color to flash (leave undefined for no flash)
+   * @param {number} [config.duration=0.1] - Duration in seconds
+   * @param {number} [config.entityShake=0] - Amplitude of entity jitter
+   * @param {number} [config.screenShake=0] - Amplitude of screen shake
+   */
+  applyHitEffect(config) {
+    this.hitConfig = {
+      duration: 0.1,
+      entityShake: 0,
+      screenShake: 0,
+      ...config,
+    };
+    this.hitEffectTimer.set(this.hitConfig.duration);
+  }
+
+  update() {
+    super.update();
+
+    if (this.hitConfig && !this.hitEffectTimer.elapsed()) {
+      if (this.hitConfig.screenShake > 0) {
+        // Shake dampens over time
+        const percent = 1 - this.hitEffectTimer.getPercent();
+        const shake = this.hitConfig.screenShake * percent;
+        setCameraPos(
+          system.cameraPos.add(vec2(rand(-shake, shake), rand(-shake, shake))),
+        );
+      }
+    } else if (this.hitConfig && this.hitEffectTimer.elapsed()) {
+      // Revert screen shake
+      if (this.hitConfig.screenShake > 0) {
+        setCameraPos(system.cameraPos);
+      }
+      this.hitConfig = null;
+    }
   }
 
   render() {
@@ -59,14 +105,50 @@ export class BaseEntity extends EngineObject {
         this.mirrorY ? this.visualSize.y : -this.visualSize.y,
       );
 
+      let renderPos = this.pos;
+      let renderColor = this.color;
+      let doFlash = false;
+      let flashColor = null;
+
+      if (this.hitConfig && !this.hitEffectTimer.elapsed()) {
+        const percent = 1 - this.hitEffectTimer.getPercent();
+
+        if (this.hitConfig.entityShake > 0) {
+          const shake = this.hitConfig.entityShake * percent;
+          renderPos = this.pos.add(
+            vec2(rand(-shake, shake), rand(-shake, shake)),
+          );
+        }
+
+        if (this.hitConfig.flashColor) {
+          doFlash = true;
+          flashColor = this.hitConfig.flashColor;
+        }
+      }
+
+      // Base pass: Draw normally
       drawTile(
-        this.pos,
+        renderPos,
         drawSize,
         this.sprite,
-        this.color,
+        renderColor,
         this.angle,
         this.mirrorX,
       );
+
+      // Flash pass: Additive
+      if (doFlash) {
+        setBlendMode(true); // Switch to additive mode honoring alpha
+        drawTile(
+          renderPos,
+          drawSize,
+          this.sprite,
+          flashColor, // Color multiplier acts as the glow color
+          this.angle,
+          this.mirrorX,
+        );
+        setBlendMode(false); // Restore normal mode
+      }
     }
   }
 }

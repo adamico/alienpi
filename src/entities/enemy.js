@@ -151,8 +151,10 @@ export class Enemy extends BaseEntity {
     if (other instanceof Bullet && !other.isEnemy) {
       this.hp--;
       other.destroy();
-      this.color = new Color(1, 1, 1); // Flash white
-      setTimeout(() => (this.color = this.cfg.color.copy()), 50);
+      this.applyHitEffect({
+        flashColor: new Color(1, 1, 1),
+        duration: 0.05,
+      });
 
       if (this.hp <= 0) {
         this.destroy();

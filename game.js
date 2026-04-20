@@ -11,7 +11,7 @@ import {
   engineInit,
   Timer,
   rand,
-  drawText,
+  drawTextScreen,
   WHITE,
   glSetAntialias,
   setCanvasPixelated,
@@ -73,7 +73,7 @@ async function gameInit() {
 
   spawnPlayer();
   waveTimer.set(3);
-  
+
   // Straight to boss level
   currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
   bossSpawned = true;
@@ -82,16 +82,33 @@ async function gameInit() {
   const wallThick = 2;
   const { x: lx, y: ly } = system.levelSize;
   const margin = 1; // Align with visual playfield
-  
+
   // -- SOLID WALLS (for Player) --
   // Left
-  boundaries.push(new Boundary(vec2(-margin - wallThick/2, ly/2), vec2(wallThick, ly * 3)));
+  boundaries.push(
+    new Boundary(
+      vec2(-margin - wallThick / 2, ly / 2),
+      vec2(wallThick, ly * 3),
+    ),
+  );
   // Right
-  boundaries.push(new Boundary(vec2(lx + margin + wallThick/2, ly/2), vec2(wallThick, ly * 3)));
+  boundaries.push(
+    new Boundary(
+      vec2(lx + margin + wallThick / 2, ly / 2),
+      vec2(wallThick, ly * 3),
+    ),
+  );
   // Top
-  boundaries.push(new Boundary(vec2(lx/2, ly + margin + wallThick/2), vec2(lx * 2, wallThick)));
+  boundaries.push(
+    new Boundary(
+      vec2(lx / 2, ly + margin + wallThick / 2),
+      vec2(lx * 2, wallThick),
+    ),
+  );
   // Bottom
-  boundaries.push(new Boundary(vec2(lx/2, -wallThick/2), vec2(lx * 2, wallThick)));
+  boundaries.push(
+    new Boundary(vec2(lx / 2, -wallThick / 2), vec2(lx * 2, wallThick)),
+  );
 }
 
 function gameUpdate() {
@@ -99,11 +116,13 @@ function gameUpdate() {
 
   if (waveTimer.elapsed()) {
     spawnWave();
-    waveTimer.set(5); 
+    waveTimer.set(5);
     waveIndex++;
-    
+
     if (waveIndex > 10 && !bossSpawned) {
-      currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
+      currentBoss = new Boss(
+        vec2(system.levelSize.x / 2, system.levelSize.y - 4),
+      );
       bossSpawned = true;
     }
   }
@@ -113,7 +132,7 @@ function spawnWave() {
   const count = 5 + Math.floor(waveIndex / 2);
   const typeKeys = ["type1", "type2", "type3"];
   const typeKey = typeKeys[Math.floor(rand(typeKeys.length))];
-  
+
   for (let i = 0; i < count; i++) {
     const pos = vec2(rand(system.levelSize.x), system.levelSize.y + rand(5));
     new Enemy(pos, typeKey);
@@ -129,7 +148,7 @@ function gameRender() {
 function drawPlayField() {
   const marqueeColor = rgb(0.05, 0.05, 0.1);
   const playFieldColor = rgb(0.01, 0.01, 0.02);
-  
+
   // Background
   const margin = 1;
   drawRect(system.cameraPos, vec2(100), marqueeColor);
@@ -138,15 +157,19 @@ function drawPlayField() {
     vec2(system.levelSize.x + margin * 2, system.levelSize.y * 2),
     playFieldColor,
   );
-  
+
   // Vibrant scrolling starfield
   for (let i = 0; i < 40; i++) {
-    const speed = (i % 5 + 1) * 2;
+    const speed = ((i % 5) + 1) * 2;
     // Spread stars across the entire width including margins
-    const x = ((Math.sin(i * 1337) * 0.5 + 0.5) * (system.levelSize.x + margin * 2)) - margin;
+    const x =
+      (Math.sin(i * 1337) * 0.5 + 0.5) * (system.levelSize.x + margin * 2) -
+      margin;
     const time = performance.now() * 0.001;
-    const y = (system.levelSize.y * 2 - (time * speed + i * 2) % (system.levelSize.y * 2));
-    
+    const y =
+      system.levelSize.y * 2 -
+      ((time * speed + i * 2) % (system.levelSize.y * 2));
+
     const size = 0.05 + (i % 3) * 0.03;
     drawRect(vec2(x, y), vec2(size), rgb(1, 1, 1, 0.4));
   }
@@ -179,17 +202,38 @@ function drawMarquee() {
 
   // Mask off areas outside the visible playfield
   // Left Mask
-  drawRect(vec2(-maskSize / 2 - margin, ly), vec2(maskSize, ly * 3), marqueeColor);
+  drawRect(
+    vec2(-maskSize / 2 - margin, ly),
+    vec2(maskSize, ly * 3),
+    marqueeColor,
+  );
   // Right Mask
-  drawRect(vec2(lx + maskSize / 2 + margin, ly), vec2(maskSize, ly * 3), marqueeColor);
+  drawRect(
+    vec2(lx + maskSize / 2 + margin, ly),
+    vec2(maskSize, ly * 3),
+    marqueeColor,
+  );
   // Top Mask
-  drawRect(vec2(lx / 2, ly + margin + maskSize / 2), vec2(maskReach, maskSize), marqueeColor);
+  drawRect(
+    vec2(lx / 2, ly + margin + maskSize / 2),
+    vec2(maskReach, maskSize),
+    marqueeColor,
+  );
   // Bottom Mask
-  drawRect(vec2(lx / 2, -margin - maskSize / 2), vec2(maskReach, maskSize), marqueeColor);
+  drawRect(
+    vec2(lx / 2, -margin - maskSize / 2),
+    vec2(maskReach, maskSize),
+    marqueeColor,
+  );
 }
 
 function drawUI() {
   if (currentBoss) {
-    drawText(`BOSS HP: ${currentBoss.hp}`, vec2(system.levelSize.x / 2, system.levelSize.y - 1), 1, WHITE);
+    drawTextScreen(
+      `BOSS HP: ${currentBoss.hp}`,
+      vec2(system.canvasSize.x / 2, 50),
+      32,
+      WHITE,
+    );
   }
 }
