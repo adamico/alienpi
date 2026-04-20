@@ -7,10 +7,16 @@ import {
   PI,
   engineObjectsCallback,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
-import { system, boss as bossCfg, orbiter as orbCfg } from "../config.js";
+import {
+  system,
+  boss as bossCfg,
+  orbiter as orbCfg,
+  missile as missileCfg,
+} from "../config.js";
 import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
+import { player } from "./player.js";
 
 /**
  * Defensive pods that orbit the boss
@@ -36,7 +42,10 @@ export class BossOrbiter extends BaseEntity {
   update() {
     this.angleOffset += orbCfg.speed;
     this.localAngle = this.angleOffset;
-    this.localPos = vec2(Math.cos(this.angleOffset), Math.sin(this.angleOffset)).scale(orbCfg.radius);
+    this.localPos = vec2(
+      Math.cos(this.angleOffset),
+      Math.sin(this.angleOffset),
+    ).scale(orbCfg.radius);
     super.update();
 
     // The engine skips collision for child objects (o.parent check in the collision loop).
@@ -47,6 +56,88 @@ export class BossOrbiter extends BaseEntity {
         o.collideWithObject(this); // triggers bullet's impact particle effect
       }
     });
+  }
+
+  collideWithObject(other) {
+    if (other instanceof Bullet && !other.isEnemy) {
+      this.hp--;
+      other.destroy();
+      this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
+      if (this.hp <= 0) this.destroy();
+      return false;
+    }
+    return false;
+  }
+}
+
+/**
+ * Homing missile fired by the boss — destroyable by player bullets
+ */
+export class BossMissile extends BaseEntity {
+  /**
+   * @param {Vector2} pos
+   * @param {Vector2} initialVel  Small initial kick so they clear the boss immediately
+   */
+  constructor(pos, initialVel) {
+    super(
+      pos,
+      missileCfg.sprite,
+      missileCfg.sheet,
+      missileCfg.hitboxScale,
+      missileCfg.size,
+      false,
+      missileCfg.mirrorY,
+    );
+    this.hp = missileCfg.hp;
+    this.velocity = initialVel;
+    this.setCollision(true, false); // trigger, not solid
+    this.mass = 0;
+    this.isEnemy = true; // so player bullets recognise it
+    this.renderOrder = 8;
+  }
+
+  update() {
+    if (player && !player.destroyed) {
+      const toPlayer = player.pos.subtract(this.pos);
+      const dist = toPlayer.length();
+      if (dist > 0.1) {
+        this.velocity = this.velocity.add(
+          toPlayer.normalize().scale(missileCfg.homingStrength),
+        );
+      }
+      // Cap speed
+      if (this.velocity.length() > missileCfg.speed) {
+        this.velocity = this.velocity.normalize().scale(missileCfg.speed);
+      }
+      // Rotate sprite to face movement direction
+      this.angle = this.velocity.angle();
+    }
+
+    // Despawn far outside level
+    const killMargin = 8;
+    const { x: lx, y: ly } = system.levelSize;
+    if (
+      this.pos.x < -killMargin ||
+      this.pos.x > lx + killMargin ||
+      this.pos.y < -killMargin ||
+      this.pos.y > ly + killMargin
+    ) {
+      this.destroy();
+    }
+
+    super.update();
+
+    // Both BossMissile and player Bullet are non-solid triggers; the engine
+    // skips collision events between two non-solid objects.  Manually sweep
+    // for overlapping player bullets the same way BossOrbiter does.
+    if (!this.destroyed) {
+      engineObjectsCallback(this.pos, this.size, (o) => {
+        if (!o.destroyed && o !== this && this.isOverlappingObject(o)) {
+          this.collideWithObject(o);
+          o.collideWithObject(this);
+        }
+      });
+    }
   }
 
   collideWithObject(other) {
@@ -92,6 +183,7 @@ export class Boss extends BaseEntity {
     this.targetPos = entryPos.copy();
     this.moveTimer = 0;
     this.pulseTimer = 0;
+    this.volleyCount = 0; // tracks nova pulses; missiles fire every missileCfg.volleys pulses
 
     this.fireEmitters = [];
     this.orbiters = [];
@@ -198,10 +290,41 @@ export class Boss extends BaseEntity {
   }
 
   novaPulse() {
+    this.volleyCount++;
     this.fireNovaSalve(0);
     setTimeout(() => {
       if (!this.destroyed) this.fireNovaSalve(0.5 / 24);
     }, 200);
+
+    if (this.volleyCount >= missileCfg.volleys) {
+      this.volleyCount = 0;
+      setTimeout(() => {
+        if (!this.destroyed) this.fireMissiles();
+      }, 400); // slight delay so missiles launch after the second salvo wave
+    }
+  }
+
+  fireMissiles() {
+    // Offsets relative to boss centre (world units)
+    // Front = top of ship (positive Y), Back = bottom (negative Y)
+    const spawnOffsets = [
+      vec2(-1.2, 2.5), // front-left
+      vec2(1.2, 2.5), // front-right
+      vec2(-1.2, -2.5), // back-left
+      vec2(1.2, -2.5), // back-right
+    ];
+    const kickSpeed = 0.6;
+    for (const offset of spawnOffsets) {
+      const spawnPos = this.pos.add(offset);
+      // Back missiles (negative Y offset) kick upward so they initially face
+      // the top of the screen before homing curves them toward the player.
+      // Front missiles kick outward-and-up as before.
+      const kick =
+        offset.y < 0
+          ? vec2(Math.sign(offset.x) * kickSpeed * 0.3, kickSpeed) // up + slight lateral
+          : offset.normalize().scale(kickSpeed);
+      new BossMissile(spawnPos, kick);
+    }
   }
 
   fireNovaSalve(offsetFactor) {

@@ -99,6 +99,18 @@ export const bossBullet = {
   hitboxScale: 0.5,
 };
 
+export const missile = {
+  sheet: SPRITE_SHEET_NAME,
+  sprite: "spaceMissiles_006.png",
+  hp: 3,
+  speed: 0.12,
+  homingStrength: 0.008, // acceleration toward player each frame
+  size: vec2(1.2, 1.8),
+  hitboxScale: 0.7,
+  mirrorY: true,
+  volleys: 3, // nova pulses between each missile salvo
+};
+
 export const enemy = {
   swarm: {
     type1: {
@@ -145,7 +157,7 @@ export const boss = {
   sprite: "spaceShips_007.png",
   hp: 500,
   speed: 0.05,
-  size: vec2(8, 8),
+  size: vec2(6, 6),
   color: rgb(1, 1, 1),
   pulseRate: 180,
   fireLocations: [vec2(-1.5, 2), vec2(1.5, 2), vec2(-1.5, -1), vec2(1.5, -1)],
