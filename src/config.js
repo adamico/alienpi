@@ -143,9 +143,9 @@ export const enemy = {
 export const boss = {
   sheet: SPRITE_SHEET_NAME,
   sprite: "spaceShips_007.png",
-  hp: 1000,
+  hp: 500,
   speed: 0.05,
-  size: vec2(5, 5),
+  size: vec2(8, 8),
   color: rgb(1, 1, 1),
   pulseRate: 180,
   fireLocations: [vec2(-1.5, 2), vec2(1.5, 2), vec2(-1.5, -1), vec2(1.5, -1)],

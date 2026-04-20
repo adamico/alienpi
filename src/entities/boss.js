@@ -65,9 +65,14 @@ export class BossOrbiter extends BaseEntity {
  * Boss with dynamic movement, fire emitters, and pulse attacks
  */
 export class Boss extends BaseEntity {
-  constructor(pos) {
+  /**
+   * @param {import('../../node_modules/littlejsengine/dist/littlejs.esm.js').Vector2} entryPos - In-level destination
+   */
+  constructor(entryPos) {
+    // Spawn well above the visible playfield
+    const spawnPos = vec2(entryPos.x, entryPos.y + 14);
     super(
-      pos,
+      spawnPos,
       bossCfg.sprite,
       bossCfg.sheet,
       bossCfg.hitboxScale,
@@ -82,7 +87,9 @@ export class Boss extends BaseEntity {
     this.setCollision(true);
     this.mass = 1;
 
-    this.targetPos = pos.copy();
+    // Approach the entry position before starting normal movement
+    this.isEntering = true;
+    this.targetPos = entryPos.copy();
     this.moveTimer = 0;
     this.pulseTimer = 0;
 
@@ -145,6 +152,22 @@ export class Boss extends BaseEntity {
 
   updateMovement() {
     const moveScale = this.hp < this.maxHp / 5 ? 1.5 : 1;
+
+    if (this.isEntering) {
+      // Glide toward the entry position; clear flag once arrived
+      const toEntry = this.targetPos.subtract(this.pos);
+      if (toEntry.length() < 0.5) {
+        this.isEntering = false;
+        this.moveTimer = 0; // trigger an immediate first random move
+      } else {
+        this.velocity = this.velocity.add(
+          toEntry.normalize().scale(bossCfg.speed * 0.1),
+        );
+        this.velocity = this.velocity.scale(0.95);
+      }
+      return;
+    }
+
     this.moveTimer -= moveScale;
 
     const margin = orbCfg.radius + 1.5;
