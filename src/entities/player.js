@@ -4,6 +4,7 @@ import {
   keyIsDown,
   Color,
   ParticleEmitter,
+  PI,
   rgb,
   time,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
@@ -39,12 +40,78 @@ export class Player extends BaseEntity {
     this.isPlayer = true;
     this.mass = 1;
     this.damping = playerCfg.damping;
+
+    // Jet exhaust
+    this.exhaustEmitter = new ParticleEmitter(
+      this.pos.add(vec2(0, -2)), // pos
+      PI, // angle (pointing down)
+      0.1, // emitSize
+      0, // emitTime (0 = loop forever)
+      60, // emitRate
+      0, // emitConeAngle
+      sprites.get("muzzle_02.png", system.particleSheetName), // tileInfo
+      rgb(1, 1, 1), // colorStartA
+      rgb(1, 1, 1), // colorStartB
+      rgb(1, 0.2, 0, 0), // colorEndA
+      rgb(1, 0, 0, 0), // colorEndB
+      0.15, // particleTime
+      1, // sizeStart
+      0.2, // sizeEnd
+      0, // speed
+      0, // angleSpeed
+      0, // damping
+      0, // angleDamping
+      0, // gravityScale
+      0, // particleConeAngle
+      0.1, // fadeRate
+      0.05, // randomness
+      false, // collideTiles
+      true, // additive
+      true, // randomColorLinear
+      -2, // renderOrder
+      true, // localSpace
+    );
+
+    // Override the emitter's render to anchor the exhaust at its base (upside down)
+    this.exhaustEmitter.render = function () {
+      for (const p of this.particles) {
+        const originalY = p.pos.y;
+        const p1 =
+          p.lifeTime > 0 ? Math.min((time - p.spawnTime) / p.lifeTime, 1) : 1;
+        const p2 = 1 - p1;
+        const dynamicRadius = p2 * p.sizeStart + p1 * p.sizeEnd;
+
+        // Since angle is PI, the original base is rotated to the top of the quad.
+        // Shift drawing center DOWN by half of size.
+        p.pos.y -= dynamicRadius / 2;
+        p.render();
+        p.pos.y = originalY; // Restore
+      }
+    };
   }
 
   update() {
     this.updateMoving();
     this.updateShooting();
+
+    if (this.exhaustEmitter) {
+      // Keep exhaust fixed to the bottom of the ship
+      this.exhaustEmitter.pos = this.pos.add(vec2(0, -1.2));
+
+      // Scale emission based on input to create dynamic engine reaction
+      const isMoving = keyDirection().length() > 0;
+      this.exhaustEmitter.emitRate = isMoving ? 120 : 60;
+    }
+
     super.update();
+  }
+
+  destroy() {
+    if (this.exhaustEmitter) {
+      this.exhaustEmitter.destroy();
+      this.exhaustEmitter = null;
+    }
+    super.destroy();
   }
 
   updateMoving() {
