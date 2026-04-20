@@ -105,10 +105,11 @@ export const missile = {
   hp: 3,
   speed: 0.12,
   homingStrength: 0.008, // acceleration toward player each frame
-  size: vec2(1.2, 1.8),
+  size: vec2(0.7, 0.7),
   hitboxScale: 0.7,
   mirrorY: true,
   volleys: 3, // nova pulses between each missile salvo
+  lifetime: 6, // seconds before missile detonates
 };
 
 export const enemy = {

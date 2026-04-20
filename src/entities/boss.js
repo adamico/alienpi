@@ -6,6 +6,9 @@ import {
   rand,
   PI,
   engineObjectsCallback,
+  Timer,
+  EngineObject,
+  drawCircle,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   system,
@@ -94,6 +97,7 @@ export class BossMissile extends BaseEntity {
     this.mass = 0;
     this.isEnemy = true; // so player bullets recognise it
     this.renderOrder = 8;
+    this.lifeTimer = new Timer(missileCfg.lifetime);
   }
 
   update() {
@@ -125,6 +129,12 @@ export class BossMissile extends BaseEntity {
       this.destroy();
     }
 
+    // Lifetime expiry — detonate
+    if (this.lifeTimer.elapsed()) {
+      new MissileExplosion(this.pos.copy());
+      this.destroy();
+    }
+
     super.update();
 
     // Both BossMissile and player Bullet are non-solid triggers; the engine
@@ -149,6 +159,92 @@ export class BossMissile extends BaseEntity {
       return false;
     }
     return false;
+  }
+}
+
+/**
+ * Invisible explosion zone spawned when a missile's lifetime expires.
+ * Lasts one frame, radius 8 world tiles — damages the player on contact.
+ */
+class MissileExplosion extends EngineObject {
+  constructor(pos) {
+    super(pos, vec2(10)); // diameter 16 = radius 8
+    this.setCollision(true, false, false);
+    this.mass = 0;
+    this.isEnemy = true;
+    this.renderOrder = 100; // Draw on top of everything
+
+    // --- Tweakable Animation Variables ---
+    this.duration = 0.5; // Total time visible
+    this.pWhite = 0.15; // End of white phase (% of duration)
+    this.pRed = 0.4; // End of red transition (% of duration)
+    this.maxAlpha = 0.6; // Transparency at peak
+    // --------------------------------------
+
+    this.lingerTimer = new Timer(this.duration);
+    this.timeAlive = 0;
+
+    // Burst of explosion particles
+    new ParticleEmitter(
+      this.pos,
+      0, // angle
+      10, // emitSize (radius-ish spread)
+      0.2, // emitTime
+      500, // emitRate
+      PI * 2, // emitConeAngle
+      sprites.get("scorch_03.png", system.particleSheetName),
+      rgb(1, 0.5, 0.2), // colorStartA
+      rgb(1, 1, 0.5), // colorStartB
+      rgb(0.2, 0.2, 0.2, 0), // colorEndA
+      rgb(0.1, 0.1, 0.1, 0), // colorEndB
+      0.5, // particleTime
+      2, // sizeStart
+      0.5, // sizeEnd
+      0.1, // speed
+      0.05, // angleSpeed
+      0.9, // damping
+      0.9, // angleDamping
+      0, // gravityScale
+      PI * 2, // particleConeAngle
+      0.1, // fadeRate
+      0.5, // randomness
+      false, // collideTiles
+      true, // additive
+    );
+  }
+
+  render() {
+    const p = this.timeAlive / this.duration;
+    let color;
+
+    if (p < this.pWhite) {
+      // Stage 1: Pure White Flash (no transparency)
+      color = rgb(1, 1, 1, 1);
+    } else if (p < this.pRed) {
+      // Stage 2: Fade White to Red
+      const t = (p - this.pWhite) / (this.pRed - this.pWhite);
+      color = rgb(1, 1 - t, 1 - t, this.maxAlpha);
+    } else {
+      // Stage 3: Fade Red to Black (Transparent)
+      const t = (p - this.pRed) / (1 - this.pRed);
+      color = rgb(Math.max(0, 1 - t), 0, 0, this.maxAlpha * (1 - t));
+    }
+
+    drawCircle(this.pos, this.size.x, color);
+  }
+
+  update() {
+    super.update();
+    this.timeAlive += 1 / 60;
+
+    // Disable collision after first frame to keep it a one-time blast
+    if (this.timeAlive > 0.02) {
+        this.setCollision(false, false, false);
+    }
+
+    if (this.lingerTimer.elapsed()) {
+      this.destroy();
+    }
   }
 }
 
@@ -300,7 +396,7 @@ export class Boss extends BaseEntity {
       this.volleyCount = 0;
       setTimeout(() => {
         if (!this.destroyed) this.fireMissiles();
-      }, 400); // slight delay so missiles launch after the second salvo wave
+      }, 1000); // 1 second delay after 3rd volley
     }
   }
 

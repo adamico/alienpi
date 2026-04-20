@@ -183,7 +183,7 @@ export class Player extends BaseEntity {
   collideWithObject(other) {
     if (this.invulnerable) return;
 
-    if (other instanceof Enemy || (other instanceof Bullet && other.isEnemy)) {
+    if (other instanceof Enemy || other.isEnemy || (other instanceof Bullet && other.isEnemy)) {
       this.hp--;
       other.destroy();
       this.applyHitEffect({
