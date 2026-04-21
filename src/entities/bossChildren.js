@@ -42,24 +42,31 @@ export class BossOrbiter extends BaseEntity {
     this.angleOffset = initialAngle;
     this.hp = orbCfg.hp;
     this.color = orbCfg.color.copy();
-    this.setCollision(true, false, false);
-    this.renderOrder = 5;
-    this.state = "orbiting";
+    this.mass = 0;
+    this.isSolid = false;
+    this.setCollision(false, false); // No collision while appearing
+    this.renderOrder = -1; // Render below the boss
+    this.state = "appearing";
+    this.appearTimer = new Timer(orbCfg.appearTime);
     this.diveTimer = new Timer(
       rand(orbCfg.diveRate * 0.5, orbCfg.diveRate * 1.5) / 60,
     );
     this.warningTimer = new Timer();
-    this.renderOrder = -1;
   }
 
   update() {
     if (!this.parent) return;
 
-    // The virtual slot always continues orbiting, even if the pod is diving or returning
     const speedScale = 1 + this.parent.stage * 0.25;
     this.angleOffset += orbCfg.speed * speedScale;
 
-    if (this.state === "orbiting") {
+    if (this.state === "appearing") {
+      this.updateOrbit();
+      if (this.appearTimer.elapsed()) {
+        this.state = "orbiting";
+        this.setCollision(true, false, false);
+      }
+    } else if (this.state === "orbiting") {
       this.updateOrbit();
       if (this.diveTimer.elapsed()) {
         this.state = "warning";
@@ -98,7 +105,11 @@ export class BossOrbiter extends BaseEntity {
       Math.sin(this.angleOffset),
     ).scale(orbCfg.radius);
 
-    if (this.state === "warning") {
+    if (this.state === "appearing") {
+      // Blink 10Hz
+      const isVisible = ((time * 10) | 0) % 2;
+      this.color.a = isVisible ? orbCfg.color.a : 0;
+    } else if (this.state === "warning") {
       // Reuse missile blinking logic: 10Hz red blink
       const isRedPhase = ((time * 20) | 0) % 2;
       this.color = isRedPhase ? rgb(1, 0, 0) : orbCfg.color.copy();
@@ -476,7 +487,11 @@ export class BossBeam extends EngineObject {
 export class BossShield extends EngineObject {
   constructor() {
     const tileInfo = sprites.get(shieldCfg.sprite, system.particleSheetName);
-    super(vec2(), vec2((bossCfg.size.x / 2 + shieldCfg.radiusOffset) * 2), tileInfo);
+    super(
+      vec2(),
+      vec2((bossCfg.size.x / 2 + shieldCfg.radiusOffset) * 2),
+      tileInfo,
+    );
 
     this.renderOrder = shieldCfg.renderOrder; // Render above boss, below orbiters
     this.baseColor = shieldCfg.baseColor.copy();
@@ -492,9 +507,12 @@ export class BossShield extends EngineObject {
     if (!this.parent) return;
 
     // Visual pulse
-    const scale = 1 + Math.sin(time * shieldCfg.pulseSpeed) * shieldCfg.pulseMagnitude;
-    this.size = vec2((bossCfg.size.x / 2 + shieldCfg.radiusOffset) * 2).scale(scale);
-    const radius = this.size.x / 2;
+    const scale =
+      1 + Math.sin(time * shieldCfg.pulseSpeed) * shieldCfg.pulseMagnitude;
+    this.size = vec2((bossCfg.size.x / 2 + shieldCfg.radiusOffset) * 2).scale(
+      scale,
+    );
+    const radius = (this.size.x / 2) * shieldCfg.hitboxScale;
 
     // Collision sweep
     engineObjectsCallback(this.pos, this.size, (o) => {
@@ -507,7 +525,8 @@ export class BossShield extends EngineObject {
       } else if (o === player && !o.destroyed) {
         const diff = o.pos.subtract(this.pos);
         const dist = diff.length();
-        const combinedRadius = radius + o.size.x * shieldCfg.playerHitRadiusScale;
+        const combinedRadius =
+          radius + o.size.x * shieldCfg.playerHitRadiusScale;
 
         if (dist > 0 && dist < combinedRadius) {
           const normal = diff.normalize();

@@ -188,6 +188,7 @@ export const orbiter = {
   diveRate: 600,
   diveSpeed: 0.4,
   warningTime: 1.5, // seconds to blink before diving
+  appearTime: 1.0, // seconds to blink into existence
 };
 
 export const shield = {
@@ -200,6 +201,7 @@ export const shield = {
   colorFadeSpeed: 0.1,
   bounceSpeed: 0.05,
   playerHitRadiusScale: 0.4,
+  hitboxScale: 0.75, // accounts for transparency in the circle_01.png asset
   renderOrder: 1,
 };
 

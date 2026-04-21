@@ -56,7 +56,6 @@ export class Boss extends BaseEntity {
     this.fireEmitters = [];
     this.orbiters = [];
     this.initFireEmitters();
-    this.initOrbiters();
   }
 
   initFireEmitters() {
@@ -123,6 +122,7 @@ export class Boss extends BaseEntity {
       const toEntry = this.targetPos.subtract(this.pos);
       if (toEntry.length() < 0.5) {
         this.state = "active";
+        this.initOrbiters();
         this.moveTimer = 0; // trigger an immediate first random move
       } else {
         this.velocity = this.velocity.add(
