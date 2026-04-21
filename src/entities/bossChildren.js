@@ -120,6 +120,7 @@ export class BossOrbiter extends BaseEntity {
   }
 
   updateDive() {
+    this.color = rgb(1, 0, 0);
     // Relative downward movement
     // To make it feel independent of boss horizontal movement, we'd need to adjust localPos
     // based on boss movement. A simpler way: dive fast enough that it doesn't matter,
