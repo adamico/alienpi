@@ -167,7 +167,7 @@ export const boss = {
   beamRate: 600,
   beamDuration: 180,
   beamEndDuration: 30, // duration for shrinking at the end
-  beamRotationSpeed: 0.01,
+  beamRotationSpeed: 0.005,
   beamCount: 3,
   beamLength: 60,
   beamWidth: 0.5,
