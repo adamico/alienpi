@@ -9,6 +9,7 @@ import {
   Timer,
   EngineObject,
   drawCircle,
+  time,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   system,
@@ -139,6 +140,12 @@ export class BossMissile extends BaseEntity {
     if (this.lifeTimer.elapsed()) {
       new MissileExplosion(this.pos.copy());
       this.destroy();
+    } else if (this.lifeTimer.getPercent() > 0.75) {
+      // Warning effect: constant 10Hz blink when 75% of life is gone
+      const isRedPhase = Math.floor(time * 20) % 2 === 0;
+      this.color = isRedPhase ? rgb(1, 0, 0) : rgb(1, 1, 1);
+    } else {
+      this.color = rgb(1, 1, 1);
     }
 
     super.update();
@@ -245,7 +252,7 @@ class MissileExplosion extends EngineObject {
 
     // Disable collision after first frame to keep it a one-time blast
     if (this.timeAlive > 0.02) {
-        this.setCollision(false, false, false);
+      this.setCollision(false, false, false);
     }
 
     if (this.lingerTimer.elapsed()) {
