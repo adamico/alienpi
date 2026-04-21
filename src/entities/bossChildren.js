@@ -151,16 +151,13 @@ export class BossOrbiter extends BaseEntity {
   }
 
   updateReturn() {
-    // Calculate where its slot on the orbit ring currently is in world space
+    // Calculate the target position in local space
     const targetLocalPos = vec2(
       Math.cos(this.angleOffset),
       Math.sin(this.angleOffset),
     ).scale(orbCfg.radius);
-    const targetWorldPos = this.parent.pos.add(
-      targetLocalPos.rotate(this.parent.angle),
-    );
 
-    const toTarget = targetWorldPos.subtract(this.pos);
+    const toTarget = targetLocalPos.subtract(this.localPos);
     const speed = orbCfg.diveSpeed * 0.8; // fly back up slightly slower
 
     if (toTarget.length() <= speed) {
@@ -169,13 +166,15 @@ export class BossOrbiter extends BaseEntity {
       this.state = "orbiting";
       const actualDiveRate = orbCfg.diveRate || 600;
       this.diveTimer.set(rand(actualDiveRate * 0.8, actualDiveRate * 1.2) / 60);
-      this.color = orbCfg.color.copy();
+      this.color.set(
+        orbCfg.color.r,
+        orbCfg.color.g,
+        orbCfg.color.b,
+        orbCfg.color.a,
+      );
     } else {
-      // Move towards the slot
-      this.pos = this.pos.add(toTarget.normalize().scale(speed));
-      this.localPos = this.pos
-        .subtract(this.parent.pos)
-        .rotate(-this.parent.angle);
+      // Move towards the slot in local space
+      this.localPos = this.localPos.add(toTarget.normalize().scale(speed));
 
       // Render semi-transparent while retreating to avoid confusing the player
       this.color.set(0.7, 0.7, 0.7, 0.4);
