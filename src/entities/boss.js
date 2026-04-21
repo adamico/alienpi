@@ -11,12 +11,13 @@ import {
   boss as bossCfg,
   orbiter as orbCfg,
   missile as missileCfg,
+  beam as beamCfg,
 } from "../config.js";
 import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 
-import { BossOrbiter, BossMissile, BossBeam } from "./bossChildren.js";
+import { BossOrbiter, BossMissile, BossBeam, BossShield } from "./bossChildren.js";
 /**
  * Boss with dynamic movement, fire emitters, and pulse attacks
  */
@@ -44,12 +45,12 @@ export class Boss extends BaseEntity {
     this.mass = 1;
 
     // Approach the entry position before starting normal movement
-    this.isEntering = true;
+    this.state = "entering";
     this.targetPos = entryPos.copy();
     this.moveTimer = 0;
     this.pulseTimer = 0;
-    this.beamTimer = 200; // start partially charged
-    this.volleyCount = 0; // tracks nova pulses; missiles fire every missileCfg.volleys pulses
+    this.vulnerableAttackTimer = 200; // start partially charged
+    this.nextAttackIsBeam = false;
     this.thresholds = [0.66, 0.33];
 
     this.fireEmitters = [];
@@ -102,23 +103,26 @@ export class Boss extends BaseEntity {
     }
   }
 
+  get stage() {
+    const healthPercent = this.hp / this.maxHp;
+    return Math.min(4, Math.floor((1 - healthPercent) * 5));
+  }
+
   update() {
     this.updateMovement();
-    this.updateAttacks();
+    if (this.state === "active") {
+      this.updateAttacks();
+    }
     this.updateVisuals();
     super.update();
   }
 
   updateMovement() {
-    const healthPercent = this.hp / this.maxHp;
-    const stage = Math.min(4, Math.floor((1 - healthPercent) * 5));
-    const moveScale = 1 + stage * 0.125; // Gradual: 1.0, 1.125, 1.25, 1.375, 1.5
-
-    if (this.isEntering) {
-      // Glide toward the entry position; clear flag once arrived
+    if (this.state === "entering") {
+      // Glide toward the entry position; switch to active once arrived
       const toEntry = this.targetPos.subtract(this.pos);
       if (toEntry.length() < 0.5) {
-        this.isEntering = false;
+        this.state = "active";
         this.moveTimer = 0; // trigger an immediate first random move
       } else {
         this.velocity = this.velocity.add(
@@ -128,6 +132,8 @@ export class Boss extends BaseEntity {
       }
       return;
     }
+
+    const moveScale = 1 + this.stage * 0.125; // Gradual: 1.0, 1.125, 1.25, 1.375, 1.5
 
     this.moveTimer -= moveScale;
 
@@ -150,11 +156,26 @@ export class Boss extends BaseEntity {
   }
 
   updateAttacks() {
-    const healthPercent = this.hp / this.maxHp;
-    const stage = Math.min(4, Math.floor((1 - healthPercent) * 5));
-    const rateScale = 1 + stage * 0.25; // Gradual: 1.0, 1.25, 1.5, 1.75, 2.0
-    this.updateNovaPulse(rateScale);
-    this.updateBeams(rateScale);
+    const rateScale = 1 + this.stage * 0.25; // Gradual: 1.0, 1.25, 1.5, 1.75, 2.0
+    const activeOrbiters = this.orbiters.filter((o) => !o.destroyed);
+
+    if (activeOrbiters.length > 0) {
+      // Spawn shield if it isn't active
+      if (!this.shield || this.shield.destroyed) {
+        this.shield = new BossShield();
+        this.addChild(this.shield);
+      }
+      // Shield is UP: Only fire nova pulses
+      this.updateNovaPulse(rateScale);
+    } else {
+      // Destroy shield if it is still active
+      if (this.shield && !this.shield.destroyed) {
+        this.shield.destroy();
+      }
+      // Shield is DOWN: Alternate between beams and missiles
+      this.updateVulnerableAttacks(rateScale);
+    }
+
     this.checkThresholds();
   }
 
@@ -166,16 +187,27 @@ export class Boss extends BaseEntity {
     }
   }
 
-  updateBeams(rateScale) {
-    this.beamTimer += rateScale;
-    if (this.beamTimer >= bossCfg.beamRate) {
-      this.beamTimer = 0;
-      const startAngle = rand(0, PI * 2);
-      for (let i = 0; i < bossCfg.beamCount; i++) {
-        const initialAngle = (i / bossCfg.beamCount) * PI * 2 + startAngle;
-        const beam = new BossBeam();
-        this.addChild(beam, vec2(0, 0), initialAngle);
+  updateVulnerableAttacks(rateScale) {
+    this.vulnerableAttackTimer += rateScale;
+    // Base the alternation rate roughly on the configured beam rate or similar timing (600 = 10s, which is slow for alternation. Let's use 300)
+    if (this.vulnerableAttackTimer >= 300) {
+      this.vulnerableAttackTimer = 0;
+      this.nextAttackIsBeam = !this.nextAttackIsBeam;
+
+      if (this.nextAttackIsBeam) {
+        this.fireBeams();
+      } else {
+        this.fireMissiles();
       }
+    }
+  }
+
+  fireBeams() {
+    const startAngle = rand(0, PI * 2);
+    for (let i = 0; i < beamCfg.count; i++) {
+      const initialAngle = (i / beamCfg.count) * PI * 2 + startAngle;
+      const beam = new BossBeam();
+      this.addChild(beam, vec2(0, 0), initialAngle);
     }
   }
 
@@ -200,24 +232,14 @@ export class Boss extends BaseEntity {
   }
 
   novaPulse() {
-    this.volleyCount++;
     this.fireNovaSalve(0);
     setTimeout(() => {
       if (!this.destroyed) this.fireNovaSalve(0.5 / 24);
     }, 200);
-
-    if (this.volleyCount >= missileCfg.volleys) {
-      this.volleyCount = 0;
-      setTimeout(() => {
-        if (!this.destroyed) this.fireMissiles();
-      }, 1000); // 1 second delay after 3rd volley
-    }
   }
 
   fireMissiles() {
-    const healthPercent = this.hp / this.maxHp;
-    const stage = Math.min(4, Math.floor((1 - healthPercent) * 5));
-    const missileLifetime = missileCfg.lifetime - stage * 1.0;
+    const missileLifetime = missileCfg.lifetime - this.stage * 1.0;
 
     // Offsets relative to boss centre (world units)
     // Front = top of ship (positive Y), Back = bottom (negative Y)

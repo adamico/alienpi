@@ -170,24 +170,37 @@ export const beam = {
   rate: 600,
   duration: 180,
   endDuration: 30, // duration for shrinking at the end
-  rotationSpeed: 0.005,
+  rotationSpeed: 0.007,
   count: 3,
   length: 60,
-  width: 0.5,
+  width: 0.6,
 };
 
 export const orbiter = {
   sheet: SPRITE_SHEET2_NAME,
   sprite: "ufoRed.png",
   hp: 25,
-  radius: 5,
+  radius: 6,
   speed: 0.03,
   size: vec2(2),
   color: rgb(1, 1, 1),
   hitboxScale: 0.8,
-  diveRate: 300,
+  diveRate: 600,
   diveSpeed: 0.4,
   warningTime: 1.5, // seconds to blink before diving
+};
+
+export const shield = {
+  sprite: "circle_01.png",
+  radiusOffset: 2.4,
+  pulseSpeed: 4,
+  pulseMagnitude: 0.05,
+  baseColor: rgb(0.2, 0.5, 1, 0.4),
+  hitColor: rgb(0.8, 0.9, 1, 0.8),
+  colorFadeSpeed: 0.1,
+  bounceSpeed: 0.05,
+  playerHitRadiusScale: 0.4,
+  renderOrder: 1,
 };
 
 export const ui = {

@@ -14,9 +14,11 @@ import {
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   system,
+  boss as bossCfg,
   beam as beamCfg,
   orbiter as orbCfg,
   missile as missileCfg,
+  shield as shieldCfg,
 } from "../config.js";
 import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
@@ -44,13 +46,18 @@ export class BossOrbiter extends BaseEntity {
     this.renderOrder = 5;
     this.state = "orbiting";
     this.diveTimer = new Timer(
-      rand(orbCfg.diveRate * 0.5, orbCfg.diveRate * 1.5),
+      rand(orbCfg.diveRate * 0.5, orbCfg.diveRate * 1.5) / 60,
     );
     this.warningTimer = new Timer();
+    this.renderOrder = -1;
   }
 
   update() {
     if (!this.parent) return;
+
+    // The virtual slot always continues orbiting, even if the pod is diving or returning
+    const speedScale = 1 + this.parent.stage * 0.25;
+    this.angleOffset += orbCfg.speed * speedScale;
 
     if (this.state === "orbiting") {
       this.updateOrbit();
@@ -67,25 +74,24 @@ export class BossOrbiter extends BaseEntity {
       }
     } else if (this.state === "diving") {
       this.updateDive();
+    } else if (this.state === "returning") {
+      this.updateReturn();
     }
 
     super.update();
 
-    // The engine skips collision for child objects (o.parent check in the collision loop).
-    engineObjectsCallback(this.pos, this.size, (o) => {
-      if (!o.destroyed && o !== this && this.isOverlappingObject(o)) {
-        this.collideWithObject(o);
-        o.collideWithObject(this);
-      }
-    });
+    if (this.state !== "returning") {
+      // The engine skips collision for child objects (o.parent check in the collision loop).
+      engineObjectsCallback(this.pos, this.size, (o) => {
+        if (!o.destroyed && o !== this && this.isOverlappingObject(o)) {
+          this.collideWithObject(o);
+          o.collideWithObject(this);
+        }
+      });
+    }
   }
 
   updateOrbit() {
-    const healthPercent = this.parent.hp / this.parent.maxHp;
-    const stage = Math.min(4, Math.floor((1 - healthPercent) * 5));
-    const speedScale = 1 + stage * 0.25;
-
-    this.angleOffset += orbCfg.speed * speedScale;
     this.localAngle = this.angleOffset;
     this.localPos = vec2(
       Math.cos(this.angleOffset),
@@ -117,10 +123,41 @@ export class BossOrbiter extends BaseEntity {
       .subtract(this.parent.pos)
       .rotate(-this.parent.angle);
 
-    // If far below player or off screen, return to orbit
+    // If far below player or off screen, transition to returning state
     if (this.pos.y < -5) {
+      this.state = "returning";
+    }
+  }
+
+  updateReturn() {
+    // Calculate where its slot on the orbit ring currently is in world space
+    const targetLocalPos = vec2(
+      Math.cos(this.angleOffset),
+      Math.sin(this.angleOffset),
+    ).scale(orbCfg.radius);
+    const targetWorldPos = this.parent.pos.add(
+      targetLocalPos.rotate(this.parent.angle),
+    );
+
+    const toTarget = targetWorldPos.subtract(this.pos);
+    const speed = orbCfg.diveSpeed * 0.8; // fly back up slightly slower
+
+    if (toTarget.length() <= speed) {
+      // Arrived back at orbit slot
+      this.localPos = targetLocalPos;
       this.state = "orbiting";
-      this.diveTimer.set(rand(orbCfg.diveRate * 0.8, orbCfg.diveRate * 1.2));
+      const actualDiveRate = orbCfg.diveRate || 600;
+      this.diveTimer.set(rand(actualDiveRate * 0.8, actualDiveRate * 1.2) / 60);
+      this.color = orbCfg.color.copy();
+    } else {
+      // Move towards the slot
+      const worldPos = this.pos.add(toTarget.normalize().scale(speed));
+      this.localPos = worldPos
+        .subtract(this.parent.pos)
+        .rotate(-this.parent.angle);
+
+      // Render semi-transparent while retreating to avoid confusing the player
+      this.color = rgb(0.7, 0.7, 0.7, 0.4);
     }
   }
 
@@ -429,5 +466,64 @@ export class BossBeam extends EngineObject {
 
     this.size.x = lerp(0, beamCfg.length, p);
     this.size.y = lerp(0, beamCfg.width, p);
+  }
+}
+
+/**
+ * Invulnerable shield visual and hitbox.
+ * Absorbs player bullets and pushes the player ship away.
+ */
+export class BossShield extends EngineObject {
+  constructor() {
+    const tileInfo = sprites.get(shieldCfg.sprite, system.particleSheetName);
+    super(vec2(), vec2((bossCfg.size.x / 2 + shieldCfg.radiusOffset) * 2), tileInfo);
+
+    this.renderOrder = shieldCfg.renderOrder; // Render above boss, below orbiters
+    this.baseColor = shieldCfg.baseColor.copy();
+    this.color = this.baseColor.copy();
+
+    // Disable standard collision to handle bullets and player manually
+    this.setCollision(false, false, false);
+    this.mass = 0;
+  }
+
+  update() {
+    super.update();
+    if (!this.parent) return;
+
+    // Visual pulse
+    const scale = 1 + Math.sin(time * shieldCfg.pulseSpeed) * shieldCfg.pulseMagnitude;
+    this.size = vec2((bossCfg.size.x / 2 + shieldCfg.radiusOffset) * 2).scale(scale);
+    const radius = this.size.x / 2;
+
+    // Collision sweep
+    engineObjectsCallback(this.pos, this.size, (o) => {
+      if (o instanceof Bullet && !o.isEnemy) {
+        if (o.pos.distanceSquared(this.pos) < radius * radius) {
+          o.destroy();
+          // Hit flash
+          this.color = shieldCfg.hitColor.copy();
+        }
+      } else if (o === player && !o.destroyed) {
+        const diff = o.pos.subtract(this.pos);
+        const dist = diff.length();
+        const combinedRadius = radius + o.size.x * shieldCfg.playerHitRadiusScale;
+
+        if (dist > 0 && dist < combinedRadius) {
+          const normal = diff.normalize();
+          // Snap player outside
+          o.pos = this.pos.add(normal.scale(combinedRadius));
+          // Apply outward velocity bounce
+          o.velocity = o.velocity.add(normal.scale(shieldCfg.bounceSpeed));
+        }
+      }
+    });
+
+    // Fade color back
+    const lerpSpeed = shieldCfg.colorFadeSpeed;
+    this.color.r += (this.baseColor.r - this.color.r) * lerpSpeed;
+    this.color.g += (this.baseColor.g - this.color.g) * lerpSpeed;
+    this.color.b += (this.baseColor.b - this.color.b) * lerpSpeed;
+    this.color.a += (this.baseColor.a - this.color.a) * lerpSpeed;
   }
 }
