@@ -16,7 +16,7 @@ import {
   player as playerCfg,
   weapons as weaponsCfg,
 } from "../config.js";
-import { soundShoot } from "../sounds.js";
+import { soundShoot, soundShotgun, soundLatch } from "../sounds.js";
 import { Bullet } from "./bullet.js";
 import { Enemy } from "./enemy.js";
 import { BaseEntity } from "./baseEntity.js";
@@ -51,6 +51,7 @@ export class Player extends BaseEntity {
       { length: weaponsCfg.latch.count },
       () => new LatchBeam(),
     );
+    this.latchSoundTimer = 0;
 
     // Jet exhaust emitter — parented so the engine syncs its position automatically
     this.exhaustEmitter = new ParticleEmitter(
@@ -179,7 +180,6 @@ export class Player extends BaseEntity {
 
     if (!firing || this.shootTimer > 0) return;
 
-    soundShoot.play();
     if (key === "vulcan") this.fireVulcan();
     else if (key === "shotgun") this.fireShotgun();
 
@@ -231,6 +231,7 @@ export class Player extends BaseEntity {
   }
 
   fireVulcan() {
+    soundShoot.play();
     const cfg = weaponsCfg.vulcan;
     for (const muzzle of cfg.cannonOffsets) {
       const offset = this.muzzleLocalOffset(muzzle);
@@ -245,6 +246,7 @@ export class Player extends BaseEntity {
   }
 
   fireShotgun() {
+    soundShotgun.play();
     const cfg = weaponsCfg.shotgun;
     const yInput = keyDirection().y;
     let cone = cfg.coneBase;
@@ -272,7 +274,14 @@ export class Player extends BaseEntity {
   updateLatchBeams(firing) {
     if (!firing) {
       this.clearLatchBeams();
+      this.latchSoundTimer = 0;
       return;
+    }
+    if (this.latchSoundTimer <= 0) {
+      soundLatch.play();
+      this.latchSoundTimer = 15; // retrigger ≈ sound length in frames
+    } else {
+      this.latchSoundTimer--;
     }
     this.acquireLatchTargets();
     for (const beam of this.latchBeams) beam.tick();

@@ -22,7 +22,12 @@ import {
   sin,
 } from "./node_modules/littlejsengine/dist/littlejs.esm.js";
 
-import { system, engine, starfield as starCfg } from "./src/config.js";
+import {
+  system,
+  engine,
+  settings,
+  starfield as starCfg,
+} from "./src/config.js";
 import { loadSprites, loadDynamicSpritesheet } from "./src/sprites.js";
 import { spawnPlayer } from "./src/entities/player.js";
 import { Enemy } from "./src/entities/enemy.js";
@@ -121,7 +126,7 @@ async function gameInit() {
 
 function gameUpdate() {
   if (bossSpawned) {
-    if (soundBossMusic.isLoaded() && !bossMusicPlaying) {
+    if (settings.musicEnabled && soundBossMusic.isLoaded() && !bossMusicPlaying) {
       const inst = soundBossMusic.playMusic(1.2);
       if (inst && inst.isPlaying()) {
         bossMusicPlaying = true;

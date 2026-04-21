@@ -7,6 +7,7 @@ import { system, enemy as enemyCfg } from "../config.js";
 import { Bullet } from "./bullet.js";
 import { player } from "./player.js";
 import { BaseEntity } from "./baseEntity.js";
+import { soundExplosion1 } from "../sounds.js";
 
 export class Enemy extends BaseEntity {
   constructor(pos, typeKey) {
@@ -149,6 +150,7 @@ export class Enemy extends BaseEntity {
 
   collideWithObject(other) {
     if (other instanceof Bullet && !other.isEnemy) {
+      if (this.destroyed || this.hp <= 0) return false;
       const result = other.hitTarget(this);
       if (result === "ignore") return false;
       this.hp--;
@@ -159,6 +161,7 @@ export class Enemy extends BaseEntity {
       });
 
       if (this.hp <= 0) {
+        soundExplosion1.play();
         this.destroy();
       }
       return false;

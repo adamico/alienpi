@@ -67,7 +67,82 @@ export const soundShoot = new Sound([
   0.88,
   0.06,
 ]);
+
+// Latch beam — sustained electric hum with organic tremolo. Loopable: total
+// envelope ≈ 0.28s, retriggered by Player every ~15 frames while firing.
+export const soundLatch = new Sound([
+  0.15,
+  0.0,
+  120,
+  0.02,
+  0.25,
+  0.02,
+  2,
+  1.5,
+  ,
+  ,
+  ,
+  ,
+  ,
+  0.3,
+  80,
+  0.08,
+  0.1,
+  0.8,
+  ,
+  0.2,
+  ,
+]);
+
+// Shotgun — dry white-noise burst with a quick pitch-drop thump for the
+// spread blast feel.
+export const soundShotgun = new Sound([
+  1.3,
+  0.01,
+  351,
+  ,
+  0.09,
+  0.08,
+  1,
+  4,
+  ,
+  -31,
+  ,
+  ,
+  ,
+  1.7,
+  5,
+  0.2,
+  0.14,
+  0.61,
+  0.05,
+]); // Shoot 420 - Copy 3
 /* eslint-enable no-sparse-arrays */
+
+export const soundExplosion1 = new Sound([
+  2.1,
+  ,
+  55,
+  0.07,
+  ,
+  0.53,
+  4,
+  2.9,
+  ,
+  6.9,
+  -50,
+  ,
+  0.01,
+  0.5,
+  ,
+  0.5,
+  0.24,
+  0.42,
+  0.14,
+  ,
+  4,
+]); // Explosion 444 - Mutation 4
+
 export const soundBossMusic = new Sound(
   "public/assets/sounds/Lasermelon%20Boss.mp3",
 );

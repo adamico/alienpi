@@ -3,6 +3,7 @@ import {
   Color,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import { weapons } from "../config.js";
+import { soundExplosion1 } from "../sounds.js";
 
 /**
  * A single Ghostbuster-style tether. Owned and managed by Player — not an
@@ -45,6 +46,7 @@ export class LatchBeam {
         });
       }
       if (this.target.hp <= 0) {
+        soundExplosion1.play();
         this.target.destroy();
         this.target = null;
       }

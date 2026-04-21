@@ -16,6 +16,7 @@ import {
 import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
+import { soundExplosion1 } from "../sounds.js";
 
 import { BossOrbiter, BossMissile, BossBeam, BossShield } from "./bossChildren.js";
 /**
@@ -290,6 +291,7 @@ export class Boss extends BaseEntity {
 
   collideWithObject(other) {
     if (other instanceof Bullet && !other.isEnemy) {
+      if (this.destroyed || this.hp <= 0) return false;
       // Invincible if any orbiters are alive
       const activeOrbiters = this.orbiters.filter((o) => !o.destroyed);
       if (activeOrbiters.length > 0) {
@@ -306,7 +308,10 @@ export class Boss extends BaseEntity {
       this.hp--;
       if (result === "destroy") other.destroy();
       this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
-      if (this.hp <= 0) this.destroy(); // cascades to all child emitters
+      if (this.hp <= 0) {
+        soundExplosion1.play();
+        this.destroy(); // cascades to all child emitters
+      }
       return false;
     }
     return false;

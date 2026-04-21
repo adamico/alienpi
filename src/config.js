@@ -239,6 +239,10 @@ export const shield = {
   renderOrder: 1,
 };
 
+export const settings = {
+  musicEnabled: false,
+};
+
 export const ui = {
   debugPos: vec2(1700, 64),
   debugSize: 30,
