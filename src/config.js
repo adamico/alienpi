@@ -1,4 +1,8 @@
-import { vec2, rgb } from "../node_modules/littlejsengine/dist/littlejs.esm.js";
+import {
+  vec2,
+  rgb,
+  PI,
+} from "../node_modules/littlejsengine/dist/littlejs.esm.js";
 
 const ASSET_PATH = "public/assets/";
 const SPRITE_SHEET_NAME = "spaceShooter2_spritesheet";
@@ -43,6 +47,7 @@ export const system = {
   ].map((p) => `public/assets/particles/${p}`),
   shootKey: "Space",
   focusKey: "ShiftLeft",
+  switchKey: "KeyQ",
 };
 
 export const engine = {
@@ -57,8 +62,6 @@ export const player = {
   accel: 0.3,
   damping: 0.5,
   focusSpeedScale: 0.5,
-  shootCooldown: 8,
-  cannonOffsets: [vec2(22, 40), vec2(85, 40)],
   hp: 5,
   hitboxScale: 0.25,
   mirrorX: false,
@@ -71,7 +74,7 @@ export const player = {
   },
 };
 
-export const bullet = {
+const vulcanBullet = {
   sheet: SPRITE_SHEET2_NAME,
   sprite: "laserRed04.png",
   speed: 0.3,
@@ -79,6 +82,46 @@ export const bullet = {
   despawnRadius: 0.5,
   hitboxScale: 1.0,
   mirrorY: true,
+};
+
+// Planned at MAX power level. A single `powerLevel` field on Player is the
+// hook for scaling these down later (fewer bullets, slower rate, no pierce).
+export const weapons = {
+  vulcan: {
+    label: "VULCAN",
+    cooldown: 6,
+    cannonOffsets: [vec2(22, 40), vec2(53.5, 40), vec2(85, 40)],
+    bullet: vulcanBullet,
+  },
+  shotgun: {
+    label: "SHOTGUN",
+    cooldown: 18,
+    count: 5,
+    pierce: 3,
+    coneBase: (22 * PI) / 180,
+    coneMin: (8 * PI) / 180,
+    coneMax: (40 * PI) / 180,
+    nozzle: vec2(53.5, 40),
+    bullet: vulcanBullet,
+  },
+  latch: {
+    label: "LATCH",
+    cooldown: 30,
+    count: 3,
+    cone: (8 * PI) / 180,
+    speed: 0.35,
+    lifetime: 1.5,
+    damageInterval: 10,
+    nozzle: vec2(53.5, 40),
+    bullet: {
+      sheet: SPRITE_SHEET2_NAME,
+      sprite: "laserRed08.png",
+      size: vec2(0.35, 0.6),
+      despawnRadius: 0.5,
+      hitboxScale: 1.0,
+      mirrorY: true,
+    },
+  },
 };
 
 export const enemyBullet = {

@@ -242,4 +242,10 @@ function drawUI() {
     );
   }
   drawTextScreen(`HP: ${player.hp}`, vec2(50, 50), 32, WHITE);
+  drawTextScreen(
+    `WEAPON: ${player.currentWeapon.label}`,
+    vec2(50, 90),
+    24,
+    WHITE,
+  );
 }

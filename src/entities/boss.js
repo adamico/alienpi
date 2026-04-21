@@ -302,7 +302,7 @@ export class Boss extends BaseEntity {
       }
 
       this.hp--;
-      other.destroy();
+      if (other.hitTarget()) other.destroy();
       this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
       if (this.hp <= 0) this.destroy(); // cascades to all child emitters
       return false;

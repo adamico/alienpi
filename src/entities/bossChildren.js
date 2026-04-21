@@ -185,7 +185,7 @@ export class BossOrbiter extends BaseEntity {
   collideWithObject(other) {
     if (other instanceof Bullet && !other.isEnemy) {
       this.hp--;
-      other.destroy();
+      if (other.hitTarget()) other.destroy();
       this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
       if (this.hp <= 0) this.destroy();
       return false;
@@ -371,7 +371,7 @@ export class BossMissile extends BaseEntity {
     // Shot down by player bullet
     if (other instanceof Bullet && !other.isEnemy) {
       this.hp--;
-      other.destroy();
+      if (other.hitTarget()) other.destroy();
       this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
       if (this.hp <= 0) {
         new MissileExplosion(this.pos.copy(), 3);

@@ -150,7 +150,7 @@ export class Enemy extends BaseEntity {
   collideWithObject(other) {
     if (other instanceof Bullet && !other.isEnemy) {
       this.hp--;
-      other.destroy();
+      if (other.hitTarget()) other.destroy();
       this.applyHitEffect({
         flashColor: new Color(1, 1, 1),
         duration: 0.05,

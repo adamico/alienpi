@@ -5,7 +5,7 @@ import {
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   engine,
-  bullet as bulletCfg,
+  weapons,
   enemyBullet as enemyBulletCfg,
   bossBullet as bossBulletCfg,
   system,
@@ -14,19 +14,22 @@ import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 
 export class Bullet extends BaseEntity {
-  constructor(pos, vel, type = "player") {
-    let cfg = bulletCfg;
-    if (type === "enemy") cfg = enemyBulletCfg;
-    if (type === "boss") cfg = bossBulletCfg;
+  constructor(pos, vel, type = "player", cfg = null) {
+    let finalCfg = cfg;
+    if (!finalCfg) {
+      if (type === "enemy") finalCfg = enemyBulletCfg;
+      else if (type === "boss") finalCfg = bossBulletCfg;
+      else finalCfg = weapons.vulcan.bullet;
+    }
 
     super(
       pos,
-      cfg.sprite,
-      cfg.sheet,
-      cfg.hitboxScale,
-      cfg.size,
-      cfg.mirrorX,
-      cfg.mirrorY,
+      finalCfg.sprite,
+      finalCfg.sheet,
+      finalCfg.hitboxScale,
+      finalCfg.size,
+      finalCfg.mirrorX,
+      finalCfg.mirrorY,
     );
 
     this.velocity = vel;
@@ -36,14 +39,28 @@ export class Bullet extends BaseEntity {
     this.mass = 0; // Projectiles shouldn't have mass-based physics response
     this.type = type;
     this.isEnemy = type !== "player";
-    this.mirrorY = cfg.mirrorY !== undefined ? cfg.mirrorY : true;
+    this.mirrorY = finalCfg.mirrorY !== undefined ? finalCfg.mirrorY : true;
     this.color = WHITE.copy();
+    this.pierce = 0;
 
     // Ensure small bullets are still easy to hit
     this.collisionRadius = Math.max(
       this.visualSize.length() * 0.5,
       engine.minCollisionRadius,
     );
+  }
+
+  /**
+   * Called by targets when they take damage from this bullet.
+   * Returns true if the bullet should be destroyed by the caller, false if
+   * it should keep travelling (pierce remaining).
+   */
+  hitTarget() {
+    if (this.pierce > 0) {
+      this.pierce--;
+      return false;
+    }
+    return true;
   }
 
   update() {
@@ -63,11 +80,8 @@ export class Bullet extends BaseEntity {
     super.update();
   }
 
-  collideWithObject(other) {
-    if (other instanceof Bullet) return false;
-    if (other.isBoundary) return false;
-    if (this.type === "player" && other.isPlayer) return false;
-
+  destroy() {
+    if (this.destroyed) return;
     if (this.type === "player") {
       new ParticleEmitter(
         this.pos,
@@ -96,7 +110,13 @@ export class Bullet extends BaseEntity {
         true, // additive
       );
     }
+    super.destroy();
+  }
 
+  collideWithObject(other) {
+    if (other instanceof Bullet) return false;
+    if (other.isBoundary) return false;
+    if (this.type === "player" && other.isPlayer) return false;
     return true;
   }
 }
