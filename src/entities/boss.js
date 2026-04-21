@@ -140,12 +140,10 @@ export class BossMissile extends BaseEntity {
     if (this.lifeTimer.elapsed()) {
       new MissileExplosion(this.pos.copy());
       this.destroy();
-    } else if (this.lifeTimer.getPercent() > 0.75) {
-      // Warning effect: constant 10Hz blink when 75% of life is gone
-      const isRedPhase = Math.floor(time * 20) % 2 === 0;
-      this.color = isRedPhase ? rgb(1, 0, 0) : rgb(1, 1, 1);
     } else {
-      this.color = rgb(1, 1, 1);
+      // Warning effect: constant 10Hz blink when 75% of life is gone
+      const isRedPhase = this.lifeTimer.getPercent() > 0.75 && (time * 20 | 0) % 2;
+      this.color = isRedPhase ? rgb(1, 0, 0) : rgb(1, 1, 1);
     }
 
     super.update();
