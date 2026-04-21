@@ -14,7 +14,7 @@ import {
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   system,
-  boss as bossCfg,
+  beam as beamCfg,
   orbiter as orbCfg,
   missile as missileCfg,
 } from "../config.js";
@@ -338,7 +338,7 @@ class MissileExplosion extends EngineObject {
  */
 export class BossBeam extends EngineObject {
   constructor() {
-    super(vec2(), vec2(bossCfg.beamLength, bossCfg.beamWidth));
+    super(vec2(), vec2(beamCfg.length, beamCfg.width));
     this.setCollision(false, false, false);
     this.mass = 0;
     this.isEnemy = true;
@@ -392,17 +392,17 @@ export class BossBeam extends EngineObject {
   updateState() {
     if (this.state === "starting" && this.startTimer.elapsed()) {
       this.state = "active";
-      this.lifeTimer.set(bossCfg.beamDuration / 60);
+      this.lifeTimer.set(beamCfg.duration / 60);
     } else if (this.state === "active" && this.lifeTimer.elapsed()) {
       this.state = "ending";
-      this.endTimer.set(bossCfg.beamEndDuration / 60);
+      this.endTimer.set(beamCfg.endDuration / 60);
     } else if (this.state === "ending" && this.endTimer.elapsed()) {
       this.destroy();
     }
   }
 
   updateRotation() {
-    this.localAngle += bossCfg.beamRotationSpeed;
+    this.localAngle += beamCfg.rotationSpeed;
   }
 
   updateColor() {
@@ -427,7 +427,7 @@ export class BossBeam extends EngineObject {
     // Apply smoothstep easing to make the animation feel more premium
     const p = targetScale * targetScale * (3 - 2 * targetScale);
 
-    this.size.x = lerp(0, bossCfg.beamLength, p);
-    this.size.y = lerp(0, bossCfg.beamWidth, p);
+    this.size.x = lerp(0, beamCfg.length, p);
+    this.size.y = lerp(0, beamCfg.width, p);
   }
 }

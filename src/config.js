@@ -160,17 +160,20 @@ export const boss = {
   speed: 0.05,
   size: vec2(6, 6),
   color: rgb(1, 1, 1),
-  pulseRate: 180,
+  novaRate: 180,
   fireLocations: [vec2(-1.5, 2), vec2(1.5, 2), vec2(-1.5, -1), vec2(1.5, -1)],
   hitboxScale: 0.8,
   mirrorY: true,
-  beamRate: 600,
-  beamDuration: 180,
-  beamEndDuration: 30, // duration for shrinking at the end
-  beamRotationSpeed: 0.005,
-  beamCount: 3,
-  beamLength: 60,
-  beamWidth: 0.5,
+};
+
+export const beam = {
+  rate: 600,
+  duration: 180,
+  endDuration: 30, // duration for shrinking at the end
+  rotationSpeed: 0.005,
+  count: 3,
+  length: 60,
+  width: 0.5,
 };
 
 export const orbiter = {

@@ -160,7 +160,7 @@ export class Boss extends BaseEntity {
 
   updateNovaPulse(rateScale) {
     this.pulseTimer += rateScale;
-    if (this.pulseTimer >= bossCfg.pulseRate) {
+    if (this.pulseTimer >= bossCfg.novaRate) {
       this.pulseTimer = 0;
       this.novaPulse();
     }
