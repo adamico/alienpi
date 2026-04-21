@@ -53,6 +53,8 @@ export class BossOrbiter extends BaseEntity {
       rand(orbCfg.diveRate * 0.5, orbCfg.diveRate * 1.5) / 60,
     );
     this.warningTimer = new Timer();
+    this.tetherColor = this.color.copy();
+    this.workingPos = vec2();
   }
 
   update() {
@@ -65,7 +67,7 @@ export class BossOrbiter extends BaseEntity {
       this.updateOrbit();
       if (this.appearTimer.elapsed()) {
         this.state = "orbiting";
-        this.setCollision(true, false, false);
+        this.setCollision(true, false);
       }
     } else if (this.state === "orbiting") {
       this.updateOrbit();
@@ -113,9 +115,15 @@ export class BossOrbiter extends BaseEntity {
     } else if (this.state === "warning") {
       // Reuse missile blinking logic: 10Hz red blink
       const isRedPhase = ((time * 20) | 0) % 2;
-      this.color = isRedPhase ? rgb(1, 0, 0) : orbCfg.color.copy();
+      if (isRedPhase) this.color.set(1, 0, 0);
+      else this.color.set(orbCfg.color.r, orbCfg.color.g, orbCfg.color.b);
     } else {
-      this.color = orbCfg.color.copy();
+      this.color.set(
+        orbCfg.color.r,
+        orbCfg.color.g,
+        orbCfg.color.b,
+        orbCfg.color.a,
+      );
     }
   }
 
@@ -164,13 +172,13 @@ export class BossOrbiter extends BaseEntity {
       this.color = orbCfg.color.copy();
     } else {
       // Move towards the slot
-      const worldPos = this.pos.add(toTarget.normalize().scale(speed));
-      this.localPos = worldPos
+      this.pos = this.pos.add(toTarget.normalize().scale(speed));
+      this.localPos = this.pos
         .subtract(this.parent.pos)
         .rotate(-this.parent.angle);
 
       // Render semi-transparent while retreating to avoid confusing the player
-      this.color = rgb(0.7, 0.7, 0.7, 0.4);
+      this.color.set(0.7, 0.7, 0.7, 0.4);
     }
   }
 
@@ -196,11 +204,17 @@ export class BossOrbiter extends BaseEntity {
       const shieldRadius = (shield.size.x / 2) * shieldCfg.hitboxScale;
 
       if (dist > shieldRadius) {
-        const tetherColor = this.color.copy();
-        tetherColor.a *= 0.5;
+        this.tetherColor.set(
+          this.color.r,
+          this.color.g,
+          this.color.b,
+          this.color.a * 0.5,
+        );
         // The line starts at the orbiter and ends at the shield's edge
-        const endPos = this.pos.add(toBoss.normalize().scale(dist - shieldRadius));
-        drawLine(this.pos, endPos, 0.05, tetherColor);
+        const endPos = this.pos.add(
+          toBoss.normalize().scale(dist - shieldRadius),
+        );
+        drawLine(this.pos, endPos, 0.05, this.tetherColor);
       }
     }
     super.render();
@@ -228,7 +242,7 @@ export class BossMissile extends BaseEntity {
     );
     this.hp = missileCfg.hp;
     this.velocity = initialVel;
-    this.setCollision(true, false, false);
+    this.setCollision(true, false);
     this.mass = 0;
     this.isEnemy = true; // so player bullets recognise it
     this.renderOrder = 8;
@@ -272,7 +286,8 @@ export class BossMissile extends BaseEntity {
       // Warning effect: constant 10Hz blink when 75% of life is gone
       const isRedPhase =
         this.lifeTimer.getPercent() > 0.75 && ((time * 20) | 0) % 2;
-      this.color = isRedPhase ? rgb(1, 0, 0) : rgb(1, 1, 1);
+      if (isRedPhase) this.color.set(1, 0, 0);
+      else this.color.set(1, 1, 1);
     }
 
     super.update();
@@ -321,7 +336,7 @@ export class BossMissile extends BaseEntity {
 class MissileExplosion extends EngineObject {
   constructor(pos, diameter = 10) {
     super(pos, vec2(diameter));
-    this.setCollision(true, false, false);
+    this.setCollision(true, false);
     this.mass = 0;
     this.isEnemy = true;
     this.renderOrder = 100; // Draw on top of everything
@@ -391,7 +406,7 @@ class MissileExplosion extends EngineObject {
 
     // Disable collision after first frame to keep it a one-time blast
     if (this.timeAlive > 0.02) {
-      this.setCollision(false, false, false);
+      this.setCollision(false, false);
     }
 
     if (this.lingerTimer.elapsed()) {
@@ -410,7 +425,7 @@ class MissileExplosion extends EngineObject {
 export class BossBeam extends EngineObject {
   constructor() {
     super(vec2(), vec2(beamCfg.length, beamCfg.width));
-    this.setCollision(false, false, false);
+    this.setCollision(false, false);
     this.mass = 0;
     this.isEnemy = true;
     this.noDestroyOnImpact = true;
@@ -519,9 +534,10 @@ export class BossShield extends EngineObject {
     this.renderOrder = shieldCfg.renderOrder; // Render above boss, below orbiters
     this.baseColor = shieldCfg.baseColor.copy();
     this.color = this.baseColor.copy();
+    this.hitColor = shieldCfg.hitColor.copy();
 
     // Disable standard collision to handle bullets and player manually
-    this.setCollision(false, false, false);
+    this.setCollision(false, false);
     this.mass = 0;
   }
 
@@ -543,7 +559,12 @@ export class BossShield extends EngineObject {
         if (o.pos.distanceSquared(this.pos) < radius * radius) {
           o.destroy();
           // Hit flash
-          this.color = shieldCfg.hitColor.copy();
+          this.color.set(
+            this.hitColor.r,
+            this.hitColor.g,
+            this.hitColor.b,
+            this.hitColor.a,
+          );
         }
       } else if (o === player && !o.destroyed) {
         const diff = o.pos.subtract(this.pos);
@@ -562,10 +583,6 @@ export class BossShield extends EngineObject {
     });
 
     // Fade color back
-    const lerpSpeed = shieldCfg.colorFadeSpeed;
-    this.color.r += (this.baseColor.r - this.color.r) * lerpSpeed;
-    this.color.g += (this.baseColor.g - this.color.g) * lerpSpeed;
-    this.color.b += (this.baseColor.b - this.color.b) * lerpSpeed;
-    this.color.a += (this.baseColor.a - this.color.a) * lerpSpeed;
+    this.color.lerp(this.baseColor, shieldCfg.colorFadeSpeed);
   }
 }

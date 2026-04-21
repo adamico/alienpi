@@ -1,0 +1,3 @@
+[submodule ".agents/littlejs-ai"]
+	path = .agents/littlejs-ai
+	url = https://github.com/KilledByAPixel/LittleJS-AI

@@ -18,9 +18,11 @@ import {
   setTilesPixelated,
   PostProcessPlugin,
   EngineObject,
+  time,
+  sin,
 } from "./node_modules/littlejsengine/dist/littlejs.esm.js";
 
-import { system, engine } from "./src/config.js";
+import { system, engine, starfield as starCfg } from "./src/config.js";
 import { loadSprites, loadDynamicSpritesheet } from "./src/sprites.js";
 import { spawnPlayer } from "./src/entities/player.js";
 import { Enemy } from "./src/entities/enemy.js";
@@ -162,20 +164,19 @@ function drawPlayField() {
     playFieldColor,
   );
 
-  // Vibrant scrolling starfield
-  for (let i = 0; i < 40; i++) {
-    const speed = ((i % 5) + 1) * 2;
-    // Spread stars across the entire width including margins
-    const x =
-      (Math.sin(i * 1337) * 0.5 + 0.5) * (system.levelSize.x + margin * 2) -
-      margin;
-    const time = performance.now() * 0.001;
-    const y =
-      system.levelSize.y * 2 -
-      ((time * speed + i * 2) % (system.levelSize.y * 2));
-
-    const size = 0.05 + (i % 3) * 0.03;
-    drawRect(vec2(x, y), vec2(size), rgb(1, 1, 1, 0.4));
+  // precreate variables to avoid overhead
+  const pos = vec2(),
+    size = vec2(),
+    color = rgb();
+  for (let i = starCfg.count; i--; ) {
+    // use math to generate random star positions
+    const offset =
+      time * (starCfg.speedBase + (i ** 2.1 % starCfg.speedRange)) + i ** 2.3;
+    pos.y = starCfg.verticalOffset - (offset % starCfg.verticalRange);
+    pos.x = i / system.levelSize.x - starCfg.horizontalOffset;
+    size.x = size.y = (i % starCfg.sizeRange) + starCfg.sizeBase;
+    color.set(0.5, 0.5, 0.5, sin(i) ** starCfg.alphaPower);
+    drawRect(pos, size, color);
   }
 }
 

@@ -56,6 +56,8 @@ export class Boss extends BaseEntity {
     this.fireEmitters = [];
     this.orbiters = [];
     this.initFireEmitters();
+    this.workingVec = vec2();
+    this.workingVec2 = vec2();
   }
 
   initFireEmitters() {
@@ -125,9 +127,8 @@ export class Boss extends BaseEntity {
         this.initOrbiters();
         this.moveTimer = 0; // trigger an immediate first random move
       } else {
-        this.velocity = this.velocity.add(
-          toEntry.normalize().scale(bossCfg.speed * 0.1),
-        );
+        const accel = toEntry.normalize(bossCfg.speed * 0.1);
+        this.velocity = this.velocity.add(accel);
         this.velocity = this.velocity.scale(0.95);
       }
       return;
@@ -148,9 +149,8 @@ export class Boss extends BaseEntity {
 
     const toTarget = this.targetPos.subtract(this.pos);
     if (toTarget.length() > 0.1) {
-      this.velocity = this.velocity.add(
-        toTarget.normalize().scale(bossCfg.speed * 0.1 * moveScale),
-      );
+      const accel = toTarget.normalize(bossCfg.speed * 0.1 * moveScale);
+      this.velocity = this.velocity.add(accel);
     }
     this.velocity = this.velocity.scale(0.95);
   }
@@ -258,7 +258,7 @@ export class Boss extends BaseEntity {
       const kick =
         offset.y < 0
           ? vec2(Math.sign(offset.x) * kickSpeed * 0.3, kickSpeed) // up + slight lateral
-          : offset.normalize().scale(kickSpeed);
+          : offset.normalize(kickSpeed);
       new BossMissile(spawnPos, kick, missileLifetime);
     }
   }
@@ -269,8 +269,7 @@ export class Boss extends BaseEntity {
     for (let i = 0; i < pulseCount; i++) {
       const angle = (i / pulseCount) * PI * 2 + offset;
       const bulletVel = vec2(Math.cos(angle), Math.sin(angle)).scale(0.2);
-      const b = new Bullet(this.pos.copy(), bulletVel, "boss");
-      b.color = rgb(1, 0.2, 0.2);
+      new Bullet(this.pos.copy(), bulletVel, "boss").color = rgb(1, 0.2, 0.2);
     }
   }
 

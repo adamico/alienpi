@@ -210,3 +210,15 @@ export const ui = {
   debugSize: 30,
   debugColor: rgb(1, 0, 0),
 };
+
+export const starfield = {
+  count: 2000,
+  speedBase: 5,
+  speedRange: 7,
+  verticalRange: 70,
+  verticalOffset: 35,
+  horizontalOffset: 9,
+  sizeBase: 0.07,
+  sizeRange: 0.11,
+  alphaPower: 8,
+};

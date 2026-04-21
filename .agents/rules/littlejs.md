@@ -3,69 +3,40 @@ trigger: model_decision
 description: when working on a LittleJS Project
 ---
 
-# LittleJS - AI Agent Guidelines
+# LittleJS - AI Agent Guidelines (Modular Edition)
 
-Follow these rules strictly when working on LittleJS projects. Optimize for minimal changes, clarity, and zero external dependencies.
+Follow these rules strictly when working on the AlienPi project. These guidelines incorporate best practices from the `LittleJS-AI` submodule while maintaining our advanced modular architecture.
 
-## 1. Core Constraints
+## 1. Project Architecture & Context
 
-- **One File Only:** Use `index.html` exclusively. No build steps, no external JS/CSS files.
-- **JS Only:** Do not modify HTML or CSS. Write all logic in JavaScript.
-- **Synthesized Audio:** Use the `SoundGenerator` class (ZZFX) for all audio. Do not write raw audio code.
+- **Modular Project:** We use ES Modules. Logic is split across `game.js`, `src/config.js`, and specialized files in `src/entities/`.
+- **Primary References:** Consult these local files before implementing engine logic:
+  - [.agents/littlejs-ai/GPT/reference.md](file:///Users/kc00l/alienpi/.agents/littlejs-ai/GPT/reference.md) (Full API Cheat Sheet)
+  - [.agents/littlejs-ai/GPT/tutorial.md](file:///Users/kc00l/alienpi/.agents/littlejs-ai/GPT/tutorial.md) (Pattern Guide)
+- **External Assets:** We use external spritesheets and particle textures. Do NOT use the "untextured-only" constraint found in some generic LittleJS AI prompts.
 
-## 2. Engine Lifecycle & Structure
+## 2. Technical Pitfalls & Conventions
 
-- **Global Variables:** Use built-in globals: `time`, `frame`, `mousePos`, `paused`, `debug`.
-- **Initialization:** Always include all required callbacks in `engineInit`.
+- **Angles:** Clockwise is **positive**. 0 is up, PI/2 is right, PI is down, 3PI/2 is left.
+- **Circles/Ellipses:** The size parameter for `drawCircle` and `drawEllipse` is the **diameter**, not the radius.
+- **Math Shortcuts:** Use `vec2(x, y)`, `rgb(r, g, b)`, `hsl(h, s, l)`. Avoid `new Vector2` or `new Color`.
+- **Input:** Use `keyDirection()` to get a `vec2` for basic movement.
+- **Collision:** 
+  - `EngineObject.setCollision(collideSolidObjects, isSolid, collideTiles)` takes three booleans.
+  - **CRITICAL:** `setCollision(false)` will fail if `isSolid` (the 2nd param) defaults to true. Always use `setCollision(false, false)` to fully disable collision.
+- **Colors:** Use `.copy()` before modifying shared constants like `WHITE` or `BLACK`.
 
-```javascript
-function gameInit() {}
-function gameUpdate() {}
-function gameUpdatePost() {}
-function gameRender() {}
-function gameRenderPost() {}
+## 3. Engineering Workflow
 
-engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost);
-```
+- **Config-First:** Move all magic numbers and tweakable parameters to `src/config.js`.
+- **Entity Structure:** All game entities should extend `BaseEntity` (in `src/entities/baseEntity.js`) to benefit from standardized scaling and hit effects.
+- **Particle Systems:** Use `ParticleEmitter` and define settings in the config. Refer to the engine's built-in `fire_01.png`, `smoke_01.png`, etc., in `public/assets/particles/`.
 
-- **Physics:** Runs at a fixed 60 FPS. `timeDelta` is constant in `gameUpdate`.
+## 4. Coding Style
 
-## 3. Mathematical & Visual Conventions
+- **Minimalism:** Prefer minimal, surgical changes over large refactors.
+- **JSDoc:** Add brief JSDoc comments for classes and complex methods.
+- **Diagnostics:** Use `ASSERT(condition, msg)` for internal state checks and `LOG(msg)` for debugging.
 
-- **World Space:** Defaults to world space (Y-up, origin at center). To draw in pixels, set `screenSpace = true`.
-- **Angles:** Clockwise is **positive**.
-- **Circle Sizes:** For `drawCircle` and `drawEllipse`, the size parameter is the **diameter**, not the radius.
-- **Input:** Use `keyDirection()` to get a `vec2` for directional input.
-- **Math Shortcuts:** Use `vec2(x, y)`, `rgb(r, g, b)`, `hsl(h, s, l)`. Do not use `new Vector2` or `new Color`.
-
-## 4. Coding Conventions
-
-- **Factory Functions:** Use `vec2()`, `tile()`, `rgb()`.
-- **Constructors:** Use `new EngineObject()`, `new Sound()`, `new Timer()`.
-- **Type Checking:** Use `isNumber()`, `isString()`, `isVector2()`, `isColor()`.
-- **Diagnostics:**
-  - Use `ASSERT(condition, msg)` and `LOG(msg)` (stripped in release).
-  - Use `debugRect()`, `debugCircle()`, etc., for visual debugging.
-- **Freeze Constants:** Do not modify `WHITE`, `BLACK`, `RED`, etc. Use `.copy()` first.
-
-## 5. Agent Interaction & Response
-
-- **Minimalism:** Prefer minimal, local changes. Do not refactor for style.
-- **Smallest Version First:** Build a working MVP before iterating.
-- **Documentation:** Use JSDoc with `@memberof` grouping (e.g., Engine, Draw, Math).
-- **Format:**
-  - Provide a 1-3 line step summary.
-  - Include quick test instructions (expected behavior + controls).
-  - Offer 2-4 next-step choices.
-- **Error Handling:** If an error occurs, request the console text and provide a minimal fix.
-
-## 6. Common Pitfalls to Avoid
-
-- **Y-Origin:** World space Y increases **upward**. Tile coordinates start at the bottom-left.
-- **Side Effects:** Never place logic inside `ASSERT` or `LOG`.
-- **Line Breaks:** Do not use literal `\n` characters for rendered text; use `\n` escape sequences instead.
-- **Redefinition:** Do not redefine Math shortcuts or existing engine globals.
-
-## 7. References
-
-[cheatsheet](https://github.com/KilledByAPixel/LittleJS-AI/blob/main/AI/reference.md)
+## 5. Submodule Updates
+The `.agents/littlejs-ai/` submodule is maintained by the community. Check `GPT/AI_instructions.md` for refined system prompt ideas, but ignore instructions regarding `index.html` or "single file" constraints.
