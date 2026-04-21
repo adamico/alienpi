@@ -54,6 +54,9 @@ export class LatchBeam {
   render(fromPos) {
     if (!this.target) return;
     const cfg = weapons.latch;
-    drawLine(fromPos, this.target.pos, cfg.lineWidth, cfg.color);
+    const endPos = this.endOffset
+      ? this.target.pos.add(this.endOffset)
+      : this.target.pos;
+    drawLine(fromPos, endPos, cfg.lineWidth, cfg.color);
   }
 }
