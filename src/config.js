@@ -89,7 +89,7 @@ const vulcanBullet = {
 export const weapons = {
   vulcan: {
     label: "VULCAN",
-    cooldown: 6,
+    cooldown: 8,
     cannonOffsets: [vec2(22, 40), vec2(53.5, 40), vec2(85, 40)],
     bullet: vulcanBullet,
   },

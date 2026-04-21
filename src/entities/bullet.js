@@ -42,6 +42,7 @@ export class Bullet extends BaseEntity {
     this.mirrorY = finalCfg.mirrorY !== undefined ? finalCfg.mirrorY : true;
     this.color = WHITE.copy();
     this.pierce = 0;
+    this.hitTargets = null;
 
     // Ensure small bullets are still easy to hit
     this.collisionRadius = Math.max(
@@ -51,16 +52,22 @@ export class Bullet extends BaseEntity {
   }
 
   /**
-   * Called by targets when they take damage from this bullet.
-   * Returns true if the bullet should be destroyed by the caller, false if
-   * it should keep travelling (pierce remaining).
+   * Called by a target when this bullet collides with it. Returns one of:
+   *   "ignore"  — target was already hit by this bullet; no damage this frame.
+   *   "damage"  — apply damage; bullet keeps travelling (pierce remaining).
+   *   "destroy" — apply damage; caller must call bullet.destroy().
+   * The bullet remembers which targets it has already hit so a pierce'd
+   * shot doesn't tick damage every frame it overlaps a single target.
    */
-  hitTarget() {
+  hitTarget(target) {
+    if (this.hitTargets && this.hitTargets.has(target)) return "ignore";
+    if (!this.hitTargets) this.hitTargets = new Set();
+    this.hitTargets.add(target);
     if (this.pierce > 0) {
       this.pierce--;
-      return false;
+      return "damage";
     }
-    return true;
+    return "destroy";
   }
 
   update() {

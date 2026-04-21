@@ -226,8 +226,8 @@ export class Player extends BaseEntity {
     const cfg = weaponsCfg.shotgun;
     const yInput = keyDirection().y;
     let cone = cfg.coneBase;
-    if (yInput > 0) cone = lerp(yInput, cfg.coneBase, cfg.coneMax);
-    else if (yInput < 0) cone = lerp(-yInput, cfg.coneBase, cfg.coneMin);
+    if (yInput > 0) cone = lerp(cfg.coneBase, cfg.coneMax, yInput);
+    else if (yInput < 0) cone = lerp(cfg.coneBase, cfg.coneMin, -yInput);
 
     const nozzleOffset = this.muzzleLocalOffset(cfg.nozzle);
     const spawnPos = this.pos.add(nozzleOffset);

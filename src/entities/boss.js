@@ -301,8 +301,10 @@ export class Boss extends BaseEntity {
         return false;
       }
 
+      const result = other.hitTarget(this);
+      if (result === "ignore") return false;
       this.hp--;
-      if (other.hitTarget()) other.destroy();
+      if (result === "destroy") other.destroy();
       this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
       if (this.hp <= 0) this.destroy(); // cascades to all child emitters
       return false;
