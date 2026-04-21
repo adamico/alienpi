@@ -9,7 +9,9 @@ import {
   Timer,
   EngineObject,
   drawCircle,
+  drawRect,
   time,
+  clamp,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   system,
@@ -39,15 +41,50 @@ export class BossOrbiter extends BaseEntity {
     this.angleOffset = initialAngle;
     this.hp = orbCfg.hp;
     this.color = orbCfg.color.copy();
-    this.setCollision(true);
+    this.setCollision(true, false, false);
     this.renderOrder = 5;
+    this.state = "orbiting";
+    this.diveTimer = new Timer(
+      rand(orbCfg.diveRate * 0.5, orbCfg.diveRate * 1.5),
+    );
+    this.warningTimer = new Timer();
   }
 
   update() {
     if (!this.parent) return;
+
+    if (this.state === "orbiting") {
+      this.updateOrbit();
+      if (this.diveTimer.elapsed()) {
+        this.state = "warning";
+        this.warningTimer.set(orbCfg.warningTime);
+      }
+    } else if (this.state === "warning") {
+      this.updateOrbit(); // still orbit while warning
+      if (this.warningTimer.elapsed()) {
+        this.state = "diving";
+        // Lock world position for dive
+        this.diveX = this.pos.x;
+      }
+    } else if (this.state === "diving") {
+      this.updateDive();
+    }
+
+    super.update();
+
+    // The engine skips collision for child objects (o.parent check in the collision loop).
+    engineObjectsCallback(this.pos, this.size, (o) => {
+      if (!o.destroyed && o !== this && this.isOverlappingObject(o)) {
+        this.collideWithObject(o);
+        o.collideWithObject(this);
+      }
+    });
+  }
+
+  updateOrbit() {
     const healthPercent = this.parent.hp / this.parent.maxHp;
     const stage = Math.min(4, Math.floor((1 - healthPercent) * 5));
-    const speedScale = 1 + stage * 0.25; // Gradual: 1.0, 1.25, 1.5, 1.75, 2.0
+    const speedScale = 1 + stage * 0.25;
 
     this.angleOffset += orbCfg.speed * speedScale;
     this.localAngle = this.angleOffset;
@@ -55,16 +92,37 @@ export class BossOrbiter extends BaseEntity {
       Math.cos(this.angleOffset),
       Math.sin(this.angleOffset),
     ).scale(orbCfg.radius);
-    super.update();
 
-    // The engine skips collision for child objects (o.parent check in the collision loop).
-    // We manually check nearby objects and call both sides, matching engine behavior.
-    engineObjectsCallback(this.pos, this.size, (o) => {
-      if (!o.destroyed && o !== this && this.isOverlappingObject(o)) {
-        this.collideWithObject(o);
-        o.collideWithObject(this); // triggers bullet's impact particle effect
-      }
-    });
+    if (this.state === "warning") {
+      // Reuse missile blinking logic: 10Hz red blink
+      const isRedPhase = ((time * 20) | 0) % 2;
+      this.color = isRedPhase ? rgb(1, 0, 0) : orbCfg.color.copy();
+    } else {
+      this.color = orbCfg.color.copy();
+    }
+  }
+
+  updateDive() {
+    // Relative downward movement
+    // To make it feel independent of boss horizontal movement, we'd need to adjust localPos
+    // based on boss movement. A simpler way: dive fast enough that it doesn't matter,
+    // or just calculate world pos.
+    // Since it's a child, worldPos = parent.pos + localPos.rotate(parent.angle)
+    // We want worldX to stay diveX, and worldY to decrease.
+
+    const worldY = this.pos.y - orbCfg.diveSpeed;
+
+    // Convert back to local space: localPos = (worldPos - parent.pos).rotate(-parent.angle)
+    const worldPos = vec2(this.diveX, worldY);
+    this.localPos = worldPos
+      .subtract(this.parent.pos)
+      .rotate(-this.parent.angle);
+
+    // If far below player or off screen, return to orbit
+    if (this.pos.y < -5) {
+      this.state = "orbiting";
+      this.diveTimer.set(rand(orbCfg.diveRate * 0.8, orbCfg.diveRate * 1.2));
+    }
   }
 
   collideWithObject(other) {
@@ -187,8 +245,8 @@ export class BossMissile extends BaseEntity {
 }
 
 /**
- * Invisible explosion zone spawned when a missile's lifetime expires.
- * Lasts one frame, radius 5 world tiles — damages the player on contact.
+ * Explosion zone spawned.
+ * Lasts one frame, custom size — damages the player on contact.
  */
 class MissileExplosion extends EngineObject {
   constructor(pos, diameter = 10) {
@@ -273,6 +331,76 @@ class MissileExplosion extends EngineObject {
 }
 
 /**
+ * Rotating beam hazard.
+ * A rectangle centered at the boss's position, with a length equal to the beamLength.
+ * The beam rotates around the boss's position at beamRotationSpeed.
+ * The beam should not hurt the player until the startTimer has elapsed.
+ * The beam is destroyed when the lifeTimer has elapsed.
+ */
+class BossBeam extends EngineObject {
+  constructor(initialAngle) {
+    super(vec2(), vec2(bossCfg.beamLength, 0.5)); // size.x is length, size.y is thickness
+    this.localAngle = initialAngle;
+    this.setCollision(false, false, false);
+    this.mass = 0;
+    this.isEnemy = true;
+    this.noDestroyOnImpact = true;
+    this.renderOrder = -1;
+    this.lifeTimer = new Timer(bossCfg.beamDuration / 60);
+    this.startTimer = new Timer(0.5); // 0.5s charge telegraph
+  }
+
+  update() {
+    if (!this.parent) return;
+
+    this.updateRotation();
+    this.updateColor();
+    super.update();
+
+    if (this.startTimer.elapsed() && !this.destroyed) {
+      // Manual collision check since child objects skip engine-level collision
+      // We use a custom oriented check because LittleJS 1.x is AABB only
+      engineObjectsCallback(this.pos, vec2(this.size.x), (o) => {
+        if (o === player && !o.destroyed) {
+          // Rotate the distance vector into the beam's local space to check bounds
+          const diff = o.pos.subtract(this.pos);
+          const rotatedDiff = diff.rotate(-this.angle);
+
+          const halfSizeX = this.size.x / 2;
+          const halfSizeY = this.size.y / 2;
+          const playerBufferX = o.size.x / 2;
+          const playerBufferY = o.size.y / 2;
+
+          if (
+            Math.abs(rotatedDiff.x) < halfSizeX + playerBufferX &&
+            Math.abs(rotatedDiff.y) < halfSizeY + playerBufferY
+          ) {
+            this.collideWithObject(o);
+            o.collideWithObject(this);
+          }
+        }
+      });
+    }
+
+    if (this.lifeTimer.elapsed()) {
+      this.destroy();
+    }
+  }
+
+  updateRotation() {
+    this.localAngle += bossCfg.beamRotationSpeed;
+  }
+
+  updateColor() {
+    const alpha = 0.3;
+    const color = this.startTimer.elapsed()
+      ? rgb(1, 0, 0, alpha) // Active
+      : rgb(1, 1, 1, alpha); // Telegraphing
+    this.color = color;
+  }
+}
+
+/**
  * Boss with dynamic movement, fire emitters, and pulse attacks
  */
 export class Boss extends BaseEntity {
@@ -303,12 +431,14 @@ export class Boss extends BaseEntity {
     this.targetPos = entryPos.copy();
     this.moveTimer = 0;
     this.pulseTimer = 0;
+    this.beamTimer = 200; // start partially charged
     this.volleyCount = 0; // tracks nova pulses; missiles fire every missileCfg.volleys pulses
+    this.thresholds = [0.66, 0.33];
 
     this.fireEmitters = [];
     this.orbiters = [];
     this.initFireEmitters();
-    this.initOrbiters();
+    //this.initOrbiters();
   }
 
   initFireEmitters() {
@@ -406,10 +536,53 @@ export class Boss extends BaseEntity {
     const healthPercent = this.hp / this.maxHp;
     const stage = Math.min(4, Math.floor((1 - healthPercent) * 5));
     const rateScale = 1 + stage * 0.25; // Gradual: 1.0, 1.25, 1.5, 1.75, 2.0
+    // this.updateNovaPulse(rateScale);
+    this.updateBeams(rateScale);
+    this.checkThresholds();
+  }
+
+  updateNovaPulse(rateScale) {
     this.pulseTimer += rateScale;
     if (this.pulseTimer >= bossCfg.pulseRate) {
       this.pulseTimer = 0;
       this.novaPulse();
+    }
+  }
+
+  updateBeams(rateScale) {
+    this.beamTimer += rateScale;
+    if (this.beamTimer >= bossCfg.beamRate) {
+      this.beamTimer = 0;
+      this.fireBeams();
+    }
+  }
+
+  checkThresholds() {
+    if (this.thresholds.length > 0) {
+      const healthPercent = this.hp / this.maxHp;
+      if (healthPercent <= this.thresholds[0]) {
+        this.thresholds.shift();
+        this.respawnOrbiters();
+      }
+    }
+  }
+
+  respawnOrbiters() {
+    // Destroy existing orbiters and re-init for a clean "shield phase"
+    this.orbiters.forEach((o) => o.destroy());
+    this.orbiters = [];
+    this.initOrbiters();
+
+    // Visual feedback for shield recharge
+    this.applyHitEffect({ flashColor: new Color(0.2, 0.5, 1), duration: 0.5 });
+  }
+
+  fireBeams() {
+    const startAngle = rand(0, PI * 2);
+    for (let i = 0; i < bossCfg.beamCount; i++) {
+      const initialAngle = (i / bossCfg.beamCount) * PI * 2 + startAngle;
+      const beam = new BossBeam(initialAngle);
+      this.addChild(beam); // localPos is set in BossBeam constructor
     }
   }
 
@@ -481,6 +654,17 @@ export class Boss extends BaseEntity {
 
   collideWithObject(other) {
     if (other instanceof Bullet && !other.isEnemy) {
+      // Invincible if any orbiters are alive
+      const activeOrbiters = this.orbiters.filter((o) => !o.destroyed);
+      if (activeOrbiters.length > 0) {
+        this.applyHitEffect({
+          flashColor: new Color(0.2, 0.5, 1),
+          duration: 0.1,
+        });
+        other.destroy();
+        return false;
+      }
+
       this.hp--;
       other.destroy();
       this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });

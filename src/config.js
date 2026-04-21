@@ -164,17 +164,25 @@ export const boss = {
   fireLocations: [vec2(-1.5, 2), vec2(1.5, 2), vec2(-1.5, -1), vec2(1.5, -1)],
   hitboxScale: 0.8,
   mirrorY: true,
+  beamRate: 600,
+  beamDuration: 180,
+  beamRotationSpeed: 0.01,
+  beamCount: 3,
+  beamLength: 60, // tip orbits at this radius
 };
 
 export const orbiter = {
   sheet: SPRITE_SHEET2_NAME,
   sprite: "ufoRed.png",
-  hp: 100,
+  hp: 25,
   radius: 5,
   speed: 0.03,
   size: vec2(2),
   color: rgb(1, 1, 1),
   hitboxScale: 0.8,
+  diveRate: 300,
+  diveSpeed: 0.4,
+  warningTime: 1.5, // seconds to blink before diving
 };
 
 export const ui = {

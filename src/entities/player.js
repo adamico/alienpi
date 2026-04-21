@@ -180,20 +180,35 @@ export class Player extends BaseEntity {
     this.shootTimer = playerCfg.shootCooldown;
   }
 
+  takeDamage(amount = 1) {
+    if (this.invulnerable || this.destroyed) return false;
+
+    this.hp -= amount;
+    this.applyHitEffect({
+      flashColor: new Color(1, 0, 0),
+      duration: 0.1,
+      screenShake: 0.3,
+    });
+    this.startInvulnerability({ duration: 2 });
+
+    if (this.hp <= 0) location.reload();
+    return true;
+  }
+
   collideWithObject(other) {
     if (this.invulnerable) return;
 
-    if (other instanceof Enemy || other.isEnemy || (other instanceof Bullet && other.isEnemy)) {
-      this.hp--;
-      other.destroy();
-      this.applyHitEffect({
-        flashColor: new Color(1, 0, 0),
-        duration: 0.1,
-        screenShake: 0.3,
-      });
-      this.startInvulnerability({ duration: 2 });
-
-      if (this.hp <= 0) location.reload();
+    if (
+      other instanceof Enemy ||
+      other.isEnemy ||
+      (other instanceof Bullet && other.isEnemy)
+    ) {
+      if (this.takeDamage(1, other)) {
+        // Only destroy projectile-like objects, not persistent hazards
+        if (!other.noDestroyOnImpact) {
+          other.destroy();
+        }
+      }
       return false;
     }
     return true;
