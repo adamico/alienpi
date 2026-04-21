@@ -9,6 +9,7 @@ import {
   Timer,
   EngineObject,
   drawCircle,
+  drawLine,
   time,
   lerp,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
@@ -181,6 +182,27 @@ export class BossOrbiter extends BaseEntity {
       return false;
     }
     return false;
+  }
+
+  render() {
+    const shield = this.parent?.shield;
+    const isAttached = this.state !== "diving" && this.state !== "returning";
+
+    if (shield && !shield.destroyed && isAttached) {
+      // Draw tether line from orbiter to shield border
+      const toBoss = this.parent.pos.subtract(this.pos);
+      const dist = toBoss.length();
+      const shieldRadius = (shield.size.x / 2) * shieldCfg.hitboxScale;
+
+      if (dist > shieldRadius) {
+        const tetherColor = this.color.copy();
+        tetherColor.a *= 0.5;
+        // The line starts at the orbiter and ends at the shield's edge
+        const endPos = this.pos.add(toBoss.normalize().scale(dist - shieldRadius));
+        drawLine(this.pos, endPos, 0.05, tetherColor);
+      }
+    }
+    super.render();
   }
 }
 
