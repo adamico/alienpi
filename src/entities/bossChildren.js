@@ -55,6 +55,7 @@ export class BossOrbiter extends BaseEntity {
     this.warningTimer = new Timer();
     this.tetherColor = this.color.copy();
     this.workingPos = vec2();
+    this.isEnemy = true;
   }
 
   update() {
