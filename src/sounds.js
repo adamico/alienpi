@@ -68,3 +68,6 @@ export const soundShoot = new Sound([
   0.06,
 ]);
 /* eslint-enable no-sparse-arrays */
+export const soundBossMusic = new Sound(
+  "public/assets/sounds/Lasermelon%20Boss.mp3",
+);

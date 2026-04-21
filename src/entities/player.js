@@ -276,6 +276,40 @@ export class Player extends BaseEntity {
     }
     this.acquireLatchTargets();
     for (const beam of this.latchBeams) beam.tick();
+    this.assignLatchEndOffsets(this.latchOrigin());
+  }
+
+  /**
+   * When multiple beams share a target, spread their endpoints across the
+   * target along the axis perpendicular to the beam direction so each beam
+   * visually terminates at a distinct point. Spread magnitude scales with
+   * `target.size.x` so it naturally matches small vs large enemies.
+   */
+  assignLatchEndOffsets(origin) {
+    const groups = new Map();
+    for (const beam of this.latchBeams) {
+      beam.endOffset = null;
+      if (!beam.target) continue;
+      const list = groups.get(beam.target);
+      if (list) list.push(beam);
+      else groups.set(beam.target, [beam]);
+    }
+
+    for (const [target, beams] of groups) {
+      const n = beams.length;
+      if (n === 1) continue; // no offset needed
+
+      const dir = target.pos.subtract(origin);
+      const len = dir.length();
+      if (len < 0.001) continue;
+      const perp = vec2(-dir.y / len, dir.x / len);
+
+      const span = target.size.x * 0.6; // spread across 60% of target width
+      for (let i = 0; i < n; i++) {
+        const t = i / (n - 1) - 0.5; // evenly spaced in [-0.5, +0.5]
+        beams[i].endOffset = perp.scale(t * span);
+      }
+    }
   }
 
   /**
@@ -301,13 +335,9 @@ export class Player extends BaseEntity {
       }
     }
 
-    const claimed = new Set(
-      this.latchBeams.map((b) => b.target).filter(Boolean),
-    );
-
     const candidates = [];
     for (const o of engineObjects) {
-      if (!o || o.destroyed || claimed.has(o)) continue;
+      if (!o || o.destroyed) continue;
       if (typeof o.hp !== "number" || o.hp <= 0) continue;
       if (!(o instanceof Enemy) && !o.isEnemy) continue;
       // Respect shield invulnerability — matches bullet-vs-boss behaviour.
@@ -316,13 +346,26 @@ export class Player extends BaseEntity {
       if (dSq > rangeSq) continue;
       candidates.push({ o, dSq });
     }
+    if (candidates.length === 0) return;
     candidates.sort((a, b) => a.dSq - b.dSq);
 
+    // Pass 1: try to give each idle beam a unique target (closest first).
+    const used = new Set(this.latchBeams.map((b) => b.target).filter(Boolean));
     let ci = 0;
     for (const beam of this.latchBeams) {
       if (beam.target) continue;
+      while (ci < candidates.length && used.has(candidates[ci].o)) ci++;
       if (ci >= candidates.length) break;
-      beam.setTarget(candidates[ci++].o);
+      beam.setTarget(candidates[ci].o);
+      used.add(candidates[ci].o);
+      ci++;
+    }
+
+    // Pass 2: fewer enemies than beams — share the nearest enemy rather than
+    // leaving beams idle.
+    for (const beam of this.latchBeams) {
+      if (beam.target) continue;
+      beam.setTarget(candidates[0].o);
     }
   }
 

@@ -27,10 +27,12 @@ import { loadSprites, loadDynamicSpritesheet } from "./src/sprites.js";
 import { spawnPlayer } from "./src/entities/player.js";
 import { Enemy } from "./src/entities/enemy.js";
 import { Boss } from "./src/entities/boss.js";
+import { soundBossMusic } from "./src/sounds.js";
 
 let waveTimer = new Timer();
 let waveIndex = 0;
 let bossSpawned = false;
+let bossMusicPlaying = false;
 let currentBoss = null;
 let player = null;
 const boundaries = [];
@@ -111,14 +113,22 @@ async function gameInit() {
       vec2(lx * 2, wallThick),
     ),
   );
-  // Bottom
+  // BOTTOM
   boundaries.push(
     new Boundary(vec2(lx / 2, -wallThick / 2), vec2(lx * 2, wallThick)),
   );
 }
 
 function gameUpdate() {
-  if (bossSpawned) return; // Disable swarmers in boss level
+  if (bossSpawned) {
+    if (soundBossMusic.isLoaded() && !bossMusicPlaying) {
+      const inst = soundBossMusic.playMusic(1.2);
+      if (inst && inst.isPlaying()) {
+        bossMusicPlaying = true;
+      }
+    }
+    return; // Disable swarmers in boss level
+  }
 
   if (waveTimer.elapsed()) {
     spawnWave();

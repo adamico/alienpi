@@ -13,6 +13,7 @@ export class LatchBeam {
   constructor() {
     this.target = null;
     this.damageFrame = 0;
+    this.endOffset = null;
   }
 
   setTarget(target) {
