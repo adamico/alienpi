@@ -106,21 +106,12 @@ export const weapons = {
   },
   latch: {
     label: "LATCH",
-    cooldown: 30,
-    count: 3,
-    cone: (8 * PI) / 180,
-    speed: 0.35,
-    lifetime: 1.5,
-    damageInterval: 10,
+    count: 3, // max simultaneous beams
+    damageInterval: 10, // frames between damage ticks per beam
+    range: 15, // max lock distance in world units
     nozzle: vec2(53.5, 40),
-    bullet: {
-      sheet: SPRITE_SHEET2_NAME,
-      sprite: "laserRed08.png",
-      size: vec2(0.35, 0.6),
-      despawnRadius: 0.5,
-      hitboxScale: 1.0,
-      mirrorY: true,
-    },
+    lineWidth: 0.08,
+    color: rgb(1, 0.4, 0.4, 0.9),
   },
 };
 

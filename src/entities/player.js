@@ -8,6 +8,7 @@ import {
   PI,
   rgb,
   lerp,
+  engineObjects,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   system,
@@ -20,7 +21,7 @@ import { Bullet } from "./bullet.js";
 import { Enemy } from "./enemy.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
-import { StickingBolt } from "./stickingBolt.js";
+import { LatchBeam } from "./latchBeam.js";
 
 export let player = null;
 
@@ -46,6 +47,10 @@ export class Player extends BaseEntity {
     this.damping = playerCfg.damping;
     this.weaponIndex = 0;
     this.powerLevel = "max"; // scaffolding for future power tiers
+    this.latchBeams = Array.from(
+      { length: weaponsCfg.latch.count },
+      () => new LatchBeam(),
+    );
 
     // Jet exhaust emitter — parented so the engine syncs its position automatically
     this.exhaustEmitter = new ParticleEmitter(
@@ -100,7 +105,13 @@ export class Player extends BaseEntity {
     if (keyWasPressed(system.switchKey)) {
       this.weaponIndex = (this.weaponIndex + 1) % WEAPON_ORDER.length;
       this.shootTimer = 0;
+      // Cycling away from latch breaks any active tethers.
+      if (this.currentWeaponKey !== "latch") this.clearLatchBeams();
     }
+  }
+
+  clearLatchBeams() {
+    for (const beam of this.latchBeams) beam.clear();
   }
 
   updateExhaust() {
@@ -133,6 +144,11 @@ export class Player extends BaseEntity {
     }
 
     super.render();
+
+    if (this.currentWeaponKey === "latch") {
+      const origin = this.latchOrigin();
+      for (const beam of this.latchBeams) beam.render(origin);
+    }
   }
 
   updateMoving() {
@@ -152,14 +168,20 @@ export class Player extends BaseEntity {
 
   updateShooting() {
     if (this.shootTimer > 0) this.shootTimer--;
-    if (!keyIsDown(system.shootKey) || this.shootTimer > 0) return;
-
-    soundShoot.play();
 
     const key = this.currentWeaponKey;
+    const firing = keyIsDown(system.shootKey);
+
+    if (key === "latch") {
+      this.updateLatchBeams(firing);
+      return;
+    }
+
+    if (!firing || this.shootTimer > 0) return;
+
+    soundShoot.play();
     if (key === "vulcan") this.fireVulcan();
     else if (key === "shotgun") this.fireShotgun();
-    else if (key === "latch") this.fireLatch();
 
     this.shootTimer = this.currentWeapon.cooldown;
   }
@@ -247,21 +269,66 @@ export class Player extends BaseEntity {
     this.spawnMuzzleFlash(nozzleOffset);
   }
 
-  fireLatch() {
-    const cfg = weaponsCfg.latch;
-    const nozzleOffset = this.muzzleLocalOffset(cfg.nozzle);
-    const spawnPos = this.pos.add(nozzleOffset);
-    const speed = cfg.speed;
-    const cone = cfg.cone;
+  updateLatchBeams(firing) {
+    if (!firing) {
+      this.clearLatchBeams();
+      return;
+    }
+    this.acquireLatchTargets();
+    for (const beam of this.latchBeams) beam.tick();
+  }
 
-    for (let i = 0; i < cfg.count; i++) {
-      const t = cfg.count === 1 ? 0.5 : i / (cfg.count - 1);
-      const angle = -cone / 2 + t * cone;
-      const vel = vec2(Math.sin(angle) * speed, Math.cos(angle) * speed);
-      new StickingBolt(spawnPos, vel);
+  /**
+   * Assigns up to `count` enemy targets to beams, preferring the nearest.
+   * Each beam keeps its current target if it's still alive + in range; idle
+   * beams pick the nearest available enemy that no other beam has claimed.
+   */
+  acquireLatchTargets() {
+    const cfg = weaponsCfg.latch;
+    const origin = this.latchOrigin();
+    const rangeSq = cfg.range * cfg.range;
+
+    // Drop targets that are gone, shielded, or out of range so the slot can
+    // pick another.
+    for (const beam of this.latchBeams) {
+      const t = beam.target;
+      if (!t || t.destroyed || t.hp <= 0) {
+        beam.target = null;
+      } else if (t.shield && !t.shield.destroyed) {
+        beam.target = null;
+      } else if (t.pos.distanceSquared(origin) > rangeSq) {
+        beam.target = null;
+      }
     }
 
-    this.spawnMuzzleFlash(nozzleOffset);
+    const claimed = new Set(
+      this.latchBeams.map((b) => b.target).filter(Boolean),
+    );
+
+    const candidates = [];
+    for (const o of engineObjects) {
+      if (!o || o.destroyed || claimed.has(o)) continue;
+      if (typeof o.hp !== "number" || o.hp <= 0) continue;
+      if (!(o instanceof Enemy) && !o.isEnemy) continue;
+      // Respect shield invulnerability — matches bullet-vs-boss behaviour.
+      if (o.shield && !o.shield.destroyed) continue;
+      const dSq = o.pos.distanceSquared(origin);
+      if (dSq > rangeSq) continue;
+      candidates.push({ o, dSq });
+    }
+    candidates.sort((a, b) => a.dSq - b.dSq);
+
+    let ci = 0;
+    for (const beam of this.latchBeams) {
+      if (beam.target) continue;
+      if (ci >= candidates.length) break;
+      beam.setTarget(candidates[ci++].o);
+    }
+  }
+
+  latchOrigin() {
+    const cfg = weaponsCfg.latch;
+    return this.pos.add(this.muzzleLocalOffset(cfg.nozzle));
   }
 
   takeDamage(amount = 1) {
