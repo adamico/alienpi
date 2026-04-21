@@ -43,6 +43,8 @@ export class Boss extends BaseEntity {
     this.color = bossCfg.color.copy();
     this.setCollision(true);
     this.mass = 1;
+    this.isEnemy = true;
+    this.noDestroyOnImpact = true;
 
     // Approach the entry position before starting normal movement
     this.state = "entering";
