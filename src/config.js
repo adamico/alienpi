@@ -166,9 +166,11 @@ export const boss = {
   mirrorY: true,
   beamRate: 600,
   beamDuration: 180,
+  beamEndDuration: 30, // duration for shrinking at the end
   beamRotationSpeed: 0.01,
   beamCount: 3,
-  beamLength: 60, // tip orbits at this radius
+  beamLength: 60,
+  beamWidth: 0.5,
 };
 
 export const orbiter = {

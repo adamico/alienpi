@@ -9,9 +9,8 @@ import {
   Timer,
   EngineObject,
   drawCircle,
-  drawRect,
   time,
-  clamp,
+  lerp,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
   system,
@@ -338,26 +337,33 @@ class MissileExplosion extends EngineObject {
  * The beam is destroyed when the lifeTimer has elapsed.
  */
 class BossBeam extends EngineObject {
-  constructor(initialAngle) {
-    super(vec2(), vec2(bossCfg.beamLength, 0.5)); // size.x is length, size.y is thickness
-    this.localAngle = initialAngle;
+  constructor() {
+    super(vec2(), vec2(bossCfg.beamLength, bossCfg.beamWidth));
     this.setCollision(false, false, false);
     this.mass = 0;
     this.isEnemy = true;
     this.noDestroyOnImpact = true;
     this.renderOrder = -1;
-    this.lifeTimer = new Timer(bossCfg.beamDuration / 60);
+
+    this.state = "starting";
     this.startTimer = new Timer(0.5); // 0.5s charge telegraph
+    this.lifeTimer = new Timer(); // will be set when active
+    this.endTimer = new Timer(); // will be set when ending
   }
 
   update() {
     if (!this.parent) return;
 
+    this.updateState();
     this.updateRotation();
     this.updateColor();
+    this.updateSize();
     super.update();
 
-    if (this.startTimer.elapsed() && !this.destroyed) {
+    if (
+      (this.state === "active" || this.state === "ending") &&
+      !this.destroyed
+    ) {
       // Manual collision check since child objects skip engine-level collision
       // We use a custom oriented check because LittleJS 1.x is AABB only
       engineObjectsCallback(this.pos, vec2(this.size.x), (o) => {
@@ -381,8 +387,16 @@ class BossBeam extends EngineObject {
         }
       });
     }
+  }
 
-    if (this.lifeTimer.elapsed()) {
+  updateState() {
+    if (this.state === "starting" && this.startTimer.elapsed()) {
+      this.state = "active";
+      this.lifeTimer.set(bossCfg.beamDuration / 60);
+    } else if (this.state === "active" && this.lifeTimer.elapsed()) {
+      this.state = "ending";
+      this.endTimer.set(bossCfg.beamEndDuration / 60);
+    } else if (this.state === "ending" && this.endTimer.elapsed()) {
       this.destroy();
     }
   }
@@ -392,11 +406,29 @@ class BossBeam extends EngineObject {
   }
 
   updateColor() {
-    const alpha = 0.3;
-    const color = this.startTimer.elapsed()
-      ? rgb(1, 0, 0, alpha) // Active
-      : rgb(1, 1, 1, alpha); // Telegraphing
+    const color =
+      this.state !== "starting"
+        ? rgb(1, 0, 0, 0.7) // Active / Ending
+        : rgb(1, 1, 1, 0.3); // Starting (Telegraphing)
     this.color = color;
+  }
+
+  updateSize() {
+    let targetScale = 0;
+
+    if (this.state === "starting") {
+      targetScale = this.startTimer.getPercent();
+    } else if (this.state === "active") {
+      targetScale = 1;
+    } else if (this.state === "ending") {
+      targetScale = 1 - this.endTimer.getPercent();
+    }
+
+    // Apply smoothstep easing to make the animation feel more premium
+    const p = targetScale * targetScale * (3 - 2 * targetScale);
+
+    this.size.x = lerp(0, bossCfg.beamLength, p);
+    this.size.y = lerp(0, bossCfg.beamWidth, p);
   }
 }
 
@@ -438,7 +470,7 @@ export class Boss extends BaseEntity {
     this.fireEmitters = [];
     this.orbiters = [];
     this.initFireEmitters();
-    //this.initOrbiters();
+    this.initOrbiters();
   }
 
   initFireEmitters() {
@@ -536,7 +568,7 @@ export class Boss extends BaseEntity {
     const healthPercent = this.hp / this.maxHp;
     const stage = Math.min(4, Math.floor((1 - healthPercent) * 5));
     const rateScale = 1 + stage * 0.25; // Gradual: 1.0, 1.25, 1.5, 1.75, 2.0
-    // this.updateNovaPulse(rateScale);
+    this.updateNovaPulse(rateScale);
     this.updateBeams(rateScale);
     this.checkThresholds();
   }
@@ -553,7 +585,12 @@ export class Boss extends BaseEntity {
     this.beamTimer += rateScale;
     if (this.beamTimer >= bossCfg.beamRate) {
       this.beamTimer = 0;
-      this.fireBeams();
+      const startAngle = rand(0, PI * 2);
+      for (let i = 0; i < bossCfg.beamCount; i++) {
+        const initialAngle = (i / bossCfg.beamCount) * PI * 2 + startAngle;
+        const beam = new BossBeam();
+        this.addChild(beam, vec2(0, 0), initialAngle);
+      }
     }
   }
 
@@ -575,15 +612,6 @@ export class Boss extends BaseEntity {
 
     // Visual feedback for shield recharge
     this.applyHitEffect({ flashColor: new Color(0.2, 0.5, 1), duration: 0.5 });
-  }
-
-  fireBeams() {
-    const startAngle = rand(0, PI * 2);
-    for (let i = 0; i < bossCfg.beamCount; i++) {
-      const initialAngle = (i / bossCfg.beamCount) * PI * 2 + startAngle;
-      const beam = new BossBeam(initialAngle);
-      this.addChild(beam); // localPos is set in BossBeam constructor
-    }
   }
 
   novaPulse() {
