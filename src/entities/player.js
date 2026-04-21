@@ -196,7 +196,10 @@ export class Player extends BaseEntity {
   }
 
   collideWithObject(other) {
-    if (this.invulnerable) return;
+    if (this.invulnerable) {
+      // Still need to collide with boundaries even when invulnerable!
+      return !!other.isBoundary;
+    }
 
     if (
       other instanceof Enemy ||
