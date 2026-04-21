@@ -136,13 +136,14 @@ export class BossMissile extends BaseEntity {
       this.destroy();
     }
 
-    // Lifetime expiry — detonate
+    // Lifetime expiry — detonate (Large explosion)
     if (this.lifeTimer.elapsed()) {
-      new MissileExplosion(this.pos.copy());
+      new MissileExplosion(this.pos.copy(), 10);
       this.destroy();
     } else {
       // Warning effect: constant 10Hz blink when 75% of life is gone
-      const isRedPhase = this.lifeTimer.getPercent() > 0.75 && (time * 20 | 0) % 2;
+      const isRedPhase =
+        this.lifeTimer.getPercent() > 0.75 && ((time * 20) | 0) % 2;
       this.color = isRedPhase ? rgb(1, 0, 0) : rgb(1, 1, 1);
     }
 
@@ -162,11 +163,23 @@ export class BossMissile extends BaseEntity {
   }
 
   collideWithObject(other) {
+    if (this.destroyed) return false;
+
+    // Shot down by player bullet
     if (other instanceof Bullet && !other.isEnemy) {
       this.hp--;
       other.destroy();
       this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
-      if (this.hp <= 0) this.destroy();
+      if (this.hp <= 0) {
+        new MissileExplosion(this.pos.copy(), 3);
+        this.destroy();
+      }
+      return false;
+    }
+    // Collided with player ship
+    if (other === player) {
+      new MissileExplosion(this.pos.copy(), 3);
+      this.destroy();
       return false;
     }
     return false;
@@ -175,11 +188,11 @@ export class BossMissile extends BaseEntity {
 
 /**
  * Invisible explosion zone spawned when a missile's lifetime expires.
- * Lasts one frame, radius 8 world tiles — damages the player on contact.
+ * Lasts one frame, radius 5 world tiles — damages the player on contact.
  */
 class MissileExplosion extends EngineObject {
-  constructor(pos) {
-    super(pos, vec2(10)); // diameter 16 = radius 8
+  constructor(pos, diameter = 10) {
+    super(pos, vec2(diameter));
     this.setCollision(true, false, false);
     this.mass = 0;
     this.isEnemy = true;
@@ -195,13 +208,13 @@ class MissileExplosion extends EngineObject {
     this.lingerTimer = new Timer(this.duration);
     this.timeAlive = 0;
 
-    // Burst of explosion particles
+    // Burst of explosion particles - scaled by diameter
     new ParticleEmitter(
       this.pos,
       0, // angle
-      10, // emitSize (radius-ish spread)
+      diameter, // emitSize (radius-ish spread)
       0.2, // emitTime
-      500, // emitRate
+      diameter * 50, // emitRate scaled by area/size
       PI * 2, // emitConeAngle
       sprites.get("scorch_03.png", system.particleSheetName),
       rgb(1, 0.5, 0.2), // colorStartA
@@ -209,8 +222,8 @@ class MissileExplosion extends EngineObject {
       rgb(0.2, 0.2, 0.2, 0), // colorEndA
       rgb(0.1, 0.1, 0.1, 0), // colorEndB
       0.5, // particleTime
-      2, // sizeStart
-      0.5, // sizeEnd
+      diameter * 0.2, // sizeStart
+      diameter * 0.05, // sizeEnd
       0.1, // speed
       0.05, // angleSpeed
       0.9, // damping
