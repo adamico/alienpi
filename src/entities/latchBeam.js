@@ -1,6 +1,8 @@
 import {
+  vec2,
   drawLine,
   Color,
+  EngineObject,
   ParticleEmitter,
   PI,
   rand,
@@ -10,12 +12,15 @@ import { sprites } from "../sprites.js";
 import { soundExplosion1 } from "../sounds.js";
 
 /**
- * A single Ghostbuster-style tether. Owned and managed by Player — not an
- * EngineObject, so it doesn't participate in the engine's update/collision
- * loop. Player supplies the origin position each frame.
+ * A single Ghostbuster-style tether. Parented to Player at the latch nozzle
+ * offset so `this.pos` is kept in sync automatically; the beam ticks damage,
+ * emits sparks, and renders itself via the engine render loop.
  */
-export class LatchBeam {
+export class LatchBeam extends EngineObject {
   constructor() {
+    super(vec2(), vec2());
+    this.mass = 0;
+    this.renderOrder = weapons.latch.renderOrder;
     this.target = null;
     this.damageFrame = 0;
     this.endOffset = null;
@@ -33,7 +38,8 @@ export class LatchBeam {
     this.damageFrame = 0;
   }
 
-  tick(fromPos) {
+  update() {
+    super.update();
     if (!this.target || this.target.destroyed || this.target.hp <= 0) {
       this.target = null;
       return;
@@ -57,7 +63,7 @@ export class LatchBeam {
         return;
       }
     }
-    if (fromPos) this.emitBeamSparks(fromPos);
+    this.emitBeamSparks(this.pos);
   }
 
   emitImpactSparks() {
@@ -112,12 +118,12 @@ export class LatchBeam {
     );
   }
 
-  render(fromPos) {
+  render() {
     if (!this.target) return;
     const cfg = weapons.latch;
     const endPos = this.endOffset
       ? this.target.pos.add(this.endOffset)
       : this.target.pos;
-    drawLine(fromPos, endPos, cfg.lineWidth, cfg.color);
+    drawLine(this.pos, endPos, cfg.lineWidth, cfg.color);
   }
 }

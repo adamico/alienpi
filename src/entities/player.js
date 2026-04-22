@@ -56,6 +56,8 @@ export class Player extends BaseEntity {
       { length: weaponsCfg.latch.count },
       () => new LatchBeam(),
     );
+    const latchLocalOffset = this.muzzleLocalOffset(weaponsCfg.latch.nozzle);
+    for (const beam of this.latchBeams) this.addChild(beam, latchLocalOffset);
     this.latchSoundTimer = 0;
 
     // Jet exhaust emitter — parented so the engine syncs its position automatically
@@ -150,11 +152,6 @@ export class Player extends BaseEntity {
     }
 
     super.render();
-
-    if (this.currentWeaponKey === "latch") {
-      const origin = this.latchOrigin();
-      for (const beam of this.latchBeams) beam.render(origin);
-    }
   }
 
   updateMoving() {
@@ -289,9 +286,7 @@ export class Player extends BaseEntity {
       this.latchSoundTimer--;
     }
     this.acquireLatchTargets();
-    const origin = this.latchOrigin();
-    for (const beam of this.latchBeams) beam.tick(origin);
-    this.assignLatchEndOffsets(origin);
+    this.assignLatchEndOffsets(this.pos);
   }
 
   /**
@@ -319,7 +314,7 @@ export class Player extends BaseEntity {
       if (len < 0.001) continue;
       const perp = vec2(-dir.y / len, dir.x / len);
 
-      const span = target.size.x * 0.6; // spread across 60% of target width
+      const span = target.size.x * 0.4; // spread across 60% of target width
       for (let i = 0; i < n; i++) {
         const t = i / (n - 1) - 0.5; // evenly spaced in [-0.5, +0.5]
         beams[i].endOffset = perp.scale(t * span);
@@ -334,7 +329,7 @@ export class Player extends BaseEntity {
    */
   acquireLatchTargets() {
     const cfg = weaponsCfg.latch;
-    const origin = this.latchOrigin();
+    const origin = this.pos;
     const rangeSq = cfg.range * cfg.range;
 
     // Drop targets that are gone, shielded, or out of range so the slot can
@@ -382,11 +377,6 @@ export class Player extends BaseEntity {
       if (beam.target) continue;
       beam.setTarget(candidates[0].o);
     }
-  }
-
-  latchOrigin() {
-    const cfg = weaponsCfg.latch;
-    return this.pos.add(this.muzzleLocalOffset(cfg.nozzle));
   }
 
   takeDamage(amount = 1) {

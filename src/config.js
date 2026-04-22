@@ -83,11 +83,21 @@ export const player = {
 
 const vulcanBullet = {
   sheet: SPRITE_SHEET2_NAME,
-  sprite: "laserRed04.png",
+  sprite: "laserBlue04.png",
   speed: 0.3,
   size: vec2(0.2, 0.2),
   despawnRadius: 0.5,
   hitboxScale: 1.0,
+  mirrorY: true,
+};
+
+const shotgunBullet = {
+  sheet: SPRITE_SHEET_NAME,
+  sprite: "spaceMissiles_038.png",
+  speed: 0.25,
+  size: vec2(0.25, 0.25),
+  despawnRadius: 0.5,
+  hitboxScale: 0.8,
   mirrorY: true,
 };
 
@@ -109,7 +119,7 @@ export const weapons = {
     coneMin: (8 * PI) / 180,
     coneMax: (40 * PI) / 180,
     nozzle: vec2(53.5, 40),
-    bullet: vulcanBullet,
+    bullet: shotgunBullet,
   },
   latch: {
     label: "LATCH",
@@ -118,7 +128,8 @@ export const weapons = {
     range: 15, // max lock distance in world units
     nozzle: vec2(53.5, 40),
     lineWidth: 0.2,
-    color: rgb(0.4, 0.4, 1, 0.9),
+    color: rgb(0.4, 0.8, 1, 0.9),
+    renderOrder: -1,
     sparks: {
       sprites: ["spark_01.png", "spark_02.png", "spark_03.png", "spark_04.png"],
       emitSize: 0.15,
@@ -146,9 +157,9 @@ export const weapons = {
       emitTime: 0.05,
       emitRate: 300,
       coneAngle: PI,
-      colorStartA: rgb(0.4, 0.4, 1, 1),
-      colorStartB: rgb(0.2, 0.2, 1, 1),
-      colorEndA: rgb(0.1, 0.1, 1),
+      colorStartA: rgb(0.4, 0.8, 1, 1),
+      colorStartB: rgb(0.2, 0.4, 1, 1),
+      colorEndA: rgb(0.1, 0.2, 1),
       colorEndB: rgb(0.05, 0.05, 0.5, 0),
       particleTime: 0.25,
       sizeStart: 1.18,
