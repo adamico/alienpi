@@ -49,6 +49,8 @@ export class Bullet extends BaseEntity {
       this.visualSize.length() * 0.5,
       engine.minCollisionRadius,
     );
+
+    this.playDestroySound = false;
   }
 
   /**

@@ -25,11 +25,7 @@ import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { player } from "./player.js";
-import {
-  soundExplosion1,
-  soundExplosion2,
-  soundBossBeam,
-} from "../sounds.js";
+import { soundBossBeam } from "../sounds.js";
 
 /**
  * Defensive pods that orbit the boss
@@ -230,7 +226,7 @@ export class BossOrbiter extends BaseEntity {
 
   destroy() {
     if (this.destroyed) return;
-    soundExplosion1.play();
+
     // Cosmetic explosion effect
     new ParticleEmitter(
       this.pos,
@@ -350,8 +346,6 @@ export class BossMissile extends BaseEntity {
 
     // Lifetime expiry — detonate (Large explosion)
     if (this.lifeTimer.elapsed()) {
-      soundExplosion2.play();
-      soundExplosion1.play();
       new MissileExplosion(this.pos.copy(), 10);
 
       this.destroy();
@@ -389,7 +383,6 @@ export class BossMissile extends BaseEntity {
       if (result === "destroy") other.destroy();
       this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
       if (this.hp <= 0) {
-        soundExplosion1.play();
         new MissileExplosion(this.pos.copy(), 3);
         this.destroy();
       }

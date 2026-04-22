@@ -9,6 +9,7 @@ import {
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import { engine, system } from "../config.js";
 import { sprites } from "../sprites.js";
+import { soundExplosion1, soundExplosion2 } from "../sounds.js";
 
 /**
  * Base class for game objects that need visual size distinct from hitbox size.
@@ -57,6 +58,7 @@ export class BaseEntity extends EngineObject {
 
     this.invulnerable = false;
     this.invulnerableTimer = new Timer();
+    this.playDestroySound = true;
   }
 
   /**
@@ -110,6 +112,14 @@ export class BaseEntity extends EngineObject {
     if (this.invulnerable && this.invulnerableTimer.elapsed()) {
       this.invulnerable = false;
     }
+  }
+
+  destroy() {
+    if (this.playDestroySound) {
+      soundExplosion2.play();
+      soundExplosion1.play();
+    }
+    super.destroy();
   }
 
   render() {
