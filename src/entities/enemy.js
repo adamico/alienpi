@@ -1,8 +1,4 @@
-import {
-  vec2,
-  engineObjects,
-  Color,
-} from "../engine.js";
+import { vec2, engineObjects, Color } from "../engine.js";
 import { system, enemy as enemyCfg } from "../config.js";
 import { Bullet } from "./bullet.js";
 import { player } from "./player.js";
@@ -25,7 +21,6 @@ export class Enemy extends BaseEntity {
     this.typeKey = typeKey;
     this.cfg = cfg;
     this.hp = cfg.hp;
-    this.color = cfg.color.copy();
 
     this.setCollision(true);
     this.mass = 1;

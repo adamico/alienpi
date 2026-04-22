@@ -183,9 +183,9 @@ export const weapons = {
 
 export const enemyBullet = {
   sheet: SPRITE_SHEET_NAME,
-  sprite: "spaceMissiles_001.png",
+  sprite: "spaceMissiles_009.png",
   speed: 0.3,
-  size: vec2(0.3, 0.5),
+  size: vec2(0.2, 0.2),
   despawnRadius: 0.5,
   hitboxScale: 1.0,
 };
@@ -221,7 +221,6 @@ export const enemy = {
       speed: 0.1,
       stopToFire: true,
       fireRate: 60,
-      color: rgb(0.5, 1, 0.5),
       hitboxScale: 0.8,
       mirrorY: true,
     },
@@ -230,7 +229,6 @@ export const enemy = {
       sprite: "spaceShips_005.png",
       hp: 8,
       speed: 0.05,
-      color: rgb(0.8, 0.5, 1),
       hitboxScale: 0.8,
       mirrorY: true,
     },
@@ -240,7 +238,6 @@ export const enemy = {
       hp: 5,
       speed: 0.2,
       diving: true,
-      color: rgb(1, 0.5, 0.5),
       hitboxScale: 0.8,
       mirrorY: true,
     },
@@ -252,7 +249,7 @@ export const enemy = {
       size: vec2(2, 2),
       hitboxScale: 0.8,
       mirrorY: true,
-      spawnInterval: 2,
+      spawnInterval: 15,
     },
   },
   flocking: {
