@@ -2,7 +2,7 @@ import {
   vec2,
   engineObjects,
   Color,
-} from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
+} from "../engine.js";
 import { system, enemy as enemyCfg } from "../config.js";
 import { Bullet } from "./bullet.js";
 import { player } from "./player.js";

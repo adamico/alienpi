@@ -6,7 +6,7 @@ import {
   rand,
   setCameraPos,
   setBlendMode,
-} from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
+} from "../engine.js";
 import { engine, system } from "../config.js";
 import { sprites } from "../sprites.js";
 import { soundExplosion1, soundExplosion2 } from "../sounds.js";

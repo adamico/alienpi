@@ -3,7 +3,7 @@ import {
   TileInfo,
   TextureInfo,
   textureInfos,
-} from "../node_modules/littlejsengine/dist/littlejs.esm.js";
+} from "./engine.js";
 
 const spritesMap = new Map();
 

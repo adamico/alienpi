@@ -2,7 +2,7 @@ import {
   vec2,
   rgb,
   PI,
-} from "../node_modules/littlejsengine/dist/littlejs.esm.js";
+} from "./engine.js";
 
 const ASSET_PATH = "public/assets/";
 const SPRITE_SHEET_NAME = "spaceShooter2_spritesheet";

@@ -6,7 +6,7 @@ import {
   ParticleEmitter,
   PI,
   rand,
-} from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
+} from "../engine.js";
 import { system, weapons } from "../config.js";
 import { sprites } from "../sprites.js";
 import { soundExplosion1 } from "../sounds.js";

@@ -3,7 +3,7 @@ import {
   rand,
   Timer,
   Color,
-} from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
+} from "../engine.js";
 import { enemy as enemyCfg, system } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { Bullet } from "./bullet.js";

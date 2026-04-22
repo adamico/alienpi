@@ -10,7 +10,7 @@ import {
   lerp,
   rand,
   engineObjects,
-} from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
+} from "../engine.js";
 import {
   system,
   engine,

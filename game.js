@@ -21,7 +21,7 @@ import {
   engineObjects,
   time,
   sin,
-} from "./node_modules/littlejsengine/dist/littlejs.esm.js";
+} from "./src/engine.js";
 
 import {
   system,

@@ -2,7 +2,7 @@ import {
   WHITE,
   ParticleEmitter,
   rgb,
-} from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
+} from "../engine.js";
 import {
   engine,
   weapons,

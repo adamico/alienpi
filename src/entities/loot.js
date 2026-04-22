@@ -1,7 +1,7 @@
 import {
   vec2,
   WHITE,
-} from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
+} from "../engine.js";
 import { loot as lootCfg } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";

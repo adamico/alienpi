@@ -5,7 +5,7 @@ import {
   rgb,
   rand,
   PI,
-} from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
+} from "../engine.js";
 import {
   system,
   boss as bossCfg,

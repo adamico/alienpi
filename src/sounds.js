@@ -1,4 +1,4 @@
-import { Sound } from "../node_modules/littlejsengine/dist/littlejs.esm.js";
+import { Sound } from "./engine.js";
 
 export class SoundGenerator extends Sound {
   constructor(params = {}) {
