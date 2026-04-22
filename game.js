@@ -200,7 +200,7 @@ function spawnWave() {
   }
 
   for (let i = 0; i < count; i++) {
-    const pos = vec2(rand(system.levelSize.x), system.levelSize.y + rand(5));
+    const pos = vec2(rand(system.levelSize.x), system.levelSize.y + rand(1));
     new Enemy(pos, typeKey, waveIndex);
   }
 }

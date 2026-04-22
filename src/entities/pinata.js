@@ -30,9 +30,10 @@ export class Pinata extends BaseEntity {
       if (this.moveTimer.elapsed()) {
         this.state = "DASHING";
         const margin = 2;
+        const bottomMargin = 10;
         this.targetPos = vec2(
           rand(margin, system.levelSize.x - margin),
-          rand(margin, system.levelSize.y - margin),
+          rand(bottomMargin, system.levelSize.y - margin),
         );
       }
     } else if (this.state === "DASHING") {
