@@ -46,10 +46,13 @@ export class LatchBeam extends EngineObject {
       return;
     }
     const cfg = weapons.latch;
+    const level = this.parent?.weaponLevels?.latch || 1;
+    const interval = cfg.cooldown[level - 1];
+    const dmg = cfg.damage[level - 1];
+
     this.damageFrame++;
-    if (this.damageFrame >= cfg.damageInterval) {
+    if (this.damageFrame >= interval) {
       this.damageFrame = 0;
-      const dmg = cfg.damage ?? 1;
       this.target.hp -= dmg;
       recordDamage("latch", dmg, this.target);
       if (typeof this.target.applyHitEffect === "function") {

@@ -140,6 +140,7 @@ export const weapons = {
     label: "LATCH",
     count: [3, 5, 7], // max simultaneous beams
     cooldown: [40, 32, 24], // frames between damage ticks per beam
+    damage: [1, 1, 1],
     range: [8, 12, 16], // max lock distance in world units
     nozzle: vec2(53.5, 40),
     lineWidth: 0.2,
@@ -276,6 +277,23 @@ export const enemy = {
     alignment: 0.02,
     playerAttraction: 0.005,
   },
+  formations: {
+    vShape: [
+      vec2(0, 0),
+      vec2(-1.5, 1.5),
+      vec2(1.5, 1.5),
+      vec2(-3, 3),
+      vec2(3, 3),
+    ],
+    line: [vec2(-3, 0), vec2(-1.5, 0), vec2(0, 0), vec2(1.5, 0), vec2(3, 0)],
+    single: [vec2(0, 0)],
+  },
+  paths: {
+    enterAndStay: [vec2(0, -6)],
+    zigZag: [vec2(-5, -5), vec2(5, -10), vec2(0, -15)],
+    sweepLeft: [vec2(-8, -5), vec2(-8, -20)],
+    sweepRight: [vec2(8, -5), vec2(8, -20)],
+  },
 };
 
 export const boss = {
@@ -345,10 +363,10 @@ export const loot = {
 };
 
 export const settings = {
-  musicEnabled: false,
+  musicEnabled: true,
   enableDPSLog: false,
   playBossOnly: false,
-  customDebug: false,
+  customDebug: true,
 };
 
 export const ui = {

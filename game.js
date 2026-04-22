@@ -36,7 +36,11 @@ import {
 import { spawnPlayer } from "./src/entities/player.js";
 import { Enemy } from "./src/entities/enemy.js";
 import { Boss } from "./src/entities/boss.js";
-import { soundBossMusic } from "./src/sounds.js";
+import {
+  soundBossMusic,
+  soundMusicIntro,
+  soundMusicVerse,
+} from "./src/sounds.js";
 import { Pinata } from "./src/entities/pinata.js";
 import { enemy as enemyCfg } from "./src/config.js";
 import { Boundary } from "./src/entities/boundary.js";
@@ -49,6 +53,10 @@ let currentBoss = null;
 let player = null;
 let pinataTimer = new Timer(enemyCfg.swarm.pinata.spawnInterval);
 const boundaries = [];
+
+let gameMusicIntroStarted = false;
+let gameMusicVerseStarted = false;
+let activeMusicInstance = null;
 
 async function gameInit() {
   setupSharpenShader();
@@ -142,6 +150,7 @@ function gameUpdate() {
   if (system.enableDPSLog) updateDPSLog();
 
   updatePinata();
+  updateGameMusic();
   updateBossMusic();
   updateWaves();
 }
@@ -182,6 +191,12 @@ function updatePinata() {
 function updateBossMusic() {
   if (!bossSpawned) return;
   if (settings.musicEnabled && soundBossMusic.isLoaded() && !bossMusicPlaying) {
+    // Stop level music
+    if (activeMusicInstance) {
+      activeMusicInstance.stop();
+      activeMusicInstance = null;
+    }
+
     const inst = soundBossMusic.playMusic(1.2);
     if (inst && inst.isPlaying()) {
       bossMusicPlaying = true;
@@ -189,21 +204,94 @@ function updateBossMusic() {
   }
 }
 
-function spawnWave() {
-  const count = 5 + Math.floor(waveIndex / 3);
-  let typeKey;
-  if (waveIndex < 3) {
-    typeKey = "type1";
-  } else if (waveIndex < 6) {
-    typeKey = rand() < 0.6 ? "type1" : "type3";
-  } else {
-    const typeKeys = ["type1", "type2", "type3"];
-    typeKey = typeKeys[Math.floor(rand(typeKeys.length))];
-  }
+function updateGameMusic() {
+  if (bossSpawned || !settings.musicEnabled) return;
 
-  for (let i = 0; i < count; i++) {
-    const pos = vec2(rand(system.levelSize.x), system.levelSize.y + rand(1));
-    new Enemy(pos, typeKey, waveIndex);
+  if (!gameMusicIntroStarted) {
+    if (soundMusicIntro.isLoaded()) {
+      activeMusicInstance = soundMusicIntro.playMusic(0.8, false); // Play once
+      gameMusicIntroStarted = true;
+    }
+  } else if (!gameMusicVerseStarted) {
+    // Wait for intro to finish
+    if (!activeMusicInstance || !activeMusicInstance.isPlaying()) {
+      activeMusicInstance = soundMusicVerse.playMusic(0.8, true); // Start loop
+      gameMusicVerseStarted = true;
+    }
+  }
+}
+
+function spawnWave() {
+  const patterns = [
+    // V-Shape Center
+    () => ({
+      groups: [
+        {
+          type: "type1",
+          formation: "vShape",
+          path: "enterAndStay",
+          spawn: vec2(system.levelSize.x / 2, system.levelSize.y + 2),
+        },
+      ],
+    }),
+    // Split Sweep
+    () => ({
+      groups: [
+        {
+          type: "type1",
+          formation: "line",
+          path: "sweepRight",
+          spawn: vec2(-5, system.levelSize.y),
+        },
+        {
+          type: "type1",
+          formation: "line",
+          path: "sweepLeft",
+          spawn: vec2(system.levelSize.x + 5, system.levelSize.y - 4),
+        },
+      ],
+    }),
+    // Heavy Single ZigZag
+    () => ({
+      groups: [
+        {
+          type: "type2",
+          formation: "single",
+          path: "zigZag",
+          spawn: vec2(system.levelSize.x / 2, system.levelSize.y + 2),
+        },
+      ],
+    }),
+    // Dive Bomber Swarm (retain some classic behavior)
+    () => ({
+      groups: [
+        {
+          type: "type3",
+          formation: "vShape",
+          path: "enterAndStay",
+          spawn: vec2(system.levelSize.x / 2, system.levelSize.y + 2),
+        },
+      ],
+    }),
+  ];
+
+  // Pick a random pattern
+  const patternFunc = patterns[Math.floor(rand(patterns.length))];
+  const pattern = patternFunc();
+
+  for (const group of pattern.groups) {
+    const formationOffsets = enemyCfg.formations[group.formation];
+    const pathWaypoints = enemyCfg.paths[group.path];
+
+    for (const offset of formationOffsets) {
+      const startPos = group.spawn.add(offset);
+      const e = new Enemy(startPos, group.type, waveIndex);
+
+      // Convert relative path to absolute
+      if (pathWaypoints) {
+        e.path = pathWaypoints.map((wp) => startPos.add(wp));
+      }
+    }
   }
 }
 

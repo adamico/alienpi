@@ -120,7 +120,7 @@ export const soundShotgun = new Sound([
 /* eslint-enable no-sparse-arrays */
 
 export const soundExplosion1 = new Sound([
-  2.1,
+  0.8,
   ,
   55,
   0.07,
@@ -144,7 +144,7 @@ export const soundExplosion1 = new Sound([
 ]); // Explosion 444 - Mutation 4
 
 export const soundExplosion2 = new Sound([
-  1.2,
+  0.8,
   ,
   31,
   0.03,
@@ -212,3 +212,5 @@ export const soundBossBeam = new Sound([
 export const soundBossMusic = new Sound(
   "public/assets/sounds/Lasermelon%20Boss.mp3",
 );
+export const soundMusicIntro = new Sound("public/assets/sounds/Intro.wav");
+export const soundMusicVerse = new Sound("public/assets/sounds/VerseA.wav");

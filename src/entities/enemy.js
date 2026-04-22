@@ -31,16 +31,44 @@ export class Enemy extends BaseEntity {
     this.isDiving = false;
     this.isWaveEnemy = true;
     this.isEnemy = true;
+
+    this.path = null;
+    this.pathIndex = 0;
   }
 
   update() {
+    this.applyTrajectory();
     this.applyFlocking();
     this.applyBehavior();
     super.update();
   }
 
+  applyTrajectory() {
+    if (!this.path || this.pathIndex >= this.path.length) {
+      this.velocity = this.velocity.scale(0.9);
+      return;
+    }
+
+    const target = this.path[this.pathIndex];
+    const toTarget = target.subtract(this.pos);
+    const dist = toTarget.length();
+
+    if (dist < 0.2) {
+      this.pathIndex++;
+      return;
+    }
+
+    const moveDir = toTarget.normalize();
+    const accel = 0.01;
+    this.velocity = this.velocity.add(moveDir.scale(accel));
+
+    if (this.velocity.length() > this.cfg.speed) {
+      this.velocity = this.velocity.normalize().scale(this.cfg.speed);
+    }
+  }
+
   applyFlocking() {
-    if (!player) return;
+    if (!player || !this.cfg.diving) return;
 
     let cohesion = vec2(0);
     let separation = vec2(0);
