@@ -78,12 +78,21 @@ export const player = {
     sizeStart: 1, // particle size at birth
     sizeStartBoost: 0.5, // extra size added when thrusting up
   },
+  weaponSystem: {
+    mode: "INDIVIDUAL", // "INDIVIDUAL" (loot per weapon) or "ACTIVE" (star loot for current weapon)
+    maxLevel: 3,
+    startLevels: {
+      vulcan: 1,
+      shotgun: 0,
+      latch: 0,
+    },
+  },
 };
 
 const vulcanBullet = {
   sheet: SPRITE_SHEET2_NAME,
   sprite: "laserBlue04.png",
-  speed: 0.8,
+  speed: [0.5, 0.65, 0.8], // Level-based speeds
   size: vec2(0.2, 0.2),
   despawnRadius: 0.5,
   hitboxScale: 1.0,
@@ -105,19 +114,23 @@ const shotgunBullet = {
 export const weapons = {
   vulcan: {
     label: "VULCAN",
-    cooldown: 4,
+    cooldown: [12, 8, 4],
     damage: 0.6,
-    cannonOffsets: [vec2(22, 40), vec2(53.5, 40), vec2(85, 40)],
+    cannonOffsets: [
+      [vec2(53.5, 40)], // Level 1
+      [vec2(22, 40), vec2(85, 40)], // Level 2
+      [vec2(22, 40), vec2(53.5, 40), vec2(85, 40)], // Level 3
+    ],
     spawnJitterX: 0.05, // ± world units of random x jitter at spawn
     bullet: vulcanBullet,
     playerSprite: "playerShip2_blue.png",
   },
   shotgun: {
     label: "SHOTGUN",
-    cooldown: 24,
-    count: 7,
+    cooldown: [40, 32, 24],
+    count: [3, 5, 7],
     pierce: 3,
-    damage: 0.7,
+    damage: [0.4, 0.55, 0.7],
     coneBase: (40 * PI) / 180,
     coneMin: (16 * PI) / 180,
     coneMax: (80 * PI) / 180,
@@ -127,9 +140,9 @@ export const weapons = {
   },
   latch: {
     label: "LATCH",
-    count: 7, // max simultaneous beams
-    damageInterval: 24, // frames between damage ticks per beam
-    range: 16, // max lock distance in world units
+    count: [3, 5, 7], // max simultaneous beams
+    cooldown: [40, 32, 24], // frames between damage ticks per beam
+    range: [8, 12, 16], // max lock distance in world units
     nozzle: vec2(53.5, 40),
     lineWidth: 0.2,
     color: rgb(0.4, 1, 0.4, 0.9),

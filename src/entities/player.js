@@ -51,12 +51,19 @@ export class Player extends BaseEntity {
     this.isPlayer = true;
     this.mass = 1;
     this.damping = playerCfg.damping;
-    this.weaponIndex = 0;
-    this.powerLevel = "max"; // scaffolding for future power tiers
-    this.latchBeams = Array.from(
-      { length: weaponsCfg.latch.count },
-      () => new LatchBeam(),
-    );
+    
+    const { startLevels, maxLevel } = playerCfg.weaponSystem;
+    this.weaponLevels = { ...startLevels };
+    this.maxLevel = maxLevel;
+
+    // Start with the first available (level > 0) weapon index
+    this.weaponIndex = WEAPON_ORDER.findIndex(key => this.weaponLevels[key] > 0);
+    if (this.weaponIndex === -1) this.weaponIndex = 0;
+
+    // Pre-allocate max possible latch beams
+    const maxLatchBeams = Math.max(...weaponsCfg.latch.count);
+    this.latchBeams = Array.from({ length: maxLatchBeams }, () => new LatchBeam());
+    
     const latchLocalOffset = this.muzzleLocalOffset(weaponsCfg.latch.nozzle);
     for (const beam of this.latchBeams) this.addChild(beam, latchLocalOffset);
     this.latchSoundTimer = 0;
@@ -102,6 +109,26 @@ export class Player extends BaseEntity {
     return weaponsCfg[this.currentWeaponKey];
   }
 
+  get currentWeaponLevel() {
+    return this.weaponLevels[this.currentWeaponKey];
+  }
+
+  upgradeWeapon(key) {
+    // Mode B: Always upgrade currently active weapon if key is generic or if mode is active
+    const targetKey = playerCfg.weaponSystem.mode === "ACTIVE" ? this.currentWeaponKey : key;
+    if (!targetKey || !this.weaponLevels[targetKey] === undefined) return;
+
+    if (this.weaponLevels[targetKey] < this.maxLevel) {
+      this.weaponLevels[targetKey]++;
+      console.log(`[WEAPON] ${targetKey} leveled up to ${this.weaponLevels[targetKey]}`);
+      
+      // If we just enabled a weapon that was level 0, we might need to refresh state
+      if (this.weaponLevels[targetKey] === 1 && targetKey === this.currentWeaponKey) {
+        this.updateWeaponSprite();
+      }
+    }
+  }
+
   update() {
     this.updateWeaponSwitch();
     this.updateMoving();
@@ -112,22 +139,32 @@ export class Player extends BaseEntity {
 
   updateWeaponSwitch() {
     if (keyWasPressed(system.switchKey)) {
-      this.weaponIndex = (this.weaponIndex + 1) % WEAPON_ORDER.length;
-      this.shootTimer = 0;
-
-      // Update player sprite based on weapon
-      const spriteName = this.currentWeapon.playerSprite;
-      if (spriteName) {
-        this.sprite = sprites.get(spriteName, playerCfg.sheet);
-        // Refresh sizes in case the sprite dimensions differ
-        if (this.sprite) {
-          this.visualSize = this.sprite.size.scale(engine.worldScale);
-          this.size = this.visualSize.scale(this.hitboxScale);
+      // Find the next weapon with level > 0
+      let nextIndex = this.weaponIndex;
+      for (let i = 0; i < WEAPON_ORDER.length; i++) {
+        nextIndex = (nextIndex + 1) % WEAPON_ORDER.length;
+        if (this.weaponLevels[WEAPON_ORDER[nextIndex]] > 0) {
+          this.weaponIndex = nextIndex;
+          break;
         }
       }
 
+      this.shootTimer = 0;
+      this.updateWeaponSprite();
+
       // Cycling away from latch breaks any active tethers.
       if (this.currentWeaponKey !== "latch") this.clearLatchBeams();
+    }
+  }
+
+  updateWeaponSprite() {
+    const spriteName = this.currentWeapon.playerSprite;
+    if (spriteName) {
+      this.sprite = sprites.get(spriteName, playerCfg.sheet);
+      if (this.sprite) {
+        this.visualSize = this.sprite.size.scale(engine.worldScale);
+        this.size = this.visualSize.scale(this.hitboxScale);
+      }
     }
   }
 
@@ -185,6 +222,9 @@ export class Player extends BaseEntity {
   updateShooting() {
     if (this.shootTimer > 0) this.shootTimer--;
 
+    const level = this.currentWeaponLevel;
+    if (level === 0) return; // Weapon disabled
+
     const key = this.currentWeaponKey;
     const firing = keyIsDown(system.shootKey);
 
@@ -198,7 +238,7 @@ export class Player extends BaseEntity {
     if (key === "vulcan") this.fireVulcan();
     else if (key === "shotgun") this.fireShotgun();
 
-    this.shootTimer = this.currentWeapon.cooldown;
+    this.shootTimer = this.currentWeapon.cooldown[level - 1];
   }
 
   /**
@@ -248,12 +288,16 @@ export class Player extends BaseEntity {
   fireVulcan() {
     soundShoot.play();
     const cfg = weaponsCfg.vulcan;
-    for (const muzzle of cfg.cannonOffsets) {
+    const level = this.weaponLevels.vulcan;
+    const offsets = cfg.cannonOffsets[level - 1];
+    const bulletSpeed = cfg.bullet.speed[level - 1];
+
+    for (const muzzle of offsets) {
       const offset = this.muzzleLocalOffset(muzzle);
       const jitter = vec2(rand(-cfg.spawnJitterX, cfg.spawnJitterX), 0);
       const b = new Bullet(
         this.pos.add(offset).add(jitter),
-        vec2(0, cfg.bullet.speed),
+        vec2(0, bulletSpeed),
         "player",
         cfg.bullet,
         cfg.damage,
@@ -266,6 +310,7 @@ export class Player extends BaseEntity {
   fireShotgun() {
     soundShotgun.play();
     const cfg = weaponsCfg.shotgun;
+    const level = this.weaponLevels.shotgun;
     const yInput = keyDirection().y;
     let cone = cfg.coneBase;
     if (yInput > 0) cone = lerp(cfg.coneBase, cfg.coneMax, yInput);
@@ -274,14 +319,16 @@ export class Player extends BaseEntity {
     const nozzleOffset = this.muzzleLocalOffset(cfg.nozzle);
     const spawnPos = this.pos.add(nozzleOffset);
     const speed = cfg.bullet.speed;
+    const count = cfg.count[level - 1];
+    const damage = cfg.damage[level - 1];
 
-    for (let i = 0; i < cfg.count; i++) {
+    for (let i = 0; i < count; i++) {
       // Evenly distribute across [-cone/2, +cone/2]
-      const t = cfg.count === 1 ? 0.5 : i / (cfg.count - 1);
+      const t = count === 1 ? 0.5 : i / (count - 1);
       const angle = -cone / 2 + t * cone;
       // Rotate the base upward velocity by `angle` around Z
       const vel = vec2(Math.sin(angle) * speed, Math.cos(angle) * speed);
-      const b = new Bullet(spawnPos, vel, "player", cfg.bullet, cfg.damage);
+      const b = new Bullet(spawnPos, vel, "player", cfg.bullet, damage);
       b.weaponKey = "shotgun";
       b.pierce = cfg.pierce;
       b.angle = angle; // sprite leans with its direction
@@ -291,14 +338,16 @@ export class Player extends BaseEntity {
   }
 
   updateLatchBeams(firing) {
+    const level = this.weaponLevels.latch;
     if (!firing) {
       this.clearLatchBeams();
       this.latchSoundTimer = 0;
       return;
     }
+    const cooldown = weaponsCfg.latch.cooldown[level - 1];
     if (this.latchSoundTimer <= 0) {
       soundLatch.play();
-      this.latchSoundTimer = 15; // retrigger ≈ sound length in frames
+      this.latchSoundTimer = cooldown;
     } else {
       this.latchSoundTimer--;
     }
@@ -346,8 +395,11 @@ export class Player extends BaseEntity {
    */
   acquireLatchTargets() {
     const cfg = weaponsCfg.latch;
+    const level = this.weaponLevels.latch;
+    const count = cfg.count[level - 1];
+    const range = cfg.range[level - 1];
     const origin = this.pos;
-    const rangeSq = cfg.range * cfg.range;
+    const rangeSq = range * range;
 
     // Drop targets that are gone, shielded, or out of range so the slot can
     // pick another.
@@ -377,9 +429,11 @@ export class Player extends BaseEntity {
     candidates.sort((a, b) => a.dSq - b.dSq);
 
     // Pass 1: try to give each idle beam a unique target (closest first).
+    // We only use up to `count` beams.
     const used = new Set(this.latchBeams.map((b) => b.target).filter(Boolean));
     let ci = 0;
-    for (const beam of this.latchBeams) {
+    for (let i = 0; i < count; i++) {
+      const beam = this.latchBeams[i];
       if (beam.target) continue;
       while (ci < candidates.length && used.has(candidates[ci].o)) ci++;
       if (ci >= candidates.length) break;
@@ -388,6 +442,10 @@ export class Player extends BaseEntity {
       ci++;
     }
 
+    // Ensure unused beams for this level are cleared
+    for (let i = count; i < this.latchBeams.length; i++) {
+      this.latchBeams[i].clear();
+    }
   }
 
   takeDamage(amount = 1) {

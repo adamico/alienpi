@@ -2,7 +2,7 @@ import {
   vec2,
   WHITE,
 } from "../engine.js";
-import { loot as lootCfg } from "../config.js";
+import { loot as lootCfg, player as playerCfg } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
 
@@ -51,7 +51,31 @@ export class Loot extends BaseEntity {
   }
 
   onCollect() {
-    // TODO: Implement actual powerup effects
+    if (!player || player.destroyed) return;
+
+    if (playerCfg.weaponSystem.mode === "ACTIVE") {
+      // In ACTIVE mode, only the star upgrades the active weapon.
+      if (this.typeKey === "star") {
+        player.upgradeWeapon();
+      }
+    } else {
+      // In INDIVIDUAL mode, specific bolts upgrade specific weapons.
+      const mapping = {
+        blue: "vulcan",
+        green: "latch",
+        yellow: "shotgun",
+      };
+      
+      if (this.typeKey === "star") {
+        // Star acts as a wild card/active upgrade even in individual mode
+        player.upgradeWeapon();
+      } else {
+        const weaponKey = mapping[this.typeKey];
+        if (weaponKey) {
+          player.upgradeWeapon(weaponKey);
+        }
+      }
+    }
   }
 
   collideWithObject(other) {
