@@ -92,7 +92,7 @@ const vulcanBullet = {
 
 const shotgunBullet = {
   sheet: SPRITE_SHEET_NAME,
-  sprite: "spaceMissiles_038.png",
+  sprite: "spaceMissiles_037.png",
   speed: 0.5,
   size: vec2(0.25, 0.25),
   despawnRadius: 0.5,
@@ -110,6 +110,7 @@ export const weapons = {
     cannonOffsets: [vec2(22, 40), vec2(53.5, 40), vec2(85, 40)],
     spawnJitterX: 0.05, // ± world units of random x jitter at spawn
     bullet: vulcanBullet,
+    playerSprite: "playerShip2_blue.png",
   },
   shotgun: {
     label: "SHOTGUN",
@@ -122,6 +123,7 @@ export const weapons = {
     coneMax: (80 * PI) / 180,
     nozzle: vec2(53.5, 40),
     bullet: shotgunBullet,
+    playerSprite: "playerShip2_orange.png",
   },
   latch: {
     label: "LATCH",
@@ -130,7 +132,7 @@ export const weapons = {
     range: 16, // max lock distance in world units
     nozzle: vec2(53.5, 40),
     lineWidth: 0.2,
-    color: rgb(0.4, 0.8, 1, 0.9),
+    color: rgb(0.4, 1, 0.4, 0.9),
     renderOrder: -1,
     sparks: {
       sprites: ["spark_01.png", "spark_02.png", "spark_03.png", "spark_04.png"],
@@ -138,10 +140,10 @@ export const weapons = {
       emitTime: 0.08,
       emitRate: 80,
       coneAngle: PI,
-      colorStartA: rgb(1, 0.8, 0.5, 1),
-      colorStartB: rgb(1, 0.4, 0.2, 1),
-      colorEndA: rgb(1, 0.2, 0.1, 0),
-      colorEndB: rgb(0.6, 0.1, 0.05, 0),
+      colorStartA: rgb(0, 1, 0.5, 1),
+      colorStartB: rgb(0, 1, 0.2, 1),
+      colorEndA: rgb(0, 1, 0.1, 0),
+      colorEndB: rgb(0, 0.6, 0.05, 0),
       particleTime: 0.35,
       sizeStart: 0.35,
       sizeEnd: 0.05,
@@ -159,10 +161,10 @@ export const weapons = {
       emitTime: 0.05,
       emitRate: 300,
       coneAngle: PI,
-      colorStartA: rgb(0.4, 0.8, 1, 1),
-      colorStartB: rgb(0.2, 0.4, 1, 1),
-      colorEndA: rgb(0.1, 0.2, 1),
-      colorEndB: rgb(0.05, 0.05, 0.5, 0),
+      colorStartA: rgb(0, 1, 0.5, 1),
+      colorStartB: rgb(0, 1, 0.2, 1),
+      colorEndA: rgb(0, 1, 0.1, 0),
+      colorEndB: rgb(0, 0.6, 0.05, 0),
       particleTime: 0.25,
       sizeStart: 1.18,
       sizeEnd: 0.2,
@@ -178,6 +180,7 @@ export const weapons = {
       renderOrder: 1, // renderOrder
       localSpace: true, // localSpace
     },
+    playerSprite: "playerShip2_green.png",
   },
 };
 

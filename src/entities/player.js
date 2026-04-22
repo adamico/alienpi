@@ -37,7 +37,7 @@ export class Player extends BaseEntity {
   constructor() {
     super(
       vec2(system.levelSize.x / 2, 1),
-      playerCfg.sprite,
+      weaponsCfg[WEAPON_ORDER[0]].playerSprite || playerCfg.sprite,
       playerCfg.sheet,
       playerCfg.hitboxScale,
       null,
@@ -114,6 +114,18 @@ export class Player extends BaseEntity {
     if (keyWasPressed(system.switchKey)) {
       this.weaponIndex = (this.weaponIndex + 1) % WEAPON_ORDER.length;
       this.shootTimer = 0;
+
+      // Update player sprite based on weapon
+      const spriteName = this.currentWeapon.playerSprite;
+      if (spriteName) {
+        this.sprite = sprites.get(spriteName, playerCfg.sheet);
+        // Refresh sizes in case the sprite dimensions differ
+        if (this.sprite) {
+          this.visualSize = this.sprite.size.scale(engine.worldScale);
+          this.size = this.visualSize.scale(this.hitboxScale);
+        }
+      }
+
       // Cycling away from latch breaks any active tethers.
       if (this.currentWeaponKey !== "latch") this.clearLatchBeams();
     }
