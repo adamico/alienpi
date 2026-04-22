@@ -149,7 +149,7 @@ function gameUpdate() {
 function updateWaves() {
   if (waveTimer.elapsed()) {
     spawnWave();
-    waveTimer.set(5);
+    waveTimer.set(12);
     waveIndex++;
 
     if (waveIndex > 10 && !bossSpawned) {
@@ -188,13 +188,20 @@ function updateBossMusic() {
 }
 
 function spawnWave() {
-  const count = 5 + Math.floor(waveIndex / 2);
-  const typeKeys = ["type1", "type2", "type3"];
-  const typeKey = typeKeys[Math.floor(rand(typeKeys.length))];
+  const count = 5 + Math.floor(waveIndex / 3);
+  let typeKey;
+  if (waveIndex < 3) {
+    typeKey = "type1";
+  } else if (waveIndex < 6) {
+    typeKey = rand() < 0.6 ? "type1" : "type3";
+  } else {
+    const typeKeys = ["type1", "type2", "type3"];
+    typeKey = typeKeys[Math.floor(rand(typeKeys.length))];
+  }
 
   for (let i = 0; i < count; i++) {
     const pos = vec2(rand(system.levelSize.x), system.levelSize.y + rand(5));
-    new Enemy(pos, typeKey);
+    new Enemy(pos, typeKey, waveIndex);
   }
 }
 

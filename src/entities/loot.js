@@ -1,7 +1,4 @@
-import {
-  vec2,
-  WHITE,
-} from "../engine.js";
+import { vec2, WHITE } from "../engine.js";
 import { loot as lootCfg, player as playerCfg } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
@@ -63,9 +60,9 @@ export class Loot extends BaseEntity {
       const mapping = {
         blue: "vulcan",
         green: "latch",
-        yellow: "shotgun",
+        red: "shotgun",
       };
-      
+
       if (this.typeKey === "star") {
         // Star acts as a wild card/active upgrade even in individual mode
         player.upgradeWeapon();

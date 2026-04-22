@@ -74,9 +74,10 @@ export class Pinata extends BaseEntity {
     if (this.destroyed) return;
 
     // Spawn loot
-    const lootKeys = playerCfg.weaponSystem.mode === "ACTIVE"
-      ? ["star"]
-      : ["blue", "green", "yellow", "star"];
+    const lootKeys =
+      playerCfg.weaponSystem.mode === "ACTIVE"
+        ? ["star"]
+        : ["blue", "green", "red", "star"];
     const key = lootKeys[Math.floor(rand(lootKeys.length))];
     new Loot(this.pos.copy(), key);
 

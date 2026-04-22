@@ -6,7 +6,7 @@ import { BaseEntity } from "./baseEntity.js";
 import { soundExplosion1 } from "../sounds.js";
 
 export class Enemy extends BaseEntity {
-  constructor(pos, typeKey) {
+  constructor(pos, typeKey, waveIndex = 0) {
     const cfg = enemyCfg.swarm[typeKey];
     super(
       pos,
@@ -21,6 +21,7 @@ export class Enemy extends BaseEntity {
     this.typeKey = typeKey;
     this.cfg = cfg;
     this.hp = cfg.hp;
+    this.waveIndex = waveIndex;
 
     this.setCollision(true);
     this.mass = 1;
@@ -109,7 +110,14 @@ export class Enemy extends BaseEntity {
         this.fireTimer = 0;
       }
 
-      if (this.fireTimer >= this.cfg.fireRate) {
+      // Calculate dynamic fire rate for Type 1 (shooters)
+      // Starts at 240 (4s) and decreases to 60 (1s) by wave 12
+      let fireRate = this.cfg.fireRate;
+      if (this.typeKey === "type1") {
+        fireRate = Math.max(60, 240 - this.waveIndex * 15);
+      }
+
+      if (this.fireTimer >= fireRate) {
         this.fireTimer = 0;
         this.fireBullet();
       }

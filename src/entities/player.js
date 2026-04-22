@@ -51,19 +51,24 @@ export class Player extends BaseEntity {
     this.isPlayer = true;
     this.mass = 1;
     this.damping = playerCfg.damping;
-    
+
     const { startLevels, maxLevel } = playerCfg.weaponSystem;
     this.weaponLevels = { ...startLevels };
     this.maxLevel = maxLevel;
 
     // Start with the first available (level > 0) weapon index
-    this.weaponIndex = WEAPON_ORDER.findIndex(key => this.weaponLevels[key] > 0);
+    this.weaponIndex = WEAPON_ORDER.findIndex(
+      (key) => this.weaponLevels[key] > 0,
+    );
     if (this.weaponIndex === -1) this.weaponIndex = 0;
 
     // Pre-allocate max possible latch beams
     const maxLatchBeams = Math.max(...weaponsCfg.latch.count);
-    this.latchBeams = Array.from({ length: maxLatchBeams }, () => new LatchBeam());
-    
+    this.latchBeams = Array.from(
+      { length: maxLatchBeams },
+      () => new LatchBeam(),
+    );
+
     const latchLocalOffset = this.muzzleLocalOffset(weaponsCfg.latch.nozzle);
     for (const beam of this.latchBeams) this.addChild(beam, latchLocalOffset);
     this.latchSoundTimer = 0;
@@ -114,16 +119,18 @@ export class Player extends BaseEntity {
   }
 
   upgradeWeapon(key) {
-    // Mode B: Always upgrade currently active weapon if key is generic or if mode is active
-    const targetKey = playerCfg.weaponSystem.mode === "ACTIVE" ? this.currentWeaponKey : key;
-    if (!targetKey || !this.weaponLevels[targetKey] === undefined) return;
+    // Default to the current weapon if no key is provided (e.g., from a Star loot)
+    const targetKey = key || this.currentWeaponKey;
+    if (!targetKey || this.weaponLevels[targetKey] === undefined) return;
 
     if (this.weaponLevels[targetKey] < this.maxLevel) {
       this.weaponLevels[targetKey]++;
-      console.log(`[WEAPON] ${targetKey} leveled up to ${this.weaponLevels[targetKey]}`);
-      
-      // If we just enabled a weapon that was level 0, we might need to refresh state
-      if (this.weaponLevels[targetKey] === 1 && targetKey === this.currentWeaponKey) {
+      console.log(
+        `[WEAPON] ${targetKey} leveled up to ${this.weaponLevels[targetKey]}`,
+      );
+
+      // If we just enabled a weapon that was level 0, or upgraded the current one, refresh visuals
+      if (targetKey === this.currentWeaponKey) {
         this.updateWeaponSprite();
       }
     }

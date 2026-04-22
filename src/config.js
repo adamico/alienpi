@@ -243,7 +243,7 @@ export const enemy = {
     type2: {
       sheet: SPRITE_SHEET_NAME,
       sprite: "spaceShips_005.png",
-      hp: 8,
+      hp: 6,
       speed: 0.05,
       hitboxScale: 0.8,
       mirrorY: true,
@@ -251,7 +251,7 @@ export const enemy = {
     type3: {
       sheet: SPRITE_SHEET_NAME,
       sprite: "spaceShips_001.png",
-      hp: 5,
+      hp: 4,
       speed: 0.2,
       diving: true,
       hitboxScale: 0.8,
@@ -260,7 +260,7 @@ export const enemy = {
     pinata: {
       sheet: SPRITE_SHEET_NAME,
       sprite: "spaceShips_006.png",
-      hp: 25,
+      hp: 15,
       moveSpeed: 0.4,
       size: vec2(2, 2),
       hitboxScale: 0.8,
@@ -337,7 +337,7 @@ export const loot = {
   types: {
     blue: { sprite: "powerupBlue_bolt.png", label: "Blue Bolt" },
     green: { sprite: "powerupGreen_bolt.png", label: "Green Bolt" },
-    yellow: { sprite: "powerupYellow_bolt.png", label: "Yellow Bolt" },
+    red: { sprite: "powerupRed_bolt.png", label: "Red Bolt" },
     star: { sprite: "powerupYellow_star.png", label: "Yellow Star" },
   },
 };
