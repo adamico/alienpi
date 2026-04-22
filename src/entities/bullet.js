@@ -12,9 +12,10 @@ import {
 } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
+import { recordDamage } from "../dpsTracker.js";
 
 export class Bullet extends BaseEntity {
-  constructor(pos, vel, type = "player", cfg = null) {
+  constructor(pos, vel, type = "player", cfg = null, damage = 1) {
     let finalCfg = cfg;
     if (!finalCfg) {
       if (type === "enemy") finalCfg = enemyBulletCfg;
@@ -43,6 +44,8 @@ export class Bullet extends BaseEntity {
     this.color = WHITE.copy();
     this.pierce = 0;
     this.hitTargets = null;
+    this.damage = damage;
+    this.weaponKey = null;
 
     // Ensure small bullets are still easy to hit
     this.collisionRadius = Math.max(
@@ -65,6 +68,7 @@ export class Bullet extends BaseEntity {
     if (this.hitTargets && this.hitTargets.has(target)) return "ignore";
     if (!this.hitTargets) this.hitTargets = new Set();
     this.hitTargets.add(target);
+    recordDamage(this.weaponKey, this.damage, target);
     if (this.pierce > 0) {
       this.pierce--;
       return "damage";

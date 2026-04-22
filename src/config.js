@@ -84,7 +84,7 @@ export const player = {
 const vulcanBullet = {
   sheet: SPRITE_SHEET2_NAME,
   sprite: "laserBlue04.png",
-  speed: 0.3,
+  speed: 0.8,
   size: vec2(0.2, 0.2),
   despawnRadius: 0.5,
   hitboxScale: 1.0,
@@ -94,7 +94,7 @@ const vulcanBullet = {
 const shotgunBullet = {
   sheet: SPRITE_SHEET_NAME,
   sprite: "spaceMissiles_038.png",
-  speed: 0.25,
+  speed: 0.5,
   size: vec2(0.25, 0.25),
   despawnRadius: 0.5,
   hitboxScale: 0.8,
@@ -106,26 +106,29 @@ const shotgunBullet = {
 export const weapons = {
   vulcan: {
     label: "VULCAN",
-    cooldown: 8,
+    cooldown: 4,
+    damage: 0.6,
     cannonOffsets: [vec2(22, 40), vec2(53.5, 40), vec2(85, 40)],
+    spawnJitterX: 0.05, // ± world units of random x jitter at spawn
     bullet: vulcanBullet,
   },
   shotgun: {
     label: "SHOTGUN",
-    cooldown: 18,
-    count: 5,
+    cooldown: 24,
+    count: 7,
     pierce: 3,
-    coneBase: (22 * PI) / 180,
-    coneMin: (8 * PI) / 180,
-    coneMax: (40 * PI) / 180,
+    damage: 0.7,
+    coneBase: (40 * PI) / 180,
+    coneMin: (16 * PI) / 180,
+    coneMax: (80 * PI) / 180,
     nozzle: vec2(53.5, 40),
     bullet: shotgunBullet,
   },
   latch: {
     label: "LATCH",
-    count: 3, // max simultaneous beams
-    damageInterval: 10, // frames between damage ticks per beam
-    range: 15, // max lock distance in world units
+    count: 7, // max simultaneous beams
+    damageInterval: 24, // frames between damage ticks per beam
+    range: 16, // max lock distance in world units
     nozzle: vec2(53.5, 40),
     lineWidth: 0.2,
     color: rgb(0.4, 0.8, 1, 0.9),

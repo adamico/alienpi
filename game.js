@@ -18,6 +18,7 @@ import {
   setTilesPixelated,
   PostProcessPlugin,
   EngineObject,
+  engineObjects,
   time,
   sin,
 } from "./node_modules/littlejsengine/dist/littlejs.esm.js";
@@ -28,6 +29,7 @@ import {
   settings,
   starfield as starCfg,
 } from "./src/config.js";
+import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
 import { loadSprites, loadDynamicSpritesheet } from "./src/sprites.js";
 import { spawnPlayer } from "./src/entities/player.js";
 import { Enemy } from "./src/entities/enemy.js";
@@ -87,9 +89,9 @@ async function gameInit() {
   player = spawnPlayer();
   waveTimer.set(3);
 
-  // // Straight to boss level (entryPos = in-level destination, boss spawns above)
-  currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
-  bossSpawned = true;
+  // // // Straight to boss level (entryPos = in-level destination, boss spawns above)
+  // currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
+  // bossSpawned = true;
 
   // Setup level boundaries
   const wallThick = 2;
@@ -125,8 +127,15 @@ async function gameInit() {
 }
 
 function gameUpdate() {
+  const enemies = engineObjects.filter((o) => o instanceof Enemy);
+  setEnemyCount(enemies.length);
+  tickDPSLog();
   if (bossSpawned) {
-    if (settings.musicEnabled && soundBossMusic.isLoaded() && !bossMusicPlaying) {
+    if (
+      settings.musicEnabled &&
+      soundBossMusic.isLoaded() &&
+      !bossMusicPlaying
+    ) {
       const inst = soundBossMusic.playMusic(1.2);
       if (inst && inst.isPlaying()) {
         bossMusicPlaying = true;

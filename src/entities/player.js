@@ -8,6 +8,7 @@ import {
   PI,
   rgb,
   lerp,
+  rand,
   engineObjects,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
 import {
@@ -237,12 +238,15 @@ export class Player extends BaseEntity {
     const cfg = weaponsCfg.vulcan;
     for (const muzzle of cfg.cannonOffsets) {
       const offset = this.muzzleLocalOffset(muzzle);
-      new Bullet(
-        this.pos.add(offset),
+      const jitter = vec2(rand(-cfg.spawnJitterX, cfg.spawnJitterX), 0);
+      const b = new Bullet(
+        this.pos.add(offset).add(jitter),
         vec2(0, cfg.bullet.speed),
         "player",
         cfg.bullet,
+        cfg.damage,
       );
+      b.weaponKey = "vulcan";
       this.spawnMuzzleFlash(offset);
     }
   }
@@ -265,7 +269,8 @@ export class Player extends BaseEntity {
       const angle = -cone / 2 + t * cone;
       // Rotate the base upward velocity by `angle` around Z
       const vel = vec2(Math.sin(angle) * speed, Math.cos(angle) * speed);
-      const b = new Bullet(spawnPos, vel, "player", cfg.bullet);
+      const b = new Bullet(spawnPos, vel, "player", cfg.bullet, cfg.damage);
+      b.weaponKey = "shotgun";
       b.pierce = cfg.pierce;
       b.angle = angle; // sprite leans with its direction
     }
@@ -371,12 +376,6 @@ export class Player extends BaseEntity {
       ci++;
     }
 
-    // Pass 2: fewer enemies than beams — share the nearest enemy rather than
-    // leaving beams idle.
-    for (const beam of this.latchBeams) {
-      if (beam.target) continue;
-      beam.setTarget(candidates[0].o);
-    }
   }
 
   takeDamage(amount = 1) {
