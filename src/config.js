@@ -325,6 +325,7 @@ export const loot = {
     blue: { sprite: "powerupBlue_bolt.png", label: "Blue Bolt" },
     green: { sprite: "powerupGreen_bolt.png", label: "Green Bolt" },
     yellow: { sprite: "powerupYellow_bolt.png", label: "Yellow Bolt" },
+    star: { sprite: "powerupYellow_star.png", label: "Yellow Star" },
   },
 };
 

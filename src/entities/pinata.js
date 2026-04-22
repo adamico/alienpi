@@ -1,9 +1,4 @@
-import {
-  vec2,
-  rand,
-  Timer,
-  Color,
-} from "../engine.js";
+import { vec2, rand, Timer, Color } from "../engine.js";
 import { enemy as enemyCfg, system } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { Bullet } from "./bullet.js";
@@ -79,7 +74,7 @@ export class Pinata extends BaseEntity {
     if (this.destroyed) return;
 
     // Spawn loot
-    const lootKeys = ["blue", "green", "yellow"];
+    const lootKeys = ["star"];
     const key = lootKeys[Math.floor(rand(lootKeys.length))];
     new Loot(this.pos.copy(), key);
 
