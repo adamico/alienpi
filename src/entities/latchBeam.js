@@ -1,8 +1,12 @@
 import {
   drawLine,
   Color,
+  ParticleEmitter,
+  PI,
+  rand,
 } from "../../node_modules/littlejsengine/dist/littlejs.esm.js";
-import { weapons } from "../config.js";
+import { system, weapons } from "../config.js";
+import { sprites } from "../sprites.js";
 import { soundExplosion1 } from "../sounds.js";
 
 /**
@@ -29,7 +33,7 @@ export class LatchBeam {
     this.damageFrame = 0;
   }
 
-  tick() {
+  tick(fromPos) {
     if (!this.target || this.target.destroyed || this.target.hp <= 0) {
       this.target = null;
       return;
@@ -45,12 +49,67 @@ export class LatchBeam {
           duration: 0.05,
         });
       }
+      this.emitImpactSparks();
       if (this.target.hp <= 0) {
         soundExplosion1.play();
         this.target.destroy();
         this.target = null;
+        return;
       }
     }
+    if (fromPos) this.emitBeamSparks(fromPos);
+  }
+
+  emitImpactSparks() {
+    const pos = this.endOffset
+      ? this.target.pos.add(this.endOffset)
+      : this.target.pos;
+    this.spawnSparkEmitter(pos, weapons.latch.sparks);
+  }
+
+  emitBeamSparks(fromPos) {
+    const s = weapons.latch.beamSparks;
+    if (rand() > s.spawnChance) return;
+    const endPos = this.endOffset
+      ? this.target.pos.add(this.endOffset)
+      : this.target.pos;
+    const t = rand();
+    const pos = fromPos.lerp(endPos, t);
+    this.spawnSparkEmitter(pos, s);
+  }
+
+  spawnSparkEmitter(pos, s) {
+    const spriteName = s.sprites[Math.floor(rand(s.sprites.length))];
+    const tile = sprites.get(spriteName, system.particleSheetName);
+    new ParticleEmitter(
+      pos,
+      0,
+      s.emitSize,
+      s.emitTime,
+      s.emitRate,
+      s.coneAngle,
+      tile,
+      s.colorStartA,
+      s.colorStartB,
+      s.colorEndA,
+      s.colorEndB,
+      s.particleTime,
+      s.sizeStart,
+      s.sizeEnd,
+      s.speed,
+      s.angleSpeed,
+      s.damping,
+      s.angleDamping,
+      0, // gravityScale
+      PI, // particleConeAngle
+      s.fadeRate,
+      s.randomness,
+      false, // collideTiles
+      true, // additive
+      s.randomColorLinear,
+      s.renderOrder,
+      s.localSpace,
+    );
   }
 
   render(fromPos) {

@@ -289,8 +289,9 @@ export class Player extends BaseEntity {
       this.latchSoundTimer--;
     }
     this.acquireLatchTargets();
-    for (const beam of this.latchBeams) beam.tick();
-    this.assignLatchEndOffsets(this.latchOrigin());
+    const origin = this.latchOrigin();
+    for (const beam of this.latchBeams) beam.tick(origin);
+    this.assignLatchEndOffsets(origin);
   }
 
   /**

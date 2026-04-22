@@ -44,6 +44,13 @@ export const system = {
     "smoke_09.png",
     "smoke_10.png",
     "circle_01.png",
+    "spark_01.png",
+    "spark_02.png",
+    "spark_03.png",
+    "spark_04.png",
+    "spark_05.png",
+    "spark_06.png",
+    "spark_07.png",
   ].map((p) => `public/assets/particles/${p}`),
   shootKey: "Space",
   focusKey: "ShiftLeft",
@@ -110,8 +117,54 @@ export const weapons = {
     damageInterval: 10, // frames between damage ticks per beam
     range: 15, // max lock distance in world units
     nozzle: vec2(53.5, 40),
-    lineWidth: 0.08,
-    color: rgb(1, 0.4, 0.4, 0.9),
+    lineWidth: 0.2,
+    color: rgb(0.4, 0.4, 1, 0.9),
+    sparks: {
+      sprites: ["spark_01.png", "spark_02.png", "spark_03.png", "spark_04.png"],
+      emitSize: 0.15,
+      emitTime: 0.08,
+      emitRate: 80,
+      coneAngle: PI,
+      colorStartA: rgb(1, 0.8, 0.5, 1),
+      colorStartB: rgb(1, 0.4, 0.2, 1),
+      colorEndA: rgb(1, 0.2, 0.1, 0),
+      colorEndB: rgb(0.6, 0.1, 0.05, 0),
+      particleTime: 0.35,
+      sizeStart: 0.35,
+      sizeEnd: 0.05,
+      speed: 0.12,
+      angleSpeed: 0.3,
+      damping: 0.9,
+      angleDamping: 0.9,
+      fadeRate: 0.3,
+      randomness: 0.5,
+    },
+    beamSparks: {
+      sprites: ["spark_01.png", "spark_02.png", "spark_03.png", "spark_04.png"],
+      spawnChance: 0.6, // per-frame probability of emitting a trail spark
+      emitSize: 0.05,
+      emitTime: 0.05,
+      emitRate: 300,
+      coneAngle: PI,
+      colorStartA: rgb(0.4, 0.4, 1, 1),
+      colorStartB: rgb(0.2, 0.2, 1, 1),
+      colorEndA: rgb(0.1, 0.1, 1),
+      colorEndB: rgb(0.05, 0.05, 0.5, 0),
+      particleTime: 0.25,
+      sizeStart: 1.18,
+      sizeEnd: 0.2,
+      speed: 0.06,
+      angleSpeed: 0.2,
+      damping: 0.9,
+      angleDamping: 0.9,
+      fadeRate: 0.4,
+      randomness: 0.6,
+      collideTiles: false, // collideTiles
+      additive: true, // additive
+      randomColorLinear: true, // randomColorLinear
+      renderOrder: 1, // renderOrder
+      localSpace: true, // localSpace
+    },
   },
 };
 
