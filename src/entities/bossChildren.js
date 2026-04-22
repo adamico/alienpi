@@ -21,7 +21,6 @@ import {
   missile as missileCfg,
   shield as shieldCfg,
 } from "../config.js";
-import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { player } from "./player.js";
@@ -184,7 +183,7 @@ export class BossOrbiter extends BaseEntity {
   }
 
   collideWithObject(other) {
-    if (other instanceof Bullet && !other.isEnemy) {
+    if (other.isBullet && !other.isEnemy) {
       if (this.destroyed || this.hp <= 0) return false;
       const result = other.hitTarget(this);
       if (result === "ignore") return false;
@@ -376,7 +375,7 @@ export class BossMissile extends BaseEntity {
     if (this.destroyed) return false;
 
     // Shot down by player bullet
-    if (other instanceof Bullet && !other.isEnemy) {
+    if (other.isBullet && !other.isEnemy) {
       const result = other.hitTarget(this);
       if (result === "ignore") return false;
       this.hp -= other.damage;
@@ -640,7 +639,7 @@ export class BossShield extends EngineObject {
 
     // Collision sweep
     engineObjectsCallback(this.pos, this.size, (o) => {
-      if (o instanceof Bullet && !o.isEnemy) {
+      if (o.isBullet && !o.isEnemy) {
         if (o.pos.distanceSquared(this.pos) < radius * radius) {
           o.destroy();
           // Hit flash

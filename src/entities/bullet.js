@@ -40,6 +40,7 @@ export class Bullet extends BaseEntity {
     this.mass = 0; // Projectiles shouldn't have mass-based physics response
     this.type = type;
     this.isEnemy = type !== "player";
+    this.isBullet = true;
     this.mirrorY = finalCfg.mirrorY !== undefined ? finalCfg.mirrorY : true;
     this.color = WHITE.copy();
     this.pierce = 0;
@@ -127,7 +128,7 @@ export class Bullet extends BaseEntity {
   }
 
   collideWithObject(other) {
-    if (other instanceof Bullet) return false;
+    if (other.isBullet) return false;
     if (other.isBoundary) return false;
     if (this.type === "player" && other.isPlayer) return false;
     return true;

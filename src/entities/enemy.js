@@ -29,6 +29,8 @@ export class Enemy extends BaseEntity {
 
     this.fireTimer = 0;
     this.isDiving = false;
+    this.isWaveEnemy = true;
+    this.isEnemy = true;
   }
 
   update() {
@@ -46,7 +48,7 @@ export class Enemy extends BaseEntity {
     let count = 0;
 
     const others = engineObjects.filter(
-      (o) => o instanceof Enemy && o !== this,
+      (o) => o.isEnemy && o !== this,
     );
 
     for (const other of others) {
@@ -152,7 +154,7 @@ export class Enemy extends BaseEntity {
   }
 
   collideWithObject(other) {
-    if (other instanceof Bullet && !other.isEnemy) {
+    if (other.isBullet && !other.isEnemy) {
       if (this.destroyed || this.hp <= 0) return false;
       const result = other.hitTarget(this);
       if (result === "ignore") return false;

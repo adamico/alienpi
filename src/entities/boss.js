@@ -290,7 +290,7 @@ export class Boss extends BaseEntity {
   }
 
   collideWithObject(other) {
-    if (other instanceof Bullet && !other.isEnemy) {
+    if (other.isBullet && !other.isEnemy) {
       if (this.destroyed || this.hp <= 0) return false;
       // Invincible if any orbiters are alive
       const activeOrbiters = this.orbiters.filter((o) => !o.destroyed);

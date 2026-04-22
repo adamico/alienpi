@@ -16,9 +16,7 @@ export const system = {
   canvasSize: CANVAS_SIZE,
   levelSize: LEVEL_SIZE,
   cameraPos: LEVEL_SIZE.scale(0.5),
-  enableDPSLog: false,
-  playBossOnly: false,
-  customDebug: false,
+  enableSharpenShader: true,
   spriteSheetLists: SPRITE_SHEET_PATHS.map((p) => `${p}.png`),
   particleSheetName: "particles",
   particleLists: [
@@ -348,6 +346,9 @@ export const loot = {
 
 export const settings = {
   musicEnabled: false,
+  enableDPSLog: false,
+  playBossOnly: false,
+  customDebug: true,
 };
 
 export const ui = {

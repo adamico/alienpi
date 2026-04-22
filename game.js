@@ -147,9 +147,13 @@ function gameUpdate() {
 }
 
 function updateWaves() {
-  if (waveTimer.elapsed()) {
+  if (bossSpawned) return;
+
+  const numberEnemiesAlive = engineObjects.filter((o) => o.isEnemy).length;
+
+  if (numberEnemiesAlive <= 0 || waveTimer.elapsed()) {
     spawnWave();
-    waveTimer.set(12);
+    waveTimer.set(20);
     waveIndex++;
 
     if (waveIndex > 10 && !bossSpawned) {
@@ -162,9 +166,7 @@ function updateWaves() {
 }
 
 function updateDPSLog() {
-  const enemies = engineObjects.filter(
-    (o) => o instanceof Enemy || o instanceof Pinata || o instanceof Boss,
-  );
+  const enemies = engineObjects.filter((o) => o.isEnemy);
   setEnemyCount(enemies.length);
   tickDPSLog();
 }
@@ -286,6 +288,7 @@ function drawUI() {
 }
 
 function drawDebug() {
+  const debugX = 120;
   if (currentBoss) {
     drawTextScreen(
       `BOSS HP: ${currentBoss.hp}`,
@@ -294,9 +297,18 @@ function drawDebug() {
       WHITE,
     );
   }
+
+  drawTextScreen(`WAVE: ${waveIndex}`, vec2(debugX, 120), 24, WHITE);
+  drawTextScreen(
+    `ENEMIES ALIVE: ${engineObjects.filter((o) => o.isEnemy).length}`,
+    vec2(debugX, 150),
+    24,
+    WHITE,
+  );
+
   drawTextScreen(
     `WEAPON: ${player.currentWeapon.label}`,
-    vec2(50, 90),
+    vec2(debugX, 180),
     24,
     WHITE,
   );

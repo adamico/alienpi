@@ -1,7 +1,6 @@
 import { vec2, rand, Timer, Color } from "../engine.js";
 import { enemy as enemyCfg, system, player as playerCfg } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
-import { Bullet } from "./bullet.js";
 import { Loot } from "./loot.js";
 import { soundExplosion1 } from "../sounds.js";
 
@@ -50,7 +49,7 @@ export class Pinata extends BaseEntity {
   }
 
   collideWithObject(other) {
-    if (other instanceof Bullet && !other.isEnemy) {
+    if (other.isBullet && !other.isEnemy) {
       if (this.destroyed || this.hp <= 0) return false;
       const result = other.hitTarget(this);
       if (result === "ignore") return false;

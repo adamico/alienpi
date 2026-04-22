@@ -24,7 +24,6 @@ import {
   soundPlayerHit,
 } from "../sounds.js";
 import { Bullet } from "./bullet.js";
-import { Enemy } from "./enemy.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { LatchBeam } from "./latchBeam.js";
@@ -125,9 +124,6 @@ export class Player extends BaseEntity {
 
     if (this.weaponLevels[targetKey] < this.maxLevel) {
       this.weaponLevels[targetKey]++;
-      console.log(
-        `[WEAPON] ${targetKey} leveled up to ${this.weaponLevels[targetKey]}`,
-      );
 
       // If we just enabled a weapon that was level 0, or upgraded the current one, refresh visuals
       if (targetKey === this.currentWeaponKey) {
@@ -425,7 +421,7 @@ export class Player extends BaseEntity {
     for (const o of engineObjects) {
       if (!o || o.destroyed) continue;
       if (typeof o.hp !== "number" || o.hp <= 0) continue;
-      if (!(o instanceof Enemy) && !o.isEnemy) continue;
+      if (!o.isEnemy) continue;
       // Respect shield invulnerability — matches bullet-vs-boss behaviour.
       if (o.shield && !o.shield.destroyed) continue;
       const dSq = o.pos.distanceSquared(origin);
@@ -477,11 +473,7 @@ export class Player extends BaseEntity {
       return !!other.isBoundary;
     }
 
-    if (
-      other instanceof Enemy ||
-      other.isEnemy ||
-      (other instanceof Bullet && other.isEnemy)
-    ) {
+    if (other.isEnemy || (other.isBullet && other.isEnemy)) {
       if (this.takeDamage(1, other)) {
         // Only destroy projectile-like objects, not persistent hazards
         if (!other.noDestroyOnImpact) {
