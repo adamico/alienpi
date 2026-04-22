@@ -35,6 +35,8 @@ import { spawnPlayer } from "./src/entities/player.js";
 import { Enemy } from "./src/entities/enemy.js";
 import { Boss } from "./src/entities/boss.js";
 import { soundBossMusic } from "./src/sounds.js";
+import { Pinata } from "./src/entities/pinata.js";
+import { enemy as enemyCfg } from "./src/config.js";
 
 let waveTimer = new Timer();
 let waveIndex = 0;
@@ -42,6 +44,7 @@ let bossSpawned = false;
 let bossMusicPlaying = false;
 let currentBoss = null;
 let player = null;
+let pinataTimer = new Timer(enemyCfg.swarm.pinata.spawnInterval);
 const boundaries = [];
 
 class Boundary extends EngineObject {
@@ -127,9 +130,19 @@ async function gameInit() {
 }
 
 function gameUpdate() {
-  const enemies = engineObjects.filter((o) => o instanceof Enemy);
+  const enemies = engineObjects.filter(
+    (o) => o instanceof Enemy || o instanceof Pinata || o instanceof Boss,
+  );
   setEnemyCount(enemies.length);
   tickDPSLog();
+
+  // Pinata spawning
+  const pinataAlive = engineObjects.some((o) => o instanceof Pinata);
+  if (!pinataAlive && pinataTimer.elapsed()) {
+    new Pinata(vec2(rand(5, system.levelSize.x - 5), system.levelSize.y - 2));
+    pinataTimer.set(enemyCfg.swarm.pinata.spawnInterval);
+  }
+
   if (bossSpawned) {
     if (
       settings.musicEnabled &&

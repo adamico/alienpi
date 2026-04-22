@@ -245,6 +245,16 @@ export const enemy = {
       hitboxScale: 0.8,
       mirrorY: true,
     },
+    pinata: {
+      sheet: SPRITE_SHEET_NAME,
+      sprite: "spaceShips_006.png",
+      hp: 25,
+      moveSpeed: 0.4,
+      size: vec2(2, 2),
+      hitboxScale: 0.8,
+      mirrorY: true,
+      spawnInterval: 2,
+    },
   },
   flocking: {
     cohesion: 0.01,
@@ -304,6 +314,19 @@ export const shield = {
   playerHitRadiusScale: 0.4,
   hitboxScale: 0.75, // accounts for transparency in the circle_01.png asset
   renderOrder: 1,
+};
+
+export const loot = {
+  sheet: SPRITE_SHEET2_NAME,
+  speed: 0.05,
+  hitboxScale: 0.8,
+  size: vec2(1, 1),
+  mirrorY: true,
+  types: {
+    blue: { sprite: "powerupBlue_bolt.png", label: "Blue Bolt" },
+    green: { sprite: "powerupGreen_bolt.png", label: "Green Bolt" },
+    yellow: { sprite: "powerupYellow_bolt.png", label: "Yellow Bolt" },
+  },
 };
 
 export const settings = {
