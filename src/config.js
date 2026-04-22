@@ -348,7 +348,7 @@ export const settings = {
   musicEnabled: false,
   enableDPSLog: false,
   playBossOnly: false,
-  customDebug: true,
+  customDebug: false,
 };
 
 export const ui = {
