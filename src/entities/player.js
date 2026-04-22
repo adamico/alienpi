@@ -16,7 +16,12 @@ import {
   player as playerCfg,
   weapons as weaponsCfg,
 } from "../config.js";
-import { soundShoot, soundShotgun, soundLatch } from "../sounds.js";
+import {
+  soundShoot,
+  soundShotgun,
+  soundLatch,
+  soundPlayerHit,
+} from "../sounds.js";
 import { Bullet } from "./bullet.js";
 import { Enemy } from "./enemy.js";
 import { BaseEntity } from "./baseEntity.js";
@@ -386,6 +391,7 @@ export class Player extends BaseEntity {
   takeDamage(amount = 1) {
     if (this.invulnerable || this.destroyed) return false;
 
+    soundPlayerHit.play();
     this.hp -= amount;
     this.applyHitEffect({
       flashColor: new Color(1, 0, 0),

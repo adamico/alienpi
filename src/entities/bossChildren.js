@@ -25,7 +25,11 @@ import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { player } from "./player.js";
-import { soundExplosion1 } from "../sounds.js";
+import {
+  soundExplosion1,
+  soundExplosion2,
+  soundBossBeam,
+} from "../sounds.js";
 
 /**
  * Defensive pods that orbit the boss
@@ -346,7 +350,10 @@ export class BossMissile extends BaseEntity {
 
     // Lifetime expiry — detonate (Large explosion)
     if (this.lifeTimer.elapsed()) {
+      soundExplosion2.play();
+      soundExplosion1.play();
       new MissileExplosion(this.pos.copy(), 10);
+
       this.destroy();
     } else {
       // Warning effect: constant 10Hz blink when 75% of life is gone
@@ -505,6 +512,7 @@ export class BossBeam extends EngineObject {
     this.startTimer = new Timer(0.5); // 0.5s charge telegraph
     this.lifeTimer = new Timer(); // will be set when active
     this.endTimer = new Timer(); // will be set when ending
+    this.soundTimer = 0; // retriggers soundBossBeam while active
   }
 
   update() {
@@ -514,6 +522,7 @@ export class BossBeam extends EngineObject {
     this.updateRotation();
     this.updateColor();
     this.updateSize();
+    this.updateSound();
     super.update();
 
     if (
@@ -567,6 +576,19 @@ export class BossBeam extends EngineObject {
         ? rgb(1, 0, 0, 0.7) // Active / Ending
         : rgb(1, 1, 1, 0.3); // Starting (Telegraphing)
     this.color = color;
+  }
+
+  updateSound() {
+    if (this.state !== "active") {
+      this.soundTimer = 0;
+      return;
+    }
+    if (this.soundTimer <= 0) {
+      soundBossBeam.play();
+      this.soundTimer = 16; // ≈ sound envelope length in frames
+    } else {
+      this.soundTimer--;
+    }
   }
 
   updateSize() {

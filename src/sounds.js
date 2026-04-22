@@ -143,6 +143,72 @@ export const soundExplosion1 = new Sound([
   4,
 ]); // Explosion 444 - Mutation 4
 
+export const soundExplosion2 = new Sound([
+  1.2,
+  ,
+  31,
+  0.03,
+  0.04,
+  0,
+  5,
+  1.545843234053468,
+  ,
+  6,
+  ,
+  ,
+  ,
+  1.9,
+  ,
+  0.3,
+  ,
+  0.35,
+  0.05,
+]); // Explosion 457
+
+export const soundPlayerHit = new Sound([
+  0.8,
+  ,
+  80,
+  0.01,
+  0.05,
+  0.19,
+  5,
+  0.8261122666996943,
+  ,
+  ,
+  ,
+  ,
+  ,
+  2,
+  2.3,
+  0.2,
+  ,
+  0.93,
+  0.02,
+]); // Hit 483
+
+export const soundBossBeam = new Sound([
+  1.9,
+  ,
+  208,
+  0.01,
+  0.17,
+  0.09,
+  1,
+  2.2,
+  ,
+  2,
+  ,
+  ,
+  ,
+  ,
+  2.4,
+  ,
+  0.17,
+  0.74,
+  0.08,
+]); // Shoot 475
+
 export const soundBossMusic = new Sound(
   "public/assets/sounds/Lasermelon%20Boss.mp3",
 );
