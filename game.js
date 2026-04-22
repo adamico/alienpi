@@ -17,7 +17,6 @@ import {
   setCanvasPixelated,
   setTilesPixelated,
   PostProcessPlugin,
-  EngineObject,
   engineObjects,
   time,
   sin,
@@ -30,13 +29,17 @@ import {
   starfield as starCfg,
 } from "./src/config.js";
 import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
-import { loadSprites, loadDynamicSpritesheet } from "./src/sprites.js";
+import {
+  loadSprites,
+  loadDynamicSpritesheet as setupParticleSpritesheet,
+} from "./src/sprites.js";
 import { spawnPlayer } from "./src/entities/player.js";
 import { Enemy } from "./src/entities/enemy.js";
 import { Boss } from "./src/entities/boss.js";
 import { soundBossMusic } from "./src/sounds.js";
 import { Pinata } from "./src/entities/pinata.js";
 import { enemy as enemyCfg } from "./src/config.js";
+import { Boundary } from "./src/entities/boundary.js";
 
 let waveTimer = new Timer();
 let waveIndex = 0;
@@ -47,18 +50,44 @@ let player = null;
 let pinataTimer = new Timer(enemyCfg.swarm.pinata.spawnInterval);
 const boundaries = [];
 
-class Boundary extends EngineObject {
-  constructor(pos, size, isKillZone = false) {
-    super(pos, size);
-    this.isKillZone = isKillZone;
-    this.isBoundary = true;
-    this.setCollision(true, !isKillZone); // Always a collider, only solid if not a kill zone
-    this.mass = 0;
+async function gameInit() {
+  setupSharpenShader();
+  setCanvasFixedSize(system.canvasSize);
+  setCameraPos(system.cameraPos);
+  setTileDefaultSize(vec2(1));
+  setObjectMaxSpeed(engine.objectMaxSpeed);
+
+  // Load all spritesheets defined in config
+  await setupSpritesheets();
+
+  // Generate dynamic particle sprite sheet
+  await setupParticleSpritesheet(
+    system.particleLists,
+    system.particleSheetName,
+  );
+
+  player = spawnPlayer();
+  waveTimer.set(3);
+
+  if (system.playBossOnly) {
+    // Straight to boss level (entryPos = in-level destination, boss spawns above)
+    currentBoss = new Boss(
+      vec2(system.levelSize.x / 2, system.levelSize.y - 4),
+    );
+    bossSpawned = true;
   }
-  render() {} // Invisible
+
+  setupBoundaries();
 }
 
-async function gameInit() {
+async function setupSpritesheets() {
+  for (let i = 0; i < system.spriteSheetLists.length; i++) {
+    const fullPath = system.spriteSheetLists[i].replace(".png", "");
+    await loadSprites(fullPath, i);
+  }
+}
+
+function setupSharpenShader() {
   const sharpenShader = `
   void mainImage(out vec4 fragColor, in vec2 fragCoord) {
       vec2 uv = fragCoord.xy / iResolution.xy;
@@ -74,29 +103,9 @@ async function gameInit() {
       fragColor = tex0 * 5.0 - (tex1 + tex2 + tex3 + tex4);
   }`;
   new PostProcessPlugin(sharpenShader);
+}
 
-  setCanvasFixedSize(system.canvasSize);
-  setCameraPos(system.cameraPos);
-  setTileDefaultSize(vec2(1));
-  setObjectMaxSpeed(engine.objectMaxSpeed);
-
-  // Load all spritesheets defined in config
-  for (let i = 0; i < system.spriteSheetLists.length; i++) {
-    const fullPath = system.spriteSheetLists[i].replace(".png", "");
-    await loadSprites(fullPath, i);
-  }
-
-  // Generate dynamic particle sprite sheet
-  await loadDynamicSpritesheet(system.particleLists, system.particleSheetName);
-
-  player = spawnPlayer();
-  waveTimer.set(3);
-
-  // // // Straight to boss level (entryPos = in-level destination, boss spawns above)
-  // currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
-  // bossSpawned = true;
-
-  // Setup level boundaries
+function setupBoundaries() {
   const wallThick = 2;
   const { x: lx, y: ly } = system.levelSize;
   const margin = 1; // Align with visual playfield
@@ -130,33 +139,14 @@ async function gameInit() {
 }
 
 function gameUpdate() {
-  const enemies = engineObjects.filter(
-    (o) => o instanceof Enemy || o instanceof Pinata || o instanceof Boss,
-  );
-  setEnemyCount(enemies.length);
-  tickDPSLog();
+  if (system.enableDPSLog) updateDPSLog();
 
-  // Pinata spawning
-  const pinataAlive = engineObjects.some((o) => o instanceof Pinata);
-  if (!pinataAlive && pinataTimer.elapsed()) {
-    new Pinata(vec2(rand(5, system.levelSize.x - 5), system.levelSize.y - 2));
-    pinataTimer.set(enemyCfg.swarm.pinata.spawnInterval);
-  }
+  updatePinata();
+  updateBossMusic();
+  updateWaves();
+}
 
-  if (bossSpawned) {
-    if (
-      settings.musicEnabled &&
-      soundBossMusic.isLoaded() &&
-      !bossMusicPlaying
-    ) {
-      const inst = soundBossMusic.playMusic(1.2);
-      if (inst && inst.isPlaying()) {
-        bossMusicPlaying = true;
-      }
-    }
-    return; // Disable swarmers in boss level
-  }
-
+function updateWaves() {
   if (waveTimer.elapsed()) {
     spawnWave();
     waveTimer.set(5);
@@ -167,6 +157,32 @@ function gameUpdate() {
         vec2(system.levelSize.x / 2, system.levelSize.y - 4),
       );
       bossSpawned = true;
+    }
+  }
+}
+
+function updateDPSLog() {
+  const enemies = engineObjects.filter(
+    (o) => o instanceof Enemy || o instanceof Pinata || o instanceof Boss,
+  );
+  setEnemyCount(enemies.length);
+  tickDPSLog();
+}
+
+function updatePinata() {
+  const pinataAlive = engineObjects.some((o) => o instanceof Pinata);
+  if (!pinataAlive && pinataTimer.elapsed()) {
+    new Pinata(vec2(rand(5, system.levelSize.x - 5), system.levelSize.y - 2));
+    pinataTimer.set(enemyCfg.swarm.pinata.spawnInterval);
+  }
+}
+
+function updateBossMusic() {
+  if (!bossSpawned) return;
+  if (settings.musicEnabled && soundBossMusic.isLoaded() && !bossMusicPlaying) {
+    const inst = soundBossMusic.playMusic(1.2);
+    if (inst && inst.isPlaying()) {
+      bossMusicPlaying = true;
     }
   }
 }
@@ -222,18 +238,6 @@ function gameRenderPost() {
   drawUI();
 }
 
-glSetAntialias(true);
-setCanvasPixelated(false);
-setTilesPixelated(false);
-engineInit(
-  gameInit,
-  gameUpdate,
-  gameUpdatePost,
-  gameRender,
-  gameRenderPost,
-  system.spriteSheetLists,
-);
-
 function drawMarquee() {
   const marqueeColor = rgb(0.05, 0.05, 0.1);
   const { x: lx, y: ly } = system.levelSize;
@@ -270,6 +274,11 @@ function drawMarquee() {
 }
 
 function drawUI() {
+  drawTextScreen(`HP: ${player.hp}`, vec2(50, 50), 32, WHITE);
+  if (settings.customDebug) drawDebug();
+}
+
+function drawDebug() {
   if (currentBoss) {
     drawTextScreen(
       `BOSS HP: ${currentBoss.hp}`,
@@ -278,7 +287,6 @@ function drawUI() {
       WHITE,
     );
   }
-  drawTextScreen(`HP: ${player.hp}`, vec2(50, 50), 32, WHITE);
   drawTextScreen(
     `WEAPON: ${player.currentWeapon.label}`,
     vec2(50, 90),
@@ -286,3 +294,15 @@ function drawUI() {
     WHITE,
   );
 }
+
+glSetAntialias(true);
+setCanvasPixelated(false);
+setTilesPixelated(false);
+engineInit(
+  gameInit,
+  gameUpdate,
+  gameUpdatePost,
+  gameRender,
+  gameRenderPost,
+  system.spriteSheetLists,
+);

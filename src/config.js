@@ -1,8 +1,4 @@
-import {
-  vec2,
-  rgb,
-  PI,
-} from "./engine.js";
+import { vec2, rgb, PI } from "./engine.js";
 
 const ASSET_PATH = "public/assets/";
 const SPRITE_SHEET_NAME = "spaceShooter2_spritesheet";
@@ -20,6 +16,9 @@ export const system = {
   canvasSize: CANVAS_SIZE,
   levelSize: LEVEL_SIZE,
   cameraPos: LEVEL_SIZE.scale(0.5),
+  enableDPSLog: false,
+  playBossOnly: false,
+  customDebug: false,
   spriteSheetLists: SPRITE_SHEET_PATHS.map((p) => `${p}.png`),
   particleSheetName: "particles",
   particleLists: [

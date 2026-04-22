@@ -11,6 +11,7 @@ const spritesMap = new Map();
  * Loads a spritesheet XML and populates the composite sprite map
  * @param {string} sheetPath Path to the XML (without extension)
  * @param {number} textureIndex Index in textureInfos
+ * @returns {Promise<void>}
  */
 export async function loadSprites(sheetPath, textureIndex) {
   // Enable linear filtering for smoother large sprites/rotation
@@ -84,7 +85,7 @@ export const sprites = {
  * and populates the sprite map.
  * @param {string[]} imageUrls List of URLs to individual images
  * @param {string} sheetName Name to group these sprites under
- * @returns {number} The texture index assigned to the new sprite sheet
+ * @returns {Promise<number>} The texture index assigned to the new sprite sheet
  */
 export async function loadDynamicSpritesheet(imageUrls, sheetName) {
   const textureIndex = textureInfos.length;
