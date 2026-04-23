@@ -60,6 +60,7 @@ let gameMusicIntroStarted = false;
 let gameMusicVerseStarted = false;
 let activeMusicInstance = null;
 export let gameState = GAME_STATES.TITLE;
+let previousState = GAME_STATES.TITLE;
 
 async function gameInit() {
   setupSharpenShader();
@@ -172,6 +173,10 @@ function gameUpdatePost() {
       resetGame();
       setPaused(false);
     }
+    if (keyWasPressed("KeyS")) {
+      previousState = gameState;
+      gameState = GAME_STATES.SETTINGS;
+    }
   } else if (gameState === GAME_STATES.PLAYING) {
     if (keyWasPressed("Escape") || keyWasPressed("KeyP")) {
       gameState = GAME_STATES.PAUSE;
@@ -187,8 +192,16 @@ function gameUpdatePost() {
       gameState = GAME_STATES.PLAYING;
       setPaused(false);
     }
+    if (keyWasPressed("KeyS")) {
+      previousState = gameState;
+      gameState = GAME_STATES.SETTINGS;
+    }
+  } else if (gameState === GAME_STATES.SETTINGS) {
+    if (keyWasPressed("Escape")) {
+      gameState = previousState;
+    }
   } else if (gameState === GAME_STATES.GAMEOVER) {
-    if (keyWasPressed("Enter") || keyWasPressed("Space")) {
+    if (keyWasPressed("Enter")) {
       resetGame();
       setPaused(false);
     }

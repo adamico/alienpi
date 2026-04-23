@@ -16,7 +16,14 @@ import {
 
 import { player } from "./entities/player.js";
 import { sprites } from "./sprites.js";
-import { player as playerCfg, loot as lootCfg, settings, GAME_STATES, strings, system } from "./config.js";
+import {
+  player as playerCfg,
+  loot as lootCfg,
+  settings,
+  GAME_STATES,
+  strings,
+  system,
+} from "./config.js";
 import { gameState } from "../game.js";
 
 let uiRoot;
@@ -24,8 +31,15 @@ let scoreText, timeText;
 let healthIcons = [];
 let weaponIcons = [];
 let settingsText, musicText;
-let hudGroup, titleGroup, pauseGroup, gameOverGroup;
-let playPromptText, titleText, subtitleText, controlGroup, controlsTitle, controlsBody;
+let hudGroup, titleGroup, pauseGroup, gameOverGroup, settingsGroup;
+let playPromptText,
+  titleText,
+  subtitleText,
+  controlGroup,
+  controlsTitle,
+  controlsBody,
+  settingsPromptText;
+let settingsTitle, musicToggleText, sfxToggleText, backPromptText;
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 const WEAPON_LOOT_MAPPING = {
@@ -50,14 +64,22 @@ export function initUI() {
   uiRoot.addChild(hudGroup);
 
   // Score (Placeholder)
-  scoreText = new UIText(vec2(0, 0), vec2(300, 30), strings.ui.scorePrefix + "000000");
+  scoreText = new UIText(
+    vec2(0, 0),
+    vec2(300, 30),
+    strings.ui.scorePrefix + "000000",
+  );
   scoreText.textColor = WHITE.copy();
   scoreText.textAlign = "left";
   scoreText.fontShadow = true;
   hudGroup.addChild(scoreText);
 
   // Time
-  timeText = new UIText(vec2(0, 0), vec2(300, 30), strings.ui.timePrefix + "00:00");
+  timeText = new UIText(
+    vec2(0, 0),
+    vec2(300, 30),
+    strings.ui.timePrefix + "00:00",
+  );
   timeText.textColor = WHITE.copy();
   timeText.textAlign = "right";
   timeText.fontShadow = true;
@@ -70,13 +92,21 @@ export function initUI() {
   setupWeaponUI();
 
   // Settings
-  settingsText = new UIText(vec2(0, 0), vec2(300, 30), strings.ui.sfxLabel + strings.ui.onLabel);
+  settingsText = new UIText(
+    vec2(0, 0),
+    vec2(300, 30),
+    strings.ui.sfxLabel + strings.ui.onLabel,
+  );
   settingsText.textColor = WHITE.copy();
   settingsText.textAlign = "right";
   settingsText.fontShadow = true;
   hudGroup.addChild(settingsText);
 
-  musicText = new UIText(vec2(0, 0), vec2(300, 30), strings.ui.musicLabel + strings.ui.offLabel);
+  musicText = new UIText(
+    vec2(0, 0),
+    vec2(300, 30),
+    strings.ui.musicLabel + strings.ui.offLabel,
+  );
   musicText.textColor = WHITE.copy();
   musicText.textAlign = "right";
   musicText.fontShadow = true;
@@ -105,7 +135,11 @@ export function initUI() {
   controlGroup.lineWidth = 0;
   titleGroup.addChild(controlGroup);
 
-  controlsTitle = new UIText(vec2(0, -80), vec2(400, 30), strings.ui.controlsTitle);
+  controlsTitle = new UIText(
+    vec2(0, -80),
+    vec2(400, 30),
+    strings.ui.controlsTitle,
+  );
   controlsTitle.textHeight = 24;
   controlsTitle.textColor = rgb(0.2, 1, 0.2);
   controlGroup.addChild(controlsTitle);
@@ -119,12 +153,24 @@ export function initUI() {
   controlsBody.textColor = WHITE.copy();
   controlGroup.addChild(controlsBody);
 
-  const playPromptString = strings.ui.playPrompt.replace("<KEY>", system.shootKey.toUpperCase());
+  const playPromptString = strings.ui.playPrompt.replace(
+    "<KEY>",
+    system.shootKey.toUpperCase(),
+  );
   playPromptText = new UIText(vec2(0, 0), vec2(800, 100), playPromptString);
   playPromptText.textHeight = 48;
   playPromptText.textColor = WHITE.copy();
   playPromptText.fontShadow = true;
   titleGroup.addChild(playPromptText);
+
+  settingsPromptText = new UIText(
+    vec2(0, 240),
+    vec2(800, 30),
+    strings.ui.settingsPrompt,
+  );
+  settingsPromptText.textHeight = 20;
+  settingsPromptText.textColor = rgb(0.7, 0.7, 0.7);
+  titleGroup.addChild(settingsPromptText);
 
   // Pause Screen
   pauseGroup = new UIObject(vec2(0, 0), mainCanvasSize);
@@ -132,12 +178,20 @@ export function initUI() {
   pauseGroup.lineWidth = 0;
   uiRoot.addChild(pauseGroup);
 
-  const pauseText = new UIText(vec2(0, 40), vec2(800, 100), strings.ui.pauseTitle);
+  const pauseText = new UIText(
+    vec2(0, 40),
+    vec2(800, 100),
+    strings.ui.pauseTitle,
+  );
   pauseText.textHeight = 80;
   pauseText.fontShadow = true;
   pauseGroup.addChild(pauseText);
 
-  const resumeText = new UIText(vec2(0, -40), vec2(800, 50), strings.ui.resumePrompt);
+  const resumeText = new UIText(
+    vec2(0, -40),
+    vec2(800, 50),
+    strings.ui.resumePrompt,
+  );
   resumeText.textHeight = 24;
   resumeText.fontShadow = true;
   pauseGroup.addChild(resumeText);
@@ -148,16 +202,69 @@ export function initUI() {
   gameOverGroup.lineWidth = 0;
   uiRoot.addChild(gameOverGroup);
 
-  const gameOverText = new UIText(vec2(0, 60), vec2(800, 100), strings.ui.gameOverTitle);
+  const gameOverText = new UIText(
+    vec2(0, 60),
+    vec2(800, 100),
+    strings.ui.gameOverTitle,
+  );
   gameOverText.textHeight = 80;
   gameOverText.textColor = rgb(1, 0.2, 0.2);
   gameOverText.fontShadow = true;
   gameOverGroup.addChild(gameOverText);
 
-  const retryText = new UIText(vec2(0, -60), vec2(800, 50), strings.ui.retryPrompt);
+  const retryText = new UIText(
+    vec2(0, -60),
+    vec2(800, 50),
+    strings.ui.retryPrompt,
+  );
   retryText.textHeight = 24;
   retryText.fontShadow = true;
   gameOverGroup.addChild(retryText);
+
+  // Settings Menu Screen
+  settingsGroup = new UIObject(vec2(0, 0), mainCanvasSize);
+  settingsGroup.color = new Color(0.05, 0.05, 0.1, 0.9);
+  settingsGroup.lineWidth = 0;
+  uiRoot.addChild(settingsGroup);
+
+  settingsTitle = new UIText(
+    vec2(0, -150),
+    vec2(800, 100),
+    strings.ui.settingsTitle,
+  );
+  settingsTitle.textHeight = 80;
+  settingsTitle.fontShadow = true;
+  settingsTitle.textColor = rgb(1, 0.8, 0.2);
+  settingsGroup.addChild(settingsTitle);
+
+  musicToggleText = new UIText(
+    vec2(0, -20),
+    vec2(800, 50),
+    `${strings.ui.musicLabel}${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.musicHotkey}`,
+  );
+  musicToggleText.textHeight = 40;
+  musicToggleText.textColor = WHITE.copy();
+  musicToggleText.fontShadow = true;
+  settingsGroup.addChild(musicToggleText);
+
+  sfxToggleText = new UIText(
+    vec2(0, 60),
+    vec2(800, 50),
+    `${strings.ui.sfxLabel}${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.sfxHotkey}`,
+  );
+  sfxToggleText.textHeight = 40;
+  sfxToggleText.textColor = WHITE.copy();
+  sfxToggleText.fontShadow = true;
+  settingsGroup.addChild(sfxToggleText);
+
+  backPromptText = new UIText(
+    vec2(0, 200),
+    vec2(800, 50),
+    strings.ui.backPrompt,
+  );
+  backPromptText.textHeight = 24;
+  backPromptText.textColor = rgb(0.6, 0.6, 0.6);
+  settingsGroup.addChild(backPromptText);
 }
 
 function setupHealthUI() {
@@ -193,7 +300,12 @@ function setupWeaponUI() {
     container.addChild(icon);
 
     // Text on the right
-    const levelText = new UIText(vec2(20, 0), vec2(120, 30), strings.ui.levelPrefix + "0", "left");
+    const levelText = new UIText(
+      vec2(20, 0),
+      vec2(120, 30),
+      strings.ui.levelPrefix + "0",
+      "left",
+    );
     levelText.textHeight = 18;
     container.addChild(levelText);
 
@@ -215,10 +327,12 @@ export function updateUI() {
   pauseGroup.size = mainCanvasSize;
   gameOverGroup.size = mainCanvasSize;
 
-  hudGroup.visible = gameState !== GAME_STATES.TITLE;
+  hudGroup.visible =
+    gameState !== GAME_STATES.TITLE && gameState !== GAME_STATES.SETTINGS;
   titleGroup.visible = gameState === GAME_STATES.TITLE;
   pauseGroup.visible = gameState === GAME_STATES.PAUSE;
   gameOverGroup.visible = gameState === GAME_STATES.GAMEOVER;
+  settingsGroup.visible = gameState === GAME_STATES.SETTINGS;
 
   if (titleGroup.visible) {
     const scale = hudScale;
@@ -241,9 +355,31 @@ export function updateUI() {
     playPromptText.size = vec2(800, 60).scale(scale);
     playPromptText.textHeight = 36 * scale;
     playPromptText.textColor = WHITE.copy();
-    
+
     // Re-enabled blinking
     playPromptText.visible = (timeReal * 2) % 2 < 1.2;
+
+    settingsPromptText.localPos = vec2(0, 260 * scale);
+    settingsPromptText.textHeight = 20 * scale;
+  }
+
+  if (settingsGroup.visible) {
+    const scale = hudScale;
+    settingsTitle.localPos = vec2(0, -150 * scale);
+    settingsTitle.textHeight = 80 * scale;
+
+    musicToggleText.localPos = vec2(0, -20 * scale);
+    musicToggleText.textHeight = 40 * scale;
+    musicToggleText.textColor = WHITE.copy();
+    musicToggleText.text = `${strings.ui.musicLabel}${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.musicHotkey}`;
+
+    sfxToggleText.localPos = vec2(0, 60 * scale);
+    sfxToggleText.textHeight = 40 * scale;
+    sfxToggleText.textColor = WHITE.copy();
+    sfxToggleText.text = `${strings.ui.sfxLabel}${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.sfxHotkey}`;
+
+    backPromptText.localPos = vec2(0, 200 * scale);
+    backPromptText.textHeight = 24 * scale;
   }
 
   const uiCenterX = mainCanvasSize.x / 2;
@@ -290,7 +426,8 @@ export function updateUI() {
       const level = player.weaponLevels[item.key];
       const active = player.currentWeaponKey === item.key;
 
-      item.levelText.text = level > 0 ? strings.ui.levelPrefix + level : strings.ui.lockedLabel;
+      item.levelText.text =
+        level > 0 ? strings.ui.levelPrefix + level : strings.ui.lockedLabel;
 
       // Highlight active weapon
       if (level === 0) {
@@ -332,7 +469,5 @@ export function updateUI() {
   musicText.localPos = vec2(-uiAnchor.x, uiAnchor.y + 90 * hudScale);
   musicText.size = vec2(300, 40).scale(hudScale);
   musicText.textHeight = 20 * hudScale;
-  musicText.textColor = settings.musicEnabled
-    ? WHITE.copy()
-    : rgb(1, 0.5, 0.5);
+  musicText.textColor = settings.musicEnabled ? WHITE.copy() : rgb(1, 0.5, 0.5);
 }

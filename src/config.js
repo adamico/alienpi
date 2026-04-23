@@ -5,6 +5,7 @@ export const GAME_STATES = {
   PLAYING: "PLAYING",
   PAUSE: "PAUSE",
   GAMEOVER: "GAMEOVER",
+  SETTINGS: "SETTINGS",
 };
 
 const ASSET_PATH = "public/assets/";
@@ -403,6 +404,9 @@ export const strings = {
     resumePrompt: "PRESS ESC TO RESUME",
     gameOverTitle: "MISSION FAILED",
     retryPrompt: "PRESS SPACE TO RETRY",
+    settingsTitle: "SETTINGS",
+    settingsPrompt: "PRESS [S] FOR SETTINGS",
+    backPrompt: "PRESS [ESC] TO GO BACK",
     scorePrefix: "SCORE: ",
     timePrefix: "TIME: ",
     levelPrefix: "LVL ",
