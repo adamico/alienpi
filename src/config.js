@@ -391,6 +391,30 @@ export const ui = {
   debugColor: rgb(1, 0, 0),
 };
 
+export const strings = {
+  ui: {
+    title: "ALIEN ORBIT ASSAULT",
+    subtitle: "ARCADE DEFENSE SYSTEM",
+    controlsTitle: "CONTROLS",
+    controlsBody: "WASD / ARROWS : MOVE\nSPACE : PRIMARY WEAPON\nSHIFT : FOCUS SPEED\nQ : SWITCH WEAPON",
+    startPrompt: "PRESS ENTER TO BEGIN",
+    pauseTitle: "PAUSED",
+    resumePrompt: "PRESS ESC TO RESUME",
+    gameOverTitle: "MISSION FAILED",
+    retryPrompt: "PRESS SPACE TO RETRY",
+    scorePrefix: "SCORE: ",
+    timePrefix: "TIME: ",
+    levelPrefix: "LVL ",
+    lockedLabel: "LOCKED",
+    sfxLabel: "SFX: ",
+    musicLabel: "MUSIC: ",
+    onLabel: "ON",
+    offLabel: "OFF",
+    sfxHotkey: " [S]",
+    musicHotkey: " [M]",
+  },
+};
+
 export const starfield = {
   count: 2000,
   speedBase: 5,

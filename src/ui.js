@@ -15,7 +15,7 @@ import {
 
 import { player } from "./entities/player.js";
 import { sprites } from "./sprites.js";
-import { player as playerCfg, loot as lootCfg, settings, GAME_STATES } from "./config.js";
+import { player as playerCfg, loot as lootCfg, settings, GAME_STATES, strings } from "./config.js";
 import { gameState } from "../game.js";
 
 let uiRoot;
@@ -48,14 +48,14 @@ export function initUI() {
   uiRoot.addChild(hudGroup);
 
   // Score (Placeholder)
-  scoreText = new UIText(vec2(0, 0), vec2(300, 30), "SCORE: 000000");
+  scoreText = new UIText(vec2(0, 0), vec2(300, 30), strings.ui.scorePrefix + "000000");
   scoreText.textColor = WHITE.copy();
   scoreText.textAlign = "left";
   scoreText.fontShadow = true;
   hudGroup.addChild(scoreText);
 
   // Time
-  timeText = new UIText(vec2(0, 0), vec2(300, 30), "TIME: 00:00");
+  timeText = new UIText(vec2(0, 0), vec2(300, 30), strings.ui.timePrefix + "00:00");
   timeText.textColor = WHITE.copy();
   timeText.textAlign = "right";
   timeText.fontShadow = true;
@@ -68,13 +68,13 @@ export function initUI() {
   setupWeaponUI();
 
   // Settings
-  settingsText = new UIText(vec2(0, 0), vec2(300, 30), "SFX: ON");
+  settingsText = new UIText(vec2(0, 0), vec2(300, 30), strings.ui.sfxLabel + strings.ui.onLabel);
   settingsText.textColor = WHITE.copy();
   settingsText.textAlign = "right";
   settingsText.fontShadow = true;
   hudGroup.addChild(settingsText);
 
-  musicText = new UIText(vec2(0, 0), vec2(300, 30), "MUSIC: OFF");
+  musicText = new UIText(vec2(0, 0), vec2(300, 30), strings.ui.musicLabel + strings.ui.offLabel);
   musicText.textColor = WHITE.copy();
   musicText.textAlign = "right";
   musicText.fontShadow = true;
@@ -82,17 +82,43 @@ export function initUI() {
 
   // Title Screen
   titleGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  titleGroup.color = new Color(0, 0, 0.1, 0.5);
+  titleGroup.color = new Color(0, 0, 0.1, 0.7);
   titleGroup.lineWidth = 0;
   uiRoot.addChild(titleGroup);
 
-  const titleText = new UIText(vec2(0, 80), vec2(800, 100), "ALIEN PI");
+  const titleText = new UIText(vec2(0, -200), vec2(1000, 120), strings.ui.title);
   titleText.textHeight = 100;
   titleText.fontShadow = true;
+  titleText.textColor = rgb(0.4, 0.7, 1);
   titleGroup.addChild(titleText);
 
-  const startText = new UIText(vec2(0, -60), vec2(800, 50), "PRESS SPACE TO START");
-  startText.textHeight = 30;
+  const subtitleText = new UIText(vec2(0, -110), vec2(1000, 40), strings.ui.subtitle);
+  subtitleText.textHeight = 30;
+  subtitleText.textColor = WHITE.copy();
+  titleGroup.addChild(subtitleText);
+
+  // Controls Section
+  const controlGroup = new UIObject(vec2(0, 50), vec2(600, 200));
+  controlGroup.color = new Color(0, 0, 0, 0);
+  controlGroup.lineWidth = 0;
+  titleGroup.addChild(controlGroup);
+
+  const controlsTitle = new UIText(vec2(0, -80), vec2(400, 30), strings.ui.controlsTitle);
+  controlsTitle.textHeight = 24;
+  controlsTitle.textColor = rgb(0.2, 1, 0.2);
+  controlGroup.addChild(controlsTitle);
+
+  const controlsBody = new UIText(
+    vec2(0, 0),
+    vec2(600, 100),
+    strings.ui.controlsBody,
+  );
+  controlsBody.textHeight = 20;
+  controlsBody.textColor = WHITE.copy();
+  controlGroup.addChild(controlsBody);
+
+  const startText = new UIText(vec2(0, 180), vec2(800, 50), strings.ui.startPrompt);
+  startText.textHeight = 36;
   startText.fontShadow = true;
   titleGroup.addChild(startText);
 
@@ -102,12 +128,12 @@ export function initUI() {
   pauseGroup.lineWidth = 0;
   uiRoot.addChild(pauseGroup);
 
-  const pauseText = new UIText(vec2(0, 40), vec2(800, 100), "PAUSED");
+  const pauseText = new UIText(vec2(0, 40), vec2(800, 100), strings.ui.pauseTitle);
   pauseText.textHeight = 80;
   pauseText.fontShadow = true;
   pauseGroup.addChild(pauseText);
 
-  const resumeText = new UIText(vec2(0, -40), vec2(800, 50), "PRESS ESC TO RESUME");
+  const resumeText = new UIText(vec2(0, -40), vec2(800, 50), strings.ui.resumePrompt);
   resumeText.textHeight = 24;
   resumeText.fontShadow = true;
   pauseGroup.addChild(resumeText);
@@ -118,13 +144,13 @@ export function initUI() {
   gameOverGroup.lineWidth = 0;
   uiRoot.addChild(gameOverGroup);
 
-  const gameOverText = new UIText(vec2(0, 60), vec2(800, 100), "MISSION FAILED");
+  const gameOverText = new UIText(vec2(0, 60), vec2(800, 100), strings.ui.gameOverTitle);
   gameOverText.textHeight = 80;
   gameOverText.textColor = rgb(1, 0.2, 0.2);
   gameOverText.fontShadow = true;
   gameOverGroup.addChild(gameOverText);
 
-  const retryText = new UIText(vec2(0, -60), vec2(800, 50), "PRESS SPACE TO RETRY");
+  const retryText = new UIText(vec2(0, -60), vec2(800, 50), strings.ui.retryPrompt);
   retryText.textHeight = 24;
   retryText.fontShadow = true;
   gameOverGroup.addChild(retryText);
@@ -163,7 +189,7 @@ function setupWeaponUI() {
     container.addChild(icon);
 
     // Text on the right
-    const levelText = new UIText(vec2(20, 0), vec2(120, 30), "LVL 0", "left");
+    const levelText = new UIText(vec2(20, 0), vec2(120, 30), strings.ui.levelPrefix + "0", "left");
     levelText.textHeight = 18;
     container.addChild(levelText);
 
@@ -233,7 +259,7 @@ export function updateUI() {
       const level = player.weaponLevels[item.key];
       const active = player.currentWeaponKey === item.key;
 
-      item.levelText.text = level > 0 ? `LVL ${level}` : "LOCKED";
+      item.levelText.text = level > 0 ? strings.ui.levelPrefix + level : strings.ui.lockedLabel;
 
       // Highlight active weapon
       if (level === 0) {
@@ -254,13 +280,13 @@ export function updateUI() {
   // Update Time
   const minutes = Math.floor(time / 60);
   const seconds = Math.floor(time % 60);
-  timeText.text = `TIME: ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  timeText.text = `${strings.ui.timePrefix}${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 
   // Update Settings
   if (keyWasPressed("KeyS")) {
     settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
   }
-  settingsText.text = `SFX: ${settings.soundEffectsEnabled ? "ON" : "OFF"} [S]`;
+  settingsText.text = `${strings.ui.sfxLabel}${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.sfxHotkey}`;
   settingsText.localPos = vec2(-uiAnchor.x, uiAnchor.y + 50 * hudScale);
   settingsText.size = vec2(300, 40).scale(hudScale);
   settingsText.textHeight = 20 * hudScale;
@@ -271,7 +297,7 @@ export function updateUI() {
   if (keyWasPressed("KeyM")) {
     settings.musicEnabled = !settings.musicEnabled;
   }
-  musicText.text = `MUSIC: ${settings.musicEnabled ? "ON" : "OFF"} [M]`;
+  musicText.text = `${strings.ui.musicLabel}${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.musicHotkey}`;
   musicText.localPos = vec2(-uiAnchor.x, uiAnchor.y + 90 * hudScale);
   musicText.size = vec2(300, 40).scale(hudScale);
   musicText.textHeight = 20 * hudScale;

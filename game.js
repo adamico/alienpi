@@ -225,7 +225,7 @@ function updatePinata() {
 }
 
 function updateBossMusic() {
-  if (!bossSpawned) return;
+  if (!bossSpawned || gameState === GAME_STATES.TITLE) return;
 
   if (activeMusicInstance) {
     activeMusicInstance.setVolume(settings.musicEnabled ? 1.2 : 0);
@@ -245,6 +245,16 @@ function updateBossMusic() {
 }
 
 function updateGameMusic() {
+  if (gameState === GAME_STATES.TITLE) {
+    if (activeMusicInstance) {
+      activeMusicInstance.stop();
+      activeMusicInstance = null;
+      gameMusicIntroStarted = false;
+      gameMusicVerseStarted = false;
+    }
+    return;
+  }
+
   if (activeMusicInstance) {
     activeMusicInstance.setVolume(settings.musicEnabled ? 0.8 : 0);
   }
