@@ -1,13 +1,5 @@
-import {
-  vec2,
-  EngineObject,
-  drawTile,
-  Timer,
-  rand,
-  setCameraPos,
-  setBlendMode,
-} from "../engine.js";
-import { engine, system } from "../config.js";
+import { vec2, EngineObject, drawTile, Timer } from "../engine.js";
+import { engine } from "../config.js";
 import { sprites } from "../sprites.js";
 import { soundExplosion1, soundExplosion2 } from "../sounds.js";
 import * as gameEffects from "../gameEffects.js";
@@ -78,6 +70,13 @@ export class BaseEntity extends EngineObject {
       ...config,
     };
     this.hitEffectTimer.set(this.hitConfig.duration);
+
+    if (this.hitConfig.screenShake > 0) {
+      gameEffects.applyScreenShake(
+        this.hitConfig.screenShake,
+        this.hitConfig.duration,
+      );
+    }
   }
 
   /**
@@ -93,20 +92,7 @@ export class BaseEntity extends EngineObject {
   update() {
     super.update();
 
-    if (this.hitConfig && !this.hitEffectTimer.elapsed()) {
-      if (this.hitConfig.screenShake > 0) {
-        // Shake dampens over time
-        const percent = 1 - this.hitEffectTimer.getPercent();
-        const shake = this.hitConfig.screenShake * percent;
-        setCameraPos(
-          system.cameraPos.add(vec2(rand(-shake, shake), rand(-shake, shake))),
-        );
-      }
-    } else if (this.hitConfig && this.hitEffectTimer.elapsed()) {
-      // Revert screen shake
-      if (this.hitConfig.screenShake > 0) {
-        setCameraPos(system.cameraPos);
-      }
+    if (this.hitConfig && this.hitEffectTimer.elapsed()) {
       this.hitConfig = null;
     }
 
@@ -140,12 +126,12 @@ export class BaseEntity extends EngineObject {
       let flashColor = null;
 
       if (this.hitConfig && !this.hitEffectTimer.elapsed()) {
-        const percent = 1 - this.hitEffectTimer.getPercent();
-
         if (this.hitConfig.entityShake > 0) {
-          const shake = this.hitConfig.entityShake * percent;
           renderPos = this.pos.add(
-            vec2(rand(-shake, shake), rand(-shake, shake)),
+            gameEffects.getEntityShake(
+              this.hitConfig.entityShake,
+              this.hitEffectTimer,
+            ),
           );
         }
 
@@ -167,16 +153,14 @@ export class BaseEntity extends EngineObject {
 
       // Flash pass: Additive
       if (doFlash) {
-        setBlendMode(true); // Switch to additive mode honoring alpha
-        drawTile(
+        gameEffects.drawEntityFlash(
           renderPos,
           drawSize,
           this.sprite,
-          flashColor, // Color multiplier acts as the glow color
+          flashColor,
           this.angle,
           this.mirrorX,
         );
-        setBlendMode(false); // Restore normal mode
       }
     }
   }

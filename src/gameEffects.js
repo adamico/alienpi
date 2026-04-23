@@ -6,6 +6,10 @@ import {
   vec2,
   Timer,
   drawCircle,
+  setCameraPos,
+  rand,
+  setBlendMode,
+  drawTile,
 } from "./engine.js";
 import { sprites } from "./sprites.js";
 import { system } from "./config.js";
@@ -26,7 +30,7 @@ export function explode(pos, size) {
     0, // angle
     s * 0.5, // emitSize
     0.2, // emitTime
-    400, // emitRate
+    200, // emitRate
     PI * 2, // emitConeAngle
     sprites.get("scorch_02.png", system.particleSheetName),
     new Color(1, 0.8, 0.2, 1), // colorStartA
@@ -65,7 +69,7 @@ export function missileExplode(pos, diameter) {
     0, // angle
     diameter, // emitSize (radius-ish spread)
     0.2, // emitTime
-    diameter * 50, // emitRate scaled by area/size
+    diameter * 20, // emitRate scaled by area/size
     PI * 2, // emitConeAngle
     sprites.get("scorch_03.png", system.particleSheetName),
     new Color(1, 0.5, 0.2), // colorStartA
@@ -102,7 +106,7 @@ function spawnDebris(pos, size) {
     0, // angle
     size * 0.3, // emitSize
     0.1, // emitTime
-    size * 100, // emitRate
+    size * 50, // emitRate
     PI * 2, // emitConeAngle
     0, // <--- Textureless
     new Color(0.8, 0.8, 0.8, 1), // colorStartA (Grayscale / Silver)
@@ -179,4 +183,68 @@ class FlashCircle extends EngineObject {
       new Color(1, 1, 1, 1 - p),
     );
   }
+}
+
+/**
+ * Triggers a global screen shake.
+ * @param {number} amplitude
+ * @param {number} duration
+ */
+export function applyScreenShake(amplitude = 0.5, duration = 0.2) {
+  new ScreenShaker(amplitude, duration);
+}
+
+/**
+ * Calculates a shake offset for an entity.
+ * @param {number} amplitude
+ * @param {Timer} timer
+ * @returns {import('./engine.js').Vector2}
+ */
+export function getEntityShake(amplitude, timer) {
+  if (!timer || timer.elapsed()) return vec2(0);
+  const percent = 1 - timer.getPercent();
+  const shake = amplitude * percent;
+  return vec2(rand(-shake, shake), rand(-shake, shake));
+}
+
+/**
+ * Draws an additive flash pass for a sprite.
+ * @param {import('./engine.js').Vector2} pos
+ * @param {import('./engine.js').Vector2} size
+ * @param {import('./sprites.js').TileInfo} tile
+ * @param {import('./engine.js').Color} color
+ * @param {number} angle
+ * @param {boolean} mirrorX
+ */
+export function drawEntityFlash(pos, size, tile, color, angle, mirrorX) {
+  setBlendMode(true);
+  drawTile(pos, size, tile, color, angle, mirrorX);
+  setBlendMode(false);
+}
+
+/**
+ * Logic-only object to handle camera shake.
+ */
+class ScreenShaker extends EngineObject {
+  constructor(amplitude, duration) {
+    super();
+    this.amplitude = amplitude;
+    this.timer = new Timer(duration);
+  }
+
+  update() {
+    const percent = this.timer.getPercent();
+    if (percent >= 1) {
+      setCameraPos(system.cameraPos);
+      this.destroy();
+      return;
+    }
+
+    const shake = this.amplitude * (1 - percent);
+    setCameraPos(
+      system.cameraPos.add(vec2(rand(-shake, shake), rand(-shake, shake))),
+    );
+  }
+
+  render() {} // No visual representation
 }
