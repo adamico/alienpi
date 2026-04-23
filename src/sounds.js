@@ -1,4 +1,12 @@
 import { Sound } from "./engine.js";
+import { settings } from "./config.js";
+
+// Global sound effect toggle
+const originalPlay = Sound.prototype.play;
+Sound.prototype.play = function(...args) {
+  if (!settings.soundEffectsEnabled) return;
+  return originalPlay.apply(this, args);
+};
 
 export class SoundGenerator extends Sound {
   constructor(params = {}) {

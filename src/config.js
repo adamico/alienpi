@@ -372,9 +372,10 @@ export const loot = {
 };
 
 export const settings = {
-  musicEnabled: false,
+  musicEnabled: true,
+  soundEffectsEnabled: true,
   enableDPSLog: false,
-  customDebug: true,
+  customDebug: false,
 };
 
 export const ui = {

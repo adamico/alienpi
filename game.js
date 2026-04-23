@@ -43,6 +43,8 @@ import {
 import { Pinata } from "./src/entities/pinata.js";
 import { enemy as enemyCfg } from "./src/config.js";
 import { Boundary } from "./src/entities/boundary.js";
+import { initUI, updateUI } from "./src/ui.js";
+
 
 let bossSpawned = false;
 let bossMusicPlaying = false;
@@ -80,7 +82,9 @@ async function gameInit() {
   bossSpawned = true;
 
   setupBoundaries();
+  initUI();
 }
+
 
 async function setupSpritesheets() {
   for (let i = 0; i < system.spriteSheetLists.length; i++) {
@@ -146,7 +150,9 @@ function gameUpdate() {
   updatePinata();
   updateGameMusic();
   updateBossMusic();
+  updateUI();
 }
+
 
 function updateDPSLog() {
   const enemies = engineObjects.filter((o) => o.isEnemy);
@@ -174,32 +180,38 @@ function updatePinata() {
 
 function updateBossMusic() {
   if (!bossSpawned) return;
-  if (settings.musicEnabled && soundBossMusic.isLoaded() && !bossMusicPlaying) {
+
+  if (activeMusicInstance) {
+    activeMusicInstance.setVolume(settings.musicEnabled ? 1.2 : 0);
+  }
+
+  if (soundBossMusic.isLoaded() && !bossMusicPlaying) {
     // Stop level music
     if (activeMusicInstance) {
       activeMusicInstance.stop();
-      activeMusicInstance = null;
     }
 
-    const inst = soundBossMusic.playMusic(1.2);
-    if (inst && inst.isPlaying()) {
-      bossMusicPlaying = true;
-    }
+    activeMusicInstance = soundBossMusic.playMusic(settings.musicEnabled ? 1.2 : 0);
+    bossMusicPlaying = true;
   }
 }
 
 function updateGameMusic() {
-  if (bossSpawned || !settings.musicEnabled) return;
+  if (activeMusicInstance) {
+    activeMusicInstance.setVolume(settings.musicEnabled ? 0.8 : 0);
+  }
+
+  if (bossSpawned) return;
 
   if (!gameMusicIntroStarted) {
     if (soundMusicIntro.isLoaded()) {
-      activeMusicInstance = soundMusicIntro.playMusic(0.8, false); // Play once
+      activeMusicInstance = soundMusicIntro.playMusic(settings.musicEnabled ? 0.8 : 0, false); // Play once
       gameMusicIntroStarted = true;
     }
   } else if (!gameMusicVerseStarted) {
     // Wait for intro to finish
     if (!activeMusicInstance || !activeMusicInstance.isPlaying()) {
-      activeMusicInstance = soundMusicVerse.playMusic(0.8, true); // Start loop
+      activeMusicInstance = soundMusicVerse.playMusic(settings.musicEnabled ? 0.8 : 0, true); // Start loop
       gameMusicVerseStarted = true;
     }
   }
@@ -281,9 +293,9 @@ function drawMarquee() {
 }
 
 function drawUI() {
-  drawTextScreen(`HP: ${player.hp}`, vec2(50, 50), 32, WHITE);
   if (settings.customDebug) drawDebug();
 }
+
 
 function drawDebug() {
   const debugX = 120;

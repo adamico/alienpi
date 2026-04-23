@@ -1,0 +1,216 @@
+import {
+  vec2,
+  rgb,
+  WHITE,
+  UISystemPlugin,
+  uiSystem,
+  UIObject,
+  UIText,
+  UITile,
+  time,
+  mainCanvasSize,
+  Color,
+  keyWasPressed,
+} from "./engine.js";
+
+import { player } from "./entities/player.js";
+import { sprites } from "./sprites.js";
+import { player as playerCfg, loot as lootCfg, settings } from "./config.js";
+
+let uiRoot;
+let scoreText, timeText;
+let healthIcons = [];
+let weaponIcons = [];
+let settingsText, musicText;
+
+const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
+const WEAPON_LOOT_MAPPING = {
+  vulcan: "blue",
+  shotgun: "red",
+  latch: "green",
+};
+
+export function initUI() {
+  new UISystemPlugin();
+  uiSystem.nativeHeight = 0; // Use pixel-based coords for stability
+
+  // Root covers the entire canvas, centered dynamically in updateUI
+  uiRoot = new UIObject(mainCanvasSize.scale(0.5), mainCanvasSize);
+  uiRoot.color = new Color(0, 0, 0, 0);
+  uiRoot.lineWidth = 0;
+
+  // Root positioning is handled in update to keep it responsive
+
+  // Score (Placeholder)
+  scoreText = new UIText(vec2(0, 0), vec2(300, 30), "SCORE: 000000");
+  scoreText.textColor = WHITE.copy();
+  scoreText.textAlign = "left";
+  scoreText.fontShadow = true;
+  uiRoot.addChild(scoreText);
+
+  // Time
+  timeText = new UIText(vec2(0, 0), vec2(300, 30), "TIME: 00:00");
+  timeText.textColor = WHITE.copy();
+  timeText.textAlign = "right";
+  timeText.fontShadow = true;
+  uiRoot.addChild(timeText);
+
+  // Health Icons
+  setupHealthUI();
+
+  // Weapon Icons
+  setupWeaponUI();
+
+  // Settings
+  settingsText = new UIText(vec2(0, 0), vec2(300, 30), "SFX: ON");
+  settingsText.textColor = WHITE.copy();
+  settingsText.textAlign = "right";
+  settingsText.fontShadow = true;
+  uiRoot.addChild(settingsText);
+
+  musicText = new UIText(vec2(0, 0), vec2(300, 30), "MUSIC: OFF");
+  musicText.textColor = WHITE.copy();
+  musicText.textAlign = "right";
+  musicText.fontShadow = true;
+  uiRoot.addChild(musicText);
+}
+
+function setupHealthUI() {
+  const heartSprite = sprites.get("playerLife2_blue.png", playerCfg.sheet);
+
+  for (let i = 0; i < playerCfg.hp; i++) {
+    const icon = new UITile(
+      vec2(0, 0), // Position updated in updateUI
+      vec2(37, 26).scale(0.8),
+      heartSprite,
+    );
+    // Tint to white - high values help wash out the original color
+    icon.color = new Color(5, 5, 5, 1);
+    uiRoot.addChild(icon);
+    healthIcons.push(icon);
+  }
+}
+
+function setupWeaponUI() {
+  WEAPON_ORDER.forEach((key, i) => {
+    const lootKey = WEAPON_LOOT_MAPPING[key];
+    const lootSpriteName = lootCfg.types[lootKey].sprite;
+    const lootSprite = sprites.get(lootSpriteName, lootCfg.sheet);
+
+    // Row container
+    const container = new UIObject(vec2(0, 0), vec2(200, 40));
+    container.color = new Color(0, 0, 0, 0);
+    container.lineWidth = 0;
+    uiRoot.addChild(container);
+
+    // Icon on the left
+    const icon = new UITile(vec2(-70, 0), vec2(40, 40), lootSprite);
+    container.addChild(icon);
+
+    // Text on the right
+    const levelText = new UIText(vec2(20, 0), vec2(120, 30), "LVL 0", "left");
+    levelText.textHeight = 18;
+    container.addChild(levelText);
+
+    weaponIcons.push({ key, container, icon, levelText, index: i });
+  });
+}
+
+export function updateUI() {
+  if (!uiRoot) return;
+
+  // Keep root centered and sized to canvas
+  uiRoot.pos = mainCanvasSize.scale(0.5);
+  uiRoot.size = mainCanvasSize;
+
+  const uiCenterX = mainCanvasSize.x / 2;
+  const uiCenterY = mainCanvasSize.y / 2;
+  const hudScale = mainCanvasSize.y / 720;
+  const margin = vec2(130 * hudScale, 60 * hudScale);
+
+  // Update positions for responsiveness
+  const uiAnchor = vec2(-uiCenterX + margin.x, -uiCenterY + margin.y);
+
+  scoreText.localPos = vec2(uiAnchor.x, uiAnchor.y);
+  scoreText.size = vec2(300, 40).scale(hudScale);
+  scoreText.textHeight = 30 * hudScale;
+
+  timeText.localPos = vec2(-uiAnchor.x, uiAnchor.y);
+  timeText.size = vec2(300, 40).scale(hudScale);
+  timeText.textHeight = 30 * hudScale;
+
+  // Update Health positions
+  healthIcons.forEach((icon, i) => {
+    icon.localPos = vec2(
+      uiAnchor.x + (i - 3) * 32 * hudScale,
+      uiAnchor.y + 60 * hudScale,
+    );
+    icon.size = vec2(37, 26).scale(0.8 * hudScale);
+    if (player) {
+      icon.visible = i < player.hp;
+    }
+  });
+
+  // Update Weapon positions
+  weaponIcons.forEach((item) => {
+    item.container.localPos = vec2(
+      uiAnchor.x,
+      uiAnchor.y + 400 * hudScale + item.index * 60 * hudScale,
+    );
+    item.container.size = vec2(200, 50).scale(hudScale);
+    item.icon.size = vec2(40, 40).scale(hudScale);
+    item.icon.localPos = vec2(-70 * hudScale, 0);
+    item.levelText.localPos = vec2(-30 * hudScale, 0);
+    item.levelText.size = vec2(120, 30).scale(hudScale);
+    item.levelText.textHeight = 18 * hudScale;
+
+    if (player) {
+      const level = player.weaponLevels[item.key];
+      const active = player.currentWeaponKey === item.key;
+
+      item.levelText.text = level > 0 ? `LVL ${level}` : "LOCKED";
+
+      // Highlight active weapon
+      if (level === 0) {
+        item.icon.color = new Color(1, 1, 1, 0.2);
+        item.levelText.textColor = new Color(1, 1, 1, 0.5);
+      } else if (active) {
+        item.icon.color = WHITE.copy();
+        item.levelText.textColor = rgb(0.2, 1, 0.2); // Green for active
+        item.container.scale = 1.1;
+      } else {
+        item.icon.color = new Color(1, 1, 1, 0.7);
+        item.levelText.textColor = WHITE.copy();
+        item.container.scale = 1.0;
+      }
+    }
+  });
+
+  // Update Time
+  const minutes = Math.floor(time / 60);
+  const seconds = Math.floor(time % 60);
+  timeText.text = `TIME: ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+
+  // Update Settings
+  if (keyWasPressed("KeyS")) {
+    settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
+  }
+  settingsText.text = `SFX: ${settings.soundEffectsEnabled ? "ON" : "OFF"} [S]`;
+  settingsText.localPos = vec2(-uiAnchor.x, uiAnchor.y + 50 * hudScale);
+  settingsText.size = vec2(300, 40).scale(hudScale);
+  settingsText.textHeight = 20 * hudScale;
+  settingsText.textColor = settings.soundEffectsEnabled
+    ? WHITE.copy()
+    : rgb(1, 0.5, 0.5);
+
+  if (keyWasPressed("KeyM")) {
+    settings.musicEnabled = !settings.musicEnabled;
+  }
+  musicText.text = `MUSIC: ${settings.musicEnabled ? "ON" : "OFF"} [M]`;
+  musicText.localPos = vec2(-uiAnchor.x, uiAnchor.y + 90 * hudScale);
+  musicText.size = vec2(300, 40).scale(hudScale);
+  musicText.textHeight = 20 * hudScale;
+  musicText.textColor = settings.musicEnabled
+    ? WHITE.copy()
+    : rgb(1, 0.5, 0.5);
+}
