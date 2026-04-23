@@ -76,9 +76,7 @@ export class Enemy extends BaseEntity {
     let alignment = vec2(0);
     let count = 0;
 
-    const others = engineObjects.filter(
-      (o) => o.isEnemy && o !== this,
-    );
+    const others = engineObjects.filter((o) => o.isEnemy && o !== this);
 
     for (const other of others) {
       const dist = this.pos.distance(other.pos);
@@ -189,7 +187,7 @@ export class Enemy extends BaseEntity {
       if (result === "ignore") return false;
       this.hp -= other.damage;
       if (result === "destroy") other.destroy();
-      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
+      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 0), 0.1));
 
       if (this.hp <= 0) {
         soundExplosion1.play();
