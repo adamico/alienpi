@@ -9,6 +9,7 @@ import {
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { recordDamage } from "../dpsTracker.js";
+import { TrailEffect } from "../gameEffects.js";
 
 export class Bullet extends BaseEntity {
   constructor(pos, vel, type = "player", cfg = null, damage = 1) {
@@ -51,6 +52,11 @@ export class Bullet extends BaseEntity {
     );
 
     this.explodeOnDestroy = false;
+
+    // Apply effects based on config
+    if (finalCfg.trailLength) {
+      this.applyEffect(new TrailEffect(finalCfg.trailLength));
+    }
   }
 
   /**

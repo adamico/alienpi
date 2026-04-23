@@ -95,6 +95,7 @@ const vulcanBullet = {
   despawnRadius: 0.5,
   hitboxScale: 1.0,
   mirrorY: true,
+  trailLength: 5,
 };
 
 const shotgunBullet = {
@@ -105,6 +106,7 @@ const shotgunBullet = {
   despawnRadius: 0.5,
   hitboxScale: 0.8,
   mirrorY: true,
+  trailLength: 3,
 };
 
 // Planned at MAX power level. A single `powerLevel` field on Player is the

@@ -353,3 +353,51 @@ export class OutlineEffect extends EntityEffect {
     });
   }
 }
+
+/**
+ * Creates a fading trail of previous positions.
+ */
+export class TrailEffect extends EntityEffect {
+  constructor(length = 5, duration = null) {
+    super(duration);
+    this.length = length;
+    this.history = []; // Array of {pos, angle}
+    this.renderUnder = true;
+  }
+
+  update(entity) {
+    // Record current state
+    this.history.unshift({
+      pos: entity.pos.copy(),
+      angle: entity.angle,
+    });
+
+    // Limit history length
+    if (this.history.length > this.length) {
+      this.history.pop();
+    }
+  }
+
+  render(entity, renderPos, drawSize) {
+    this.history.forEach((h, i) => {
+      // Skip the first history point as it's the current position
+      if (i === 0) return;
+
+      const p = 1 - i / this.history.length;
+      const color = entity.color.copy();
+      color.a *= p * 0.5; // Fading trail
+
+      // drawSize already handles mirrorY logic from BaseEntity
+      const trailDrawSize = drawSize.scale(p);
+
+      drawTile(
+        h.pos,
+        trailDrawSize,
+        entity.sprite,
+        color,
+        h.angle,
+        entity.mirrorX,
+      );
+    });
+  }
+}
