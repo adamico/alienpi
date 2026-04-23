@@ -1,11 +1,4 @@
-import {
-  vec2,
-  ParticleEmitter,
-  Color,
-  rgb,
-  rand,
-  PI,
-} from "../engine.js";
+import { vec2, ParticleEmitter, Color, rgb, rand, PI } from "../engine.js";
 import {
   system,
   boss as bossCfg,
@@ -19,7 +12,12 @@ import { sprites } from "../sprites.js";
 import { soundExplosion1 } from "../sounds.js";
 import * as gameEffects from "../gameEffects.js";
 
-import { BossOrbiter, BossMissile, BossBeam, BossShield } from "./bossChildren.js";
+import {
+  BossOrbiter,
+  BossMissile,
+  BossBeam,
+  BossShield,
+} from "./bossChildren.js";
 /**
  * Boss with dynamic movement, fire emitters, and pulse attacks
  */
@@ -293,10 +291,11 @@ export class Boss extends BaseEntity {
   collideWithObject(other) {
     if (other.isBullet && !other.isEnemy) {
       if (this.destroyed || this.hp <= 0) return false;
-      // Invincible if any orbiters are alive
       const activeOrbiters = this.orbiters.filter((o) => !o.destroyed);
       if (activeOrbiters.length > 0) {
-        this.applyEffect(new gameEffects.FlashEffect(new Color(0.2, 0.5, 1), 0.1));
+        this.applyEffect(
+          new gameEffects.FlashEffect(new Color(0.2, 0.5, 1), 0.1),
+        );
         other.destroy();
         return false;
       }
@@ -305,10 +304,10 @@ export class Boss extends BaseEntity {
       if (result === "ignore") return false;
       this.hp -= other.damage;
       if (result === "destroy") other.destroy();
-      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
+      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 0, 0), 0.1));
       if (this.hp <= 0) {
         soundExplosion1.play();
-        this.destroy(); // cascades to all child emitters
+        this.destroy();
       }
       return false;
     }

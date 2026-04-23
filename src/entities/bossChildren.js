@@ -219,7 +219,7 @@ export class BossOrbiter extends BaseEntity {
       if (result === "ignore") return false;
       this.hp -= other.damage;
       if (result === "destroy") other.destroy();
-      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
+      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 0), 0.1));
       if (this.hp <= 0) this.destroy();
       return false;
     }
@@ -349,7 +349,7 @@ export class BossMissile extends BaseEntity {
       if (result === "ignore") return false;
       this.hp -= other.damage;
       if (result === "destroy") other.destroy();
-      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
+      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 0), 0.1));
       if (this.hp <= 0) {
         new MissileExplosion(this.pos.copy(), 3);
         this.destroy();
@@ -519,7 +519,7 @@ export class BossBeam extends EngineObject {
       return;
     }
     if (this.soundTimer <= 0) {
-      soundBossBeam.play();
+      soundBossBeam.play(vec2(), 0.2);
       this.soundTimer = 16; // ≈ sound envelope length in frames
     } else {
       this.soundTimer--;
