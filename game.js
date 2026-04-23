@@ -18,7 +18,7 @@ import {
   setTilesPixelated,
   PostProcessPlugin,
   engineObjects,
-  time,
+  timeReal,
   sin,
   engineObjectsDestroy,
   keyWasPressed,
@@ -305,7 +305,8 @@ function drawPlayField() {
   for (let i = starCfg.count; i--; ) {
     // use math to generate random star positions
     const offset =
-      time * (starCfg.speedBase + (i ** 2.1 % starCfg.speedRange)) + i ** 2.3;
+      timeReal * (starCfg.speedBase + (i ** 2.1 % starCfg.speedRange)) +
+      i ** 2.3;
     pos.y = starCfg.verticalOffset - (offset % starCfg.verticalRange);
     pos.x = i / system.levelSize.x - starCfg.horizontalOffset;
     size.x = size.y = (i % starCfg.sizeRange) + starCfg.sizeBase;

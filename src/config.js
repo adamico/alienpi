@@ -398,6 +398,7 @@ export const strings = {
     controlsTitle: "CONTROLS",
     controlsBody: "WASD / ARROWS : MOVE\nSPACE : PRIMARY WEAPON\nSHIFT : FOCUS SPEED\nQ : SWITCH WEAPON",
     startPrompt: "PRESS ENTER TO BEGIN",
+    playPrompt: "PRESS <KEY> TO PLAY",
     pauseTitle: "PAUSED",
     resumePrompt: "PRESS ESC TO RESUME",
     gameOverTitle: "MISSION FAILED",

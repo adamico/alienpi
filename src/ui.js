@@ -8,6 +8,7 @@ import {
   UIText,
   UITile,
   time,
+  timeReal,
   mainCanvasSize,
   Color,
   keyWasPressed,
@@ -15,7 +16,7 @@ import {
 
 import { player } from "./entities/player.js";
 import { sprites } from "./sprites.js";
-import { player as playerCfg, loot as lootCfg, settings, GAME_STATES, strings } from "./config.js";
+import { player as playerCfg, loot as lootCfg, settings, GAME_STATES, strings, system } from "./config.js";
 import { gameState } from "../game.js";
 
 let uiRoot;
@@ -24,6 +25,7 @@ let healthIcons = [];
 let weaponIcons = [];
 let settingsText, musicText;
 let hudGroup, titleGroup, pauseGroup, gameOverGroup;
+let playPromptText, titleText, subtitleText, controlGroup, controlsTitle, controlsBody;
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 const WEAPON_LOOT_MAPPING = {
@@ -86,29 +88,29 @@ export function initUI() {
   titleGroup.lineWidth = 0;
   uiRoot.addChild(titleGroup);
 
-  const titleText = new UIText(vec2(0, -200), vec2(1000, 120), strings.ui.title);
+  titleText = new UIText(vec2(0, -200), vec2(1000, 120), strings.ui.title);
   titleText.textHeight = 100;
   titleText.fontShadow = true;
   titleText.textColor = rgb(0.4, 0.7, 1);
   titleGroup.addChild(titleText);
 
-  const subtitleText = new UIText(vec2(0, -110), vec2(1000, 40), strings.ui.subtitle);
+  subtitleText = new UIText(vec2(0, -110), vec2(1000, 40), strings.ui.subtitle);
   subtitleText.textHeight = 30;
   subtitleText.textColor = WHITE.copy();
   titleGroup.addChild(subtitleText);
 
   // Controls Section
-  const controlGroup = new UIObject(vec2(0, 50), vec2(600, 200));
+  controlGroup = new UIObject(vec2(0, 50), vec2(600, 200));
   controlGroup.color = new Color(0, 0, 0, 0);
   controlGroup.lineWidth = 0;
   titleGroup.addChild(controlGroup);
 
-  const controlsTitle = new UIText(vec2(0, -80), vec2(400, 30), strings.ui.controlsTitle);
+  controlsTitle = new UIText(vec2(0, -80), vec2(400, 30), strings.ui.controlsTitle);
   controlsTitle.textHeight = 24;
   controlsTitle.textColor = rgb(0.2, 1, 0.2);
   controlGroup.addChild(controlsTitle);
 
-  const controlsBody = new UIText(
+  controlsBody = new UIText(
     vec2(0, 0),
     vec2(600, 100),
     strings.ui.controlsBody,
@@ -117,10 +119,12 @@ export function initUI() {
   controlsBody.textColor = WHITE.copy();
   controlGroup.addChild(controlsBody);
 
-  const startText = new UIText(vec2(0, 180), vec2(800, 50), strings.ui.startPrompt);
-  startText.textHeight = 36;
-  startText.fontShadow = true;
-  titleGroup.addChild(startText);
+  const playPromptString = strings.ui.playPrompt.replace("<KEY>", system.shootKey.toUpperCase());
+  playPromptText = new UIText(vec2(0, 0), vec2(800, 100), playPromptString);
+  playPromptText.textHeight = 48;
+  playPromptText.textColor = WHITE.copy();
+  playPromptText.fontShadow = true;
+  titleGroup.addChild(playPromptText);
 
   // Pause Screen
   pauseGroup = new UIObject(vec2(0, 0), mainCanvasSize);
@@ -200,6 +204,8 @@ function setupWeaponUI() {
 export function updateUI() {
   if (!uiRoot) return;
 
+  const hudScale = mainCanvasSize.y / 720;
+
   // Keep root centered and sized to canvas
   uiRoot.pos = mainCanvasSize.scale(0.5);
   uiRoot.size = mainCanvasSize;
@@ -214,9 +220,34 @@ export function updateUI() {
   pauseGroup.visible = gameState === GAME_STATES.PAUSE;
   gameOverGroup.visible = gameState === GAME_STATES.GAMEOVER;
 
+  if (titleGroup.visible) {
+    const scale = hudScale;
+    titleText.localPos = vec2(0, -200 * scale);
+    titleText.size = vec2(1000, 120).scale(scale);
+    titleText.textHeight = 100 * scale;
+
+    subtitleText.localPos = vec2(0, -110 * scale);
+    subtitleText.size = vec2(1000, 40).scale(scale);
+    subtitleText.textHeight = 30 * scale;
+
+    controlGroup.localPos = vec2(0, 50 * scale);
+    controlGroup.size = vec2(600, 200).scale(scale);
+    controlsTitle.localPos = vec2(0, -80 * scale);
+    controlsTitle.textHeight = 24 * scale;
+    controlsBody.localPos = vec2(0, 0);
+    controlsBody.textHeight = 20 * scale;
+
+    playPromptText.localPos = vec2(0, 180 * scale);
+    playPromptText.size = vec2(800, 60).scale(scale);
+    playPromptText.textHeight = 36 * scale;
+    playPromptText.textColor = WHITE.copy();
+    
+    // Re-enabled blinking
+    playPromptText.visible = (timeReal * 2) % 2 < 1.2;
+  }
+
   const uiCenterX = mainCanvasSize.x / 2;
   const uiCenterY = mainCanvasSize.y / 2;
-  const hudScale = mainCanvasSize.y / 720;
   const margin = vec2(130 * hudScale, 60 * hudScale);
 
   // Update positions for responsiveness
