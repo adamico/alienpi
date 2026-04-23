@@ -6,6 +6,7 @@ import {
   ParticleEmitter,
   PI,
   rand,
+  rgb,
   setBlendMode,
   setCameraPos,
   Timer,
@@ -400,4 +401,109 @@ export class TrailEffect extends EntityEffect {
       );
     });
   }
+}
+
+/**
+ * Creates a punchy particle burst for piercing hits.
+ * @param {import('./engine.js').Vector2} pos
+ * @param {number} angle
+ * @param {number} size
+ */
+export function spawnPierceEffect(pos, angle, size) {
+  // 1. Directional Spark Burst
+  new ParticleEmitter(
+    pos,
+    angle, // Emit in the direction of the bullet
+    0.1, // emitSize
+    0.05, // emitTime
+    30, // emitRate
+    0.5, // emitConeAngle (tight cone)
+    sprites.get("trace_01.png", system.particleSheetName),
+    new Color(1, 1, 0.5), // colorStartA
+    new Color(1, 0.8, 0.2), // colorStartB
+    new Color(1, 0.5, 0, 0), // colorEndA
+    new Color(1, 0.2, 0, 0), // colorEndB
+    0.3, // particleTime
+    2 * size, // sizeStart
+    0.1 * size, // sizeEnd
+    0.2, // speed (fast)
+    0.0, // angleSpeed
+    0.9, // damping
+    0.9, // angleDamping
+    0, // gravityScale
+    PI * 2, // particleConeAngle
+    0.2, // fadeRate
+    0, // randomness
+    false, // collideTiles
+    true, // additive
+  );
+
+  // 2. Small Impact Flash
+  new ParticleEmitter(
+    pos,
+    0,
+    0,
+    0.05,
+    1,
+    0,
+    sprites.get("circle_01.png", system.particleSheetName),
+    new Color(1, 1, 1),
+    new Color(1, 1, 1),
+    new Color(1, 1, 0, 0),
+    new Color(1, 0.5, 0, 0),
+    0.1,
+    2 * size,
+    0.5 * size,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0.1,
+    0,
+    false,
+    true,
+  );
+}
+
+/**
+ * Spawns a muzzle flash parented to an entity.
+ * @param {import('./engine.js').EngineObject} entity
+ * @param {import('./engine.js').Vector2} offset
+ * @param {number} sizeScale
+ */
+export function spawnMuzzleFlash(entity, offset, sizeScale = 1) {
+  const flashEmitter = new ParticleEmitter(
+    entity.pos,
+    0, // angle
+    0, // emitSize
+    0.6, // emitTime
+    1, // emitRate
+    0, // emitConeAngle
+    sprites.get("muzzle_05.png", system.particleSheetName),
+    rgb(1, 1, 1),
+    rgb(1, 1, 1),
+    rgb(1, 0.2, 0, 0),
+    rgb(1, 0, 0, 0),
+    0.15, // particleTime
+    3.5 * sizeScale, // sizeStart
+    0.2 * sizeScale, // sizeEnd
+    0, // speed
+    0, // angleSpeed
+    0, // damping
+    0, // angleDamping
+    0, // gravityScale
+    0, // particleConeAngle
+    0.1, // fadeRate
+    0.1, // randomness
+    false, // collideTiles
+    true, // additive
+    true, // randomColorLinear
+    -1, // renderOrder
+    true, // localSpace
+  );
+  // Push the flash further forward as it grows to keep it clear of the body
+  const forwardOffset = 0.6 + sizeScale * 0.4;
+  entity.addChild(flashEmitter, offset.add(vec2(0, forwardOffset)));
 }

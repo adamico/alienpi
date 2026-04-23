@@ -88,15 +88,15 @@ export const sprites = {
  * @returns {Promise<number>} The texture index assigned to the new sprite sheet
  */
 export async function loadDynamicSpritesheet(imageUrls, sheetName) {
-  const textureIndex = textureInfos.length;
-  // Initialize an empty space in the engine's texture collection
-  textureInfos.push(null);
-
   const images = await Promise.all(
     imageUrls.map((url) => {
       return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => resolve({ url, img });
+        img.onerror = () => {
+          console.warn(`Failed to load sprite: ${url}`);
+          resolve({ url, img: null });
+        };
         img.src = url;
       });
     }),
@@ -104,16 +104,19 @@ export async function loadDynamicSpritesheet(imageUrls, sheetName) {
 
   // Simple packer: place images in a row or wrap around
   const padding = 2; // For bleed prevention
+  const maxSheetWidth = 2048; // Increased from 1024 to handle more/larger images
   let maxWidth = 0;
-
-  // Let's just create a square-ish sheet, say 1024 max width
   let curX = 0;
   let curY = 0;
   let rowHeight = 0;
   const positions = [];
 
   for (const { img } of images) {
-    if (curX + img.width + padding * 2 > 1024) {
+    if (!img) {
+      positions.push(null);
+      continue;
+    }
+    if (curX + img.width + padding * 2 > maxSheetWidth) {
       curX = 0;
       curY += rowHeight;
       rowHeight = 0;
@@ -134,28 +137,32 @@ export async function loadDynamicSpritesheet(imageUrls, sheetName) {
 
   // Draw images
   for (let i = 0; i < images.length; i++) {
+    if (!images[i].img) continue;
     const { img } = images[i];
     const pos = positions[i];
     ctx.drawImage(img, pos.x, pos.y);
   }
 
-  // Configure TextureInfo now that the canvas is fully drawn
+  // Create TextureInfo - this automatically adds to textureInfos array
   const tInfo = new TextureInfo(canvas);
-  textureInfos[textureIndex] = tInfo;
-  canvas.style = { imageRendering: "auto" };
+  canvas.style.imageRendering = "auto";
 
   // Configure TileInfos
   for (let i = 0; i < images.length; i++) {
+    if (!images[i].img) continue;
     const { url, img } = images[i];
     const pos = positions[i];
     const name = url.split("/").pop();
+
+    // Use a small bleed shrink for consistency with loadSprites
+    const bleedShrink = 1;
     const tile = new TileInfo(
-      vec2(pos.x, pos.y),
-      vec2(img.width, img.height),
-      textureInfos[textureIndex],
+      vec2(pos.x + bleedShrink, pos.y + bleedShrink),
+      vec2(img.width - bleedShrink * 2, img.height - bleedShrink * 2),
+      tInfo,
     );
     spritesMap.set(`${sheetName}:${name}`, tile);
   }
 
-  return textureIndex;
+  return textureInfos.indexOf(tInfo);
 }

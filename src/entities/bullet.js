@@ -9,7 +9,7 @@ import {
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { recordDamage } from "../dpsTracker.js";
-import { TrailEffect } from "../gameEffects.js";
+import { TrailEffect, spawnPierceEffect } from "../gameEffects.js";
 
 export class Bullet extends BaseEntity {
   constructor(pos, vel, type = "player", cfg = null, damage = 1) {
@@ -74,6 +74,7 @@ export class Bullet extends BaseEntity {
     recordDamage(this.weaponKey, this.damage, target);
     if (this.pierce > 0) {
       this.pierce--;
+      spawnPierceEffect(this.pos, this.velocity.angle(), target.size.x);
       return "damage";
     }
     return "destroy";

@@ -256,38 +256,6 @@ export class Player extends BaseEntity {
     return vec2(muzzleWorld.x - center.x, -(muzzleWorld.y - center.y));
   }
 
-  spawnMuzzleFlash(offset) {
-    const flashEmitter = new ParticleEmitter(
-      this.pos,
-      0, // angle
-      0, // emitSize
-      0.6, // emitTime
-      1, // emitRate
-      0, // emitConeAngle
-      sprites.get("muzzle_05.png", system.particleSheetName),
-      rgb(1, 1, 1),
-      rgb(1, 1, 1),
-      rgb(1, 0.2, 0, 0),
-      rgb(1, 0, 0, 0),
-      0.15, // particleTime
-      3.5, // sizeStart
-      0.2, // sizeEnd
-      0, // speed
-      0, // angleSpeed
-      0, // damping
-      0, // angleDamping
-      0, // gravityScale
-      0, // particleConeAngle
-      0.1, // fadeRate
-      0.1, // randomness
-      false, // collideTiles
-      true, // additive
-      true, // randomColorLinear
-      -1, // renderOrder
-      true, // localSpace
-    );
-    this.addChild(flashEmitter, offset.add(vec2(0, 1)));
-  }
 
   fireVulcan() {
     soundShoot.play();
@@ -307,7 +275,7 @@ export class Player extends BaseEntity {
         cfg.damage,
       );
       b.weaponKey = "vulcan";
-      this.spawnMuzzleFlash(offset);
+      gameEffects.spawnMuzzleFlash(this, offset);
     }
   }
 
@@ -338,7 +306,8 @@ export class Player extends BaseEntity {
       b.angle = angle; // sprite leans with its direction
     }
 
-    this.spawnMuzzleFlash(nozzleOffset);
+    const flashScale = 1 + (count - 1) * 0.1;
+    gameEffects.spawnMuzzleFlash(this, nozzleOffset, flashScale);
   }
 
   updateLatchBeams(firing) {
