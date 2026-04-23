@@ -1,4 +1,12 @@
-import { ParticleEmitter, Color, PI } from "./engine.js";
+import {
+  ParticleEmitter,
+  Color,
+  PI,
+  EngineObject,
+  vec2,
+  Timer,
+  drawCircle,
+} from "./engine.js";
 import { sprites } from "./sprites.js";
 import { system } from "./config.js";
 
@@ -7,60 +15,38 @@ import { system } from "./config.js";
  * @param {import('./engine.js').Vector2} pos
  */
 export function explode(pos, size) {
+  // --- STAGE 1: Instant Flash Circle ---
+  new FlashCircle(pos, size * 1.5);
+
+  // --- STAGE 2: Expanding Fireball ---
   new ParticleEmitter(
     pos,
     0, // angle
-    size, // emitSize
-    0.1, // emitTime
-    500, // emitRate
-    PI, // emitConeAngle
+    size * 0.5, // emitSize
+    0.2, // emitTime
+    400, // emitRate
+    PI * 2, // emitConeAngle
     sprites.get("scorch_02.png", system.particleSheetName),
-    new Color(1, 0.867, 0, 1), // colorStartA
-    new Color(0.341, 0, 0, 1), // colorStartB
-    new Color(0.239, 0.22, 0, 0), // colorEndA
-    new Color(1, 0, 0, 0), // colorEndB
-    0.5, // particleTime
-    4, // sizeStart
-    0.15, // sizeEnd
-    0.03, // speed
+    new Color(1, 0.8, 0.2, 1), // colorStartA
+    new Color(1, 0.4, 0, 1), // colorStartB
+    new Color(0.4, 0.1, 0, 0), // colorEndA
+    new Color(0.2, 0, 0, 0), // colorEndB
+    0.8, // particleTime (Doubled for slower burn)
+    size * 1.0, // sizeStart
+    size * 3.5, // sizeEnd
+    0.08, // speed
     0.05, // angleSpeed
-    1, // damping
+    0.95, // damping (High damping to keep fireball tight)
     1, // angleDamping
     0, // gravityScale
-    3.14, // particleConeAngle
-    0.2, // fadeRate
-    0.25, // randomness
+    PI * 2, // particleConeAngle
+    0.2, // fadeRate (Slower fade)
+    0.4, // randomness
     0, // additive
-    1, // randomColorLinear
   );
 
-  // Secondary smoke burst
-  new ParticleEmitter(
-    pos,
-    0,
-    size,
-    0.3,
-    500,
-    PI,
-    sprites.get("smoke_04.png", system.particleSheetName),
-    new Color(0.8, 0.8, 0.8, 0.5),
-    new Color(0.4, 0.4, 0.4, 0.3),
-    new Color(0, 0, 0, 0),
-    new Color(0, 0, 0, 0),
-    0.8,
-    1.0,
-    2.5,
-    0.02,
-    0.01,
-    0.95,
-    1,
-    -0.01, // slight upward drift
-    PI * 2,
-    0.05,
-    0.2,
-    false,
-    false,
-  );
+  // --- STAGE 3: Lingering Smoke ---
+  spawnSmokeBurst(pos, size);
 }
 
 /**
@@ -95,4 +81,64 @@ export function missileExplode(pos, diameter) {
     false, // collideTiles
     true, // additive
   );
+
+  spawnSmokeBurst(pos, diameter);
+}
+
+/**
+ * Helper to spawn a burst of smoke.
+ * @param {import('./engine.js').Vector2} pos
+ * @param {number} size
+ */
+function spawnSmokeBurst(pos, size) {
+  new ParticleEmitter(
+    pos,
+    0,
+    size * 1.5, // Larger initial spread
+    0.3,
+    size * 60,
+    PI,
+    sprites.get("smoke_04.png", system.particleSheetName),
+    new Color(0.8, 0.8, 0.8, 0.4),
+    new Color(0.4, 0.4, 0.4, 0.2),
+    new Color(0, 0, 0, 0),
+    new Color(0, 0, 0, 0),
+    1.5, // particleTime
+    Math.max(1.5, size * 0.8), // sizeStart
+    Math.max(6.0, size * 5.0), // sizeEnd
+    0.02,
+    0.01,
+    0.99,
+    1,
+    -0.005,
+    PI * 2,
+    0.02,
+    0.3,
+    false,
+    false,
+  );
+}
+
+/**
+ * Short-lived cosmetic flash circle.
+ */
+class FlashCircle extends EngineObject {
+  constructor(pos, diameter) {
+    super(pos, vec2(diameter));
+    this.timer = new Timer(0.1); // Extremely fast
+    this.renderOrder = 100;
+  }
+  update() {
+    if (this.timer.elapsed()) this.destroy();
+    super.update();
+  }
+  render() {
+    const p = this.timer.getPercent();
+    // Expanding and fading out
+    drawCircle(
+      this.pos,
+      this.size.x * (1 + p * 0.5),
+      new Color(1, 1, 1, 1 - p),
+    );
+  }
 }
