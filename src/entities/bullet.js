@@ -74,7 +74,7 @@ export class Bullet extends BaseEntity {
     recordDamage(this.weaponKey, this.damage, target);
     if (this.pierce > 0) {
       this.pierce--;
-      spawnPierceEffect(this.pos, this.velocity.angle(), target.size.x);
+      spawnPierceEffect(target.pos, this.velocity.angle(), target.size.x);
       return "damage";
     }
     return "destroy";

@@ -410,14 +410,13 @@ export class TrailEffect extends EntityEffect {
  * @param {number} size
  */
 export function spawnPierceEffect(pos, angle, size) {
-  // 1. Directional Spark Burst
   new ParticleEmitter(
     pos,
     angle, // Emit in the direction of the bullet
-    0.1, // emitSize
-    0.05, // emitTime
+    0.5, // emitSize
+    0.1, // emitTime
     30, // emitRate
-    0.5, // emitConeAngle (tight cone)
+    PI / 6, // emitConeAngle (tight cone)
     sprites.get("trace_01.png", system.particleSheetName),
     new Color(1, 1, 0.5), // colorStartA
     new Color(1, 0.8, 0.2), // colorStartB
@@ -431,39 +430,11 @@ export function spawnPierceEffect(pos, angle, size) {
     0.9, // damping
     0.9, // angleDamping
     0, // gravityScale
-    PI * 2, // particleConeAngle
+    0, // particleConeAngle
     0.2, // fadeRate
     0, // randomness
     false, // collideTiles
     true, // additive
-  );
-
-  // 2. Small Impact Flash
-  new ParticleEmitter(
-    pos,
-    0,
-    0,
-    0.05,
-    1,
-    0,
-    sprites.get("circle_01.png", system.particleSheetName),
-    new Color(1, 1, 1),
-    new Color(1, 1, 1),
-    new Color(1, 1, 0, 0),
-    new Color(1, 0.5, 0, 0),
-    0.1,
-    2 * size,
-    0.5 * size,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0.1,
-    0,
-    false,
-    true,
   );
 }
 
