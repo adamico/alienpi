@@ -10,6 +10,7 @@ import {
 import { engine, system } from "../config.js";
 import { sprites } from "../sprites.js";
 import { soundExplosion1, soundExplosion2 } from "../sounds.js";
+import * as gameEffects from "../gameEffects.js";
 
 /**
  * Base class for game objects that need visual size distinct from hitbox size.
@@ -58,7 +59,7 @@ export class BaseEntity extends EngineObject {
 
     this.invulnerable = false;
     this.invulnerableTimer = new Timer();
-    this.playDestroySound = true;
+    this.explodeOnDestroy = true;
   }
 
   /**
@@ -115,9 +116,10 @@ export class BaseEntity extends EngineObject {
   }
 
   destroy() {
-    if (this.playDestroySound) {
+    if (this.explodeOnDestroy) {
       soundExplosion2.play();
       soundExplosion1.play();
+      gameEffects.explode(this.pos);
     }
     super.destroy();
   }

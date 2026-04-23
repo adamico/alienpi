@@ -22,6 +22,7 @@ export class Loot extends BaseEntity {
     this.mass = 0;
     this.velocity = vec2(0, -lootCfg.speed);
     this.mirrorY = lootCfg.mirrorY;
+    this.explodeOnDestroy = false;
   }
 
   update() {

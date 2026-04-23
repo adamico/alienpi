@@ -1,8 +1,4 @@
-import {
-  WHITE,
-  ParticleEmitter,
-  rgb,
-} from "../engine.js";
+import { WHITE, ParticleEmitter, rgb } from "../engine.js";
 import {
   engine,
   weapons,
@@ -54,7 +50,7 @@ export class Bullet extends BaseEntity {
       engine.minCollisionRadius,
     );
 
-    this.playDestroySound = false;
+    this.explodeOnDestroy = false;
   }
 
   /**

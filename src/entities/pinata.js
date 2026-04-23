@@ -1,7 +1,8 @@
-import { vec2, rand, Timer, Color } from "../engine.js";
+import { vec2, rand, Timer, Color, engineObjects } from "../engine.js";
 import { enemy as enemyCfg, system, player as playerCfg } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { Loot } from "./loot.js";
+import { Boss } from "./boss.js";
 import { soundExplosion1 } from "../sounds.js";
 
 export class Pinata extends BaseEntity {
@@ -27,13 +28,29 @@ export class Pinata extends BaseEntity {
     if (this.state === "WAITING") {
       this.velocity = this.velocity.scale(0.8);
       if (this.moveTimer.elapsed()) {
-        this.state = "DASHING";
         const margin = 2;
         const bottomMargin = 10;
-        this.targetPos = vec2(
-          rand(margin, system.levelSize.x - margin),
-          rand(bottomMargin, system.levelSize.y - margin),
-        );
+        const boss = engineObjects.find((o) => o instanceof Boss && !o.destroyed);
+        const minBossDist = 10; // boss radius(3) + safe margin
+
+        let valid = false;
+        let attempts = 0;
+        while (!valid && attempts < 10) {
+          this.targetPos = vec2(
+            rand(margin, system.levelSize.x - margin),
+            rand(bottomMargin, system.levelSize.y - margin),
+          );
+          attempts++;
+
+          if (boss) {
+            if (this.targetPos.distance(boss.pos) > minBossDist) {
+              valid = true;
+            }
+          } else {
+            valid = true;
+          }
+        }
+        this.state = "DASHING";
       }
     } else if (this.state === "DASHING") {
       const toTarget = this.targetPos.subtract(this.pos);

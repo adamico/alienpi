@@ -13,6 +13,7 @@ import {
   time,
   lerp,
 } from "../engine.js";
+import * as gameEffects from "../gameEffects.js";
 import {
   system,
   boss as bossCfg,
@@ -227,32 +228,7 @@ export class BossOrbiter extends BaseEntity {
     if (this.destroyed) return;
 
     // Cosmetic explosion effect
-    new ParticleEmitter(
-      this.pos,
-      0, // angle
-      0.5, // emitSize
-      0.1, // emitTime
-      100, // emitRate
-      PI * 2, // emitConeAngle
-      sprites.get("scorch_02.png", system.particleSheetName),
-      rgb(1, 0.8, 0.3), // colorStartA
-      rgb(1, 0.5, 0.1), // colorStartB
-      rgb(0.5, 0.5, 0.5, 0), // colorEndA
-      rgb(0.2, 0.2, 0.2, 0), // colorEndB
-      0.4, // particleTime
-      1.5, // sizeStart
-      0.2, // sizeEnd
-      0.1, // speed
-      0.05, // angleSpeed
-      0.9, // damping
-      0.9, // angleDamping
-      0, // gravityScale
-      PI * 2, // particleConeAngle
-      0.1, // fadeRate
-      0.5, // randomness
-      false, // collideTiles
-      true, // additive
-    );
+    gameEffects.explode(this.pos);
 
     // Secondary smoke burst
     new ParticleEmitter(
