@@ -219,7 +219,7 @@ export class BossOrbiter extends BaseEntity {
       if (result === "ignore") return false;
       this.hp -= other.damage;
       if (result === "destroy") other.destroy();
-      this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
+      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
       if (this.hp <= 0) this.destroy();
       return false;
     }
@@ -349,7 +349,7 @@ export class BossMissile extends BaseEntity {
       if (result === "ignore") return false;
       this.hp -= other.damage;
       if (result === "destroy") other.destroy();
-      this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
+      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
       if (this.hp <= 0) {
         new MissileExplosion(this.pos.copy(), 3);
         this.destroy();

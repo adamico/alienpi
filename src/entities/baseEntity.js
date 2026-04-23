@@ -46,9 +46,7 @@ export class BaseEntity extends EngineObject {
     this.mirrorX = mirrorX;
     this.mirrorY = mirrorY;
 
-    this.hitEffectTimer = new Timer();
-    this.flashTimer = new Timer();
-    this.hitConfig = null;
+    this.effects = [];
 
     this.invulnerable = false;
     this.invulnerableTimer = new Timer();
@@ -56,29 +54,11 @@ export class BaseEntity extends EngineObject {
   }
 
   /**
-   * Applies a universal hit effect
-   * @param {Object} config
-   * @param {Color} [config.flashColor] - Color to flash (leave undefined for no flash)
-   * @param {number} [config.duration=0.1] - Duration in seconds
-   * @param {number} [config.entityShake=0] - Amplitude of entity jitter
-   * @param {number} [config.screenShake=0] - Amplitude of screen shake
+   * Adds a visual effect to this entity
+   * @param {import('../gameEffects.js').EntityEffect} effect
    */
-  applyHitEffect(config) {
-    this.hitConfig = {
-      duration: 0.1,
-      entityShake: 0,
-      screenShake: 0,
-      ...config,
-    };
-    this.hitEffectTimer.set(this.hitConfig.duration);
-    this.flashTimer.set(config.flashDuration ?? this.hitConfig.duration);
-
-    if (this.hitConfig.screenShake > 0) {
-      gameEffects.applyScreenShake(
-        this.hitConfig.screenShake,
-        this.hitConfig.duration,
-      );
-    }
+  applyEffect(effect) {
+    this.effects.push(effect);
   }
 
   /**
@@ -94,9 +74,9 @@ export class BaseEntity extends EngineObject {
   update() {
     super.update();
 
-    if (this.hitConfig && this.hitEffectTimer.elapsed()) {
-      this.hitConfig = null;
-    }
+    // Prune finished effects and update active ones
+    this.effects = this.effects.filter((e) => !e.isDone());
+    this.effects.forEach((e) => e.update(this));
 
     if (this.invulnerable && this.invulnerableTimer.elapsed()) {
       this.invulnerable = false;
@@ -122,50 +102,24 @@ export class BaseEntity extends EngineObject {
         this.mirrorY ? this.visualSize.y : -this.visualSize.y,
       );
 
+      // Accumulate offsets from all effects
       let renderPos = this.pos;
-      let renderColor = this.color;
-      let doFlash = false;
-      let flashColor = null;
-
-      if (this.hitConfig && !this.hitEffectTimer.elapsed()) {
-        if (this.hitConfig.entityShake > 0) {
-          renderPos = this.pos.add(
-            gameEffects.getEntityShake(
-              this.hitConfig.entityShake,
-              this.hitEffectTimer,
-            ),
-          );
-        }
-
-        if (this.hitConfig.flashColor && !this.flashTimer.elapsed()) {
-          doFlash = true;
-          flashColor = this.hitConfig.flashColor.copy();
-          // Smooth fade out
-          flashColor.a *= 1 - this.flashTimer.getPercent();
-        }
-      }
+      this.effects.forEach((e) => {
+        renderPos = renderPos.add(e.getOffset());
+      });
 
       // Base pass: Draw normally
       drawTile(
         renderPos,
         drawSize,
         this.sprite,
-        renderColor,
+        this.color,
         this.angle,
         this.mirrorX,
       );
 
-      // Flash pass: Additive
-      if (doFlash) {
-        gameEffects.drawEntityFlash(
-          renderPos,
-          drawSize,
-          this.sprite,
-          flashColor,
-          this.angle,
-          this.mirrorX,
-        );
-      }
+      // Effect passes: (e.g. flashes, glows)
+      this.effects.forEach((e) => e.render(this));
     }
   }
 }

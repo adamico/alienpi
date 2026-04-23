@@ -11,6 +11,7 @@ import { system, weapons } from "../config.js";
 import { sprites } from "../sprites.js";
 import { soundExplosion1 } from "../sounds.js";
 import { recordDamage } from "../dpsTracker.js";
+import * as gameEffects from "../gameEffects.js";
 
 /**
  * A single Ghostbuster-style tether. Parented to Player at the latch nozzle
@@ -55,11 +56,8 @@ export class LatchBeam extends EngineObject {
       this.damageFrame = 0;
       this.target.hp -= dmg;
       recordDamage("latch", dmg, this.target);
-      if (typeof this.target.applyHitEffect === "function") {
-        this.target.applyHitEffect({
-          flashColor: new Color(1, 1, 1),
-          duration: 0.05,
-        });
+      if (typeof this.target.applyEffect === "function") {
+        this.target.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
       }
       this.emitImpactSparks();
       if (this.target.hp <= 0) {

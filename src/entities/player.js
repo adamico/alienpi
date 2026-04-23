@@ -27,6 +27,7 @@ import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { LatchBeam } from "./latchBeam.js";
+import * as gameEffects from "../gameEffects.js";
 
 export let player = null;
 
@@ -456,11 +457,8 @@ export class Player extends BaseEntity {
 
     soundPlayerHit.play();
     this.hp -= amount;
-    this.applyHitEffect({
-      flashColor: new Color(1, 0, 0),
-      duration: 0.1,
-      screenShake: 0.3,
-    });
+    this.applyEffect(new gameEffects.FlashEffect(new Color(1, 0, 0), 0.1));
+    gameEffects.applyScreenShake(0.3, 0.1);
     this.startInvulnerability({ duration: 2 });
 
     if (this.hp <= 0) location.reload();

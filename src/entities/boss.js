@@ -17,6 +17,7 @@ import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { soundExplosion1 } from "../sounds.js";
+import * as gameEffects from "../gameEffects.js";
 
 import { BossOrbiter, BossMissile, BossBeam, BossShield } from "./bossChildren.js";
 /**
@@ -231,7 +232,7 @@ export class Boss extends BaseEntity {
     this.initOrbiters();
 
     // Visual feedback for shield recharge
-    this.applyHitEffect({ flashColor: new Color(0.2, 0.5, 1), duration: 0.5 });
+    this.applyEffect(new gameEffects.FlashEffect(new Color(0.2, 0.5, 1), 0.5));
   }
 
   novaPulse() {
@@ -295,10 +296,7 @@ export class Boss extends BaseEntity {
       // Invincible if any orbiters are alive
       const activeOrbiters = this.orbiters.filter((o) => !o.destroyed);
       if (activeOrbiters.length > 0) {
-        this.applyHitEffect({
-          flashColor: new Color(0.2, 0.5, 1),
-          duration: 0.1,
-        });
+        this.applyEffect(new gameEffects.FlashEffect(new Color(0.2, 0.5, 1), 0.1));
         other.destroy();
         return false;
       }
@@ -307,7 +305,7 @@ export class Boss extends BaseEntity {
       if (result === "ignore") return false;
       this.hp -= other.damage;
       if (result === "destroy") other.destroy();
-      this.applyHitEffect({ flashColor: new Color(1, 1, 1), duration: 0.05 });
+      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
       if (this.hp <= 0) {
         soundExplosion1.play();
         this.destroy(); // cascades to all child emitters

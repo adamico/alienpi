@@ -43,6 +43,7 @@ import { Boss } from "./src/entities/boss.js";
 import { BossOrbiter, BossMissile } from "./src/entities/bossChildren.js";
 import { Pinata } from "./src/entities/pinata.js";
 import { Loot } from "./src/entities/loot.js";
+import * as gameEffects from "./src/gameEffects.js";
 
 let behaviorEnabled = true;
 
@@ -230,10 +231,7 @@ function handleSpawn() {
     };
 
     // Visual feedback for spawn
-    entity.applyHitEffect({
-      flashColor: new Color(1, 1, 1),
-      duration: 0.2,
-    });
+    entity.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.2));
     console.log(
       `[TEST LAB] Spawned ${entityType} at ${spawnPos.x.toFixed(1)}, ${spawnPos.y.toFixed(1)} with ${hpValue} HP`,
     );

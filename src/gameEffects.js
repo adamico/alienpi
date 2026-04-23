@@ -248,3 +248,69 @@ class ScreenShaker extends EngineObject {
 
   render() {} // No visual representation
 }
+
+/**
+ * Base class for effects attached to an entity.
+ */
+export class EntityEffect {
+  constructor(duration) {
+    this.timer = new Timer(duration);
+  }
+
+  isDone() {
+    return this.timer.elapsed();
+  }
+
+  update() {}
+  render() {}
+
+  /** @returns {import('./engine.js').Vector2} */
+  getOffset() {
+    return vec2(0);
+  }
+}
+
+/**
+ * Additive flash pass with smooth fade-out.
+ */
+export class FlashEffect extends EntityEffect {
+  constructor(color, duration = 0.1) {
+    super(duration);
+    this.color = color;
+  }
+
+  render(entity) {
+    const color = this.color.copy();
+    color.a *= 1 - this.timer.getPercent();
+
+    drawEntityFlash(
+      entity.pos,
+      entity.visualSize,
+      entity.sprite,
+      color,
+      entity.angle,
+      entity.mirrorX,
+    );
+  }
+}
+
+/**
+ * Local entity jitter/shake effect.
+ */
+export class ShakeEffect extends EntityEffect {
+  constructor(amplitude, duration = 0.1) {
+    super(duration);
+    this.amplitude = amplitude;
+    this.offset = vec2(0);
+  }
+
+  update() {
+    const percent = 1 - this.timer.getPercent();
+    const shake = this.amplitude * percent;
+    this.offset = vec2(rand(-shake, shake), rand(-shake, shake));
+  }
+
+  getOffset() {
+    return this.offset;
+  }
+}

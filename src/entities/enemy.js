@@ -4,6 +4,7 @@ import { Bullet } from "./bullet.js";
 import { player } from "./player.js";
 import { BaseEntity } from "./baseEntity.js";
 import { soundExplosion1 } from "../sounds.js";
+import * as gameEffects from "../gameEffects.js";
 
 export class Enemy extends BaseEntity {
   constructor(pos, typeKey, waveIndex = 0) {
@@ -188,10 +189,7 @@ export class Enemy extends BaseEntity {
       if (result === "ignore") return false;
       this.hp -= other.damage;
       if (result === "destroy") other.destroy();
-      this.applyHitEffect({
-        flashColor: new Color(1, 1, 1),
-        duration: 0.05,
-      });
+      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
 
       if (this.hp <= 0) {
         soundExplosion1.play();

@@ -4,6 +4,7 @@ import { BaseEntity } from "./baseEntity.js";
 import { Loot } from "./loot.js";
 import { Boss } from "./boss.js";
 import { soundExplosion1 } from "../sounds.js";
+import * as gameEffects from "../gameEffects.js";
 
 export class Pinata extends BaseEntity {
   constructor(pos, stage = 0) {
@@ -73,10 +74,7 @@ export class Pinata extends BaseEntity {
       this.hp -= other.damage;
       if (result === "destroy") other.destroy();
 
-      this.applyHitEffect({
-        flashColor: new Color(1, 1, 1),
-        duration: 0.05,
-      });
+      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
 
       if (this.hp <= 0) {
         soundExplosion1.play();
