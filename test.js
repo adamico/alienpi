@@ -79,7 +79,7 @@ function setupUIListeners() {
       defaultHp = enemyCfg.swarm[type].hp;
     } else if (type === "pinata") {
       defaultHp = enemyCfg.swarm.pinata.hp;
-    } else if (type === "boss") {
+    } else if (type === "boss" || type === "boss_no_orbiters") {
       defaultHp = bossCfg.hp;
     } else if (type === "orbiter") {
       defaultHp = orbCfg.hp;
@@ -145,14 +145,16 @@ function handleSpawn() {
   } else if (entityType === "pinata") {
     entity = new Pinata(spawnPos.copy());
     entity.hp = hpValue;
-  } else if (entityType === "boss") {
+  } else if (entityType === "boss" || entityType === "boss_no_orbiters") {
     // Adjust Boss constructor behavior for immediate spawn at mouse
     entity = new Boss(spawnPos.copy());
     entity.pos = spawnPos.copy(); // Force position to mouse click
     entity.hp = hpValue;
     entity.maxHp = hpValue;
     entity.state = "active"; // Skip glide-in
-    entity.initOrbiters(); // Orbiters need explicit init if skipping state change
+    if (entityType === "boss") {
+      entity.initOrbiters(); // Only init if full boss selected
+    }
   } else if (entityType === "orbiter") {
     entity = new BossOrbiter(0, spawnPos.copy());
     entity.hp = hpValue;
