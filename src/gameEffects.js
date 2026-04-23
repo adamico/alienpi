@@ -15,14 +15,16 @@ import { system } from "./config.js";
  * @param {import('./engine.js').Vector2} pos
  */
 export function explode(pos, size) {
+  const s = Math.max(1.2, size); // Minimum effective size for visual punch
+
   // --- STAGE 1: Instant Flash Circle ---
-  new FlashCircle(pos, size * 1.5);
+  new FlashCircle(pos, s * 1.5);
 
   // --- STAGE 2: Expanding Fireball ---
   new ParticleEmitter(
     pos,
     0, // angle
-    size * 0.5, // emitSize
+    s * 0.5, // emitSize
     0.2, // emitTime
     400, // emitRate
     PI * 2, // emitConeAngle
@@ -32,8 +34,8 @@ export function explode(pos, size) {
     new Color(0.4, 0.1, 0, 0), // colorEndA
     new Color(0.2, 0, 0, 0), // colorEndB
     0.8, // particleTime (Doubled for slower burn)
-    size * 1.0, // sizeStart
-    size * 3.5, // sizeEnd
+    s * 1.0, // sizeStart
+    s * 3.5, // sizeEnd
     0.08, // speed
     0.05, // angleSpeed
     0.95, // damping (High damping to keep fireball tight)
@@ -46,10 +48,10 @@ export function explode(pos, size) {
   );
 
   // --- STAGE 3: Lingering Smoke ---
-  spawnSmokeBurst(pos, size);
+  spawnSmokeBurst(pos, s);
 
   // --- STAGE 4: Textureless Debris ---
-  spawnDebris(pos, size);
+  spawnDebris(pos, s);
 }
 
 /**

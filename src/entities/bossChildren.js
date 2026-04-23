@@ -358,7 +358,7 @@ export class BossMissile extends BaseEntity {
     }
     // Collided with player ship
     if (other === player) {
-      new MissileExplosion(this.pos.copy(), 3);
+      gameEffects.explode(this.pos, this.size.x);
       this.destroy();
       return false;
     }

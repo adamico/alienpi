@@ -33,7 +33,7 @@ export let player = null;
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 
 export class Player extends BaseEntity {
-  constructor() {
+  constructor(maxHp) {
     super(
       vec2(system.levelSize.x / 2, 1),
       weaponsCfg[WEAPON_ORDER[0]].playerSprite || playerCfg.sprite,
@@ -44,7 +44,7 @@ export class Player extends BaseEntity {
       playerCfg.mirrorY,
     );
 
-    this.hp = playerCfg.hp;
+    this.hp = maxHp || playerCfg.hp;
     this.shootTimer = 0;
     this.setCollision(true, true);
     this.isPlayer = true;
@@ -486,7 +486,7 @@ export class Player extends BaseEntity {
   }
 }
 
-export function spawnPlayer() {
-  player = new Player();
+export function spawnPlayer(maxHp) {
+  player = new Player(maxHp);
   return player;
 }

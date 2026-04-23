@@ -58,7 +58,7 @@ async function gameInit() {
     system.particleSheetName,
   );
 
-  spawnPlayer();
+  spawnPlayer(999);
   setupUIListeners();
 }
 
