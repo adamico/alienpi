@@ -382,6 +382,8 @@ export const loot = {
 export const settings = {
   musicEnabled: true,
   soundEffectsEnabled: true,
+  musicVolume: 0.8,
+  sfxVolume: 0.8,
   enableDPSLog: false,
   customDebug: false,
 };

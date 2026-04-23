@@ -12,6 +12,8 @@ import {
   mainCanvasSize,
   Color,
   BLACK,
+  UISlider,
+  setSoundVolume,
 } from "./engine.js";
 
 import { player } from "./entities/player.js";
@@ -40,6 +42,8 @@ let playPromptText,
   settingsPromptText;
 let settingsTitle, musicToggleText, sfxToggleText, backPromptText;
 let pausePanel, pauseMusicToggleText, pauseSfxToggleText;
+let pauseMusicSlider, pauseSfxSlider;
+let settingsMusicSlider, settingsSfxSlider;
 let retryText;
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
@@ -163,7 +167,7 @@ export function initUI() {
   pauseGroup.addChild(pausePanel);
 
   const pauseText = new UIText(
-    vec2(0, -110),
+    vec2(0, -150),
     vec2(500, 100),
     strings.ui.pauseTitle,
   );
@@ -171,18 +175,34 @@ export function initUI() {
   pauseText.textColor = BLACK.copy();
   pausePanel.addChild(pauseText);
 
-  pauseMusicToggleText = new UIText(vec2(0, -10), vec2(500, 50), "");
+  pauseMusicToggleText = new UIText(vec2(0, -80), vec2(500, 50), "");
   pauseMusicToggleText.textHeight = 30;
   pauseMusicToggleText.textColor = rgb(0.2, 0.2, 0.2);
   pausePanel.addChild(pauseMusicToggleText);
 
-  pauseSfxToggleText = new UIText(vec2(0, 50), vec2(500, 50), "");
+  pauseMusicSlider = new UISlider(
+    vec2(0, -40),
+    vec2(400, 20),
+    settings.musicVolume,
+  );
+  pauseMusicSlider.color = rgb(0.4, 0.7, 1);
+  pausePanel.addChild(pauseMusicSlider);
+
+  pauseSfxToggleText = new UIText(vec2(0, 40), vec2(500, 50), "");
   pauseSfxToggleText.textHeight = 30;
   pauseSfxToggleText.textColor = rgb(0.2, 0.2, 0.2);
   pausePanel.addChild(pauseSfxToggleText);
 
+  pauseSfxSlider = new UISlider(
+    vec2(0, 80),
+    vec2(400, 20),
+    settings.sfxVolume,
+  );
+  pauseSfxSlider.color = rgb(0.2, 1, 0.2);
+  pausePanel.addChild(pauseSfxSlider);
+
   const resumeText = new UIText(
-    vec2(0, 130),
+    vec2(0, 150),
     vec2(500, 50),
     strings.ui.resumePrompt,
   );
@@ -247,6 +267,22 @@ export function initUI() {
   sfxToggleText.textColor = WHITE.copy();
   sfxToggleText.fontShadow = true;
   settingsGroup.addChild(sfxToggleText);
+
+  settingsMusicSlider = new UISlider(
+    vec2(0, 20),
+    vec2(400, 30),
+    settings.musicVolume,
+  );
+  settingsMusicSlider.color = rgb(0.4, 0.7, 1);
+  settingsGroup.addChild(settingsMusicSlider);
+
+  settingsSfxSlider = new UISlider(
+    vec2(0, 140),
+    vec2(400, 30),
+    settings.sfxVolume,
+  );
+  settingsSfxSlider.color = rgb(0.2, 1, 0.2);
+  settingsGroup.addChild(settingsSfxSlider);
 
   backPromptText = new UIText(
     vec2(0, 200),
@@ -356,44 +392,60 @@ export function updateUI() {
 
   if (settingsGroup.visible) {
     const scale = hudScale;
-    settingsTitle.localPos = vec2(0, -150 * scale);
+    settingsTitle.localPos = vec2(0, -180 * scale);
     settingsTitle.textHeight = 80 * scale;
 
-    musicToggleText.localPos = vec2(0, -20 * scale);
+    musicToggleText.localPos = vec2(0, -100 * scale);
     musicToggleText.textHeight = 40 * scale;
-    musicToggleText.textColor = WHITE.copy();
     musicToggleText.text = `${strings.ui.musicLabel}${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.musicHotkey}`;
 
-    sfxToggleText.localPos = vec2(0, 60 * scale);
+    settingsMusicSlider.localPos = vec2(0, -50 * scale);
+    settingsMusicSlider.size = vec2(400, 30).scale(scale);
+    settings.musicVolume = settingsMusicSlider.value;
+
+    sfxToggleText.localPos = vec2(0, 50 * scale);
     sfxToggleText.textHeight = 40 * scale;
-    sfxToggleText.textColor = WHITE.copy();
     sfxToggleText.text = `${strings.ui.sfxLabel}${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.sfxHotkey}`;
 
-    backPromptText.localPos = vec2(0, 200 * scale);
+    settingsSfxSlider.localPos = vec2(0, 100 * scale);
+    settingsSfxSlider.size = vec2(400, 30).scale(scale);
+    settings.sfxVolume = settingsSfxSlider.value;
+
+    backPromptText.localPos = vec2(0, 220 * scale);
     backPromptText.textHeight = 24 * scale;
   }
 
   if (pauseGroup.visible) {
     const scale = hudScale;
     pausePanel.size = vec2(600, 400).scale(scale);
-
+    
     // pauseText
     pausePanel.children[0].textHeight = 80 * scale;
-    pausePanel.children[0].localPos = vec2(0, -110 * scale);
-
+    pausePanel.children[0].localPos = vec2(0, -150 * scale);
+    
     // pauseMusicToggleText
     pauseMusicToggleText.textHeight = 30 * scale;
-    pauseMusicToggleText.localPos = vec2(0, -10 * scale);
+    pauseMusicToggleText.localPos = vec2(0, -80 * scale);
     pauseMusicToggleText.text = `${strings.ui.musicLabel}${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.musicHotkey}`;
-
+    
+    // pauseMusicSlider
+    pauseMusicSlider.localPos = vec2(0, -40 * scale);
+    pauseMusicSlider.size = vec2(400, 20).scale(scale);
+    settings.musicVolume = pauseMusicSlider.value;
+    
     // pauseSfxToggleText
     pauseSfxToggleText.textHeight = 30 * scale;
-    pauseSfxToggleText.localPos = vec2(0, 50 * scale);
+    pauseSfxToggleText.localPos = vec2(0, 40 * scale);
     pauseSfxToggleText.text = `${strings.ui.sfxLabel}${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.sfxHotkey}`;
-
+    
+    // pauseSfxSlider
+    pauseSfxSlider.localPos = vec2(0, 80 * scale);
+    pauseSfxSlider.size = vec2(400, 20).scale(scale);
+    settings.sfxVolume = pauseSfxSlider.value;
+    
     // resumeText
-    pausePanel.children[3].textHeight = 24 * scale;
-    pausePanel.children[3].localPos = vec2(0, 130 * scale);
+    pausePanel.children[5].textHeight = 24 * scale;
+    pausePanel.children[5].localPos = vec2(0, 150 * scale);
   }
 
   if (gameOverGroup.visible) {

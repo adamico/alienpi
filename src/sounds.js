@@ -1,11 +1,34 @@
-import { Sound } from "./engine.js";
+import { Sound, SoundInstance } from "./engine.js";
 import { settings } from "./config.js";
 
-// Global sound effect toggle
+// Keep track of which sounds are music to apply different volume settings
+const musicSounds = new Set();
+
+// Global sound effect and volume control
 const originalPlay = Sound.prototype.play;
-Sound.prototype.play = function(...args) {
-  if (!settings.soundEffectsEnabled) return;
-  return originalPlay.apply(this, args);
+Sound.prototype.play = function(pos, volume = 1, pitch = 1, randomPitch = 0, loop = false, paused) {
+  const isMusic = musicSounds.has(this);
+  if (isMusic) {
+    // Music uses musicVolume and musicEnabled toggle
+    const vol = settings.musicEnabled ? volume * settings.musicVolume : 0;
+    return originalPlay.call(this, pos, vol, pitch, randomPitch, loop, paused);
+  } else {
+    // SFX uses sfxVolume and soundEffectsEnabled toggle
+    if (!settings.soundEffectsEnabled) return;
+    return originalPlay.call(this, pos, volume * settings.sfxVolume, pitch, randomPitch, loop, paused);
+  }
+};
+
+// Also patch setVolume for active sound instances (like music)
+const originalSetVolume = SoundInstance.prototype.setVolume;
+SoundInstance.prototype.setVolume = function(volume) {
+  const isMusic = musicSounds.has(this.sound);
+  if (isMusic) {
+    const vol = settings.musicEnabled ? volume * settings.musicVolume : 0;
+    return originalSetVolume.call(this, vol);
+  } else {
+    return originalSetVolume.call(this, volume * settings.sfxVolume);
+  }
 };
 
 export class SoundGenerator extends Sound {
@@ -222,3 +245,8 @@ export const soundBossMusic = new Sound(
 );
 export const soundMusicIntro = new Sound("public/assets/sounds/Intro.wav");
 export const soundMusicVerse = new Sound("public/assets/sounds/VerseA.wav");
+
+// Register music sounds
+musicSounds.add(soundBossMusic);
+musicSounds.add(soundMusicIntro);
+musicSounds.add(soundMusicVerse);
