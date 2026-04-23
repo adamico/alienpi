@@ -31,7 +31,9 @@ export class Pinata extends BaseEntity {
       if (this.moveTimer.elapsed()) {
         const margin = 2;
         const bottomMargin = 10;
-        const boss = engineObjects.find((o) => o instanceof Boss && !o.destroyed);
+        const boss = engineObjects.find(
+          (o) => o instanceof Boss && !o.destroyed,
+        );
         const minBossDist = 10; // boss radius(3) + safe margin
 
         let valid = false;
@@ -74,8 +76,9 @@ export class Pinata extends BaseEntity {
       this.hp -= other.damage;
       if (result === "destroy") other.destroy();
 
-      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
-
+      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 0), 0.1));
+      this.applyEffect(new gameEffects.ShakeEffect(0.15, 0.1));
+      this.applyEffect(new gameEffects.KnockbackEffect(other.velocity, 0.1));
       if (this.hp <= 0) {
         soundExplosion1.play();
         this.destroy();

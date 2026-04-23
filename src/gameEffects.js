@@ -3,12 +3,14 @@ import {
   drawCircle,
   drawTile,
   EngineObject,
+  glContext,
   ParticleEmitter,
   PI,
   rand,
   rgb,
   setBlendMode,
   setCameraPos,
+  time,
   Timer,
   vec2,
 } from "./engine.js";
@@ -318,6 +320,29 @@ export class ShakeEffect extends EntityEffect {
 }
 
 /**
+ * Visual knockback effect that pushes the entity in a direction.
+ */
+export class KnockbackEffect extends EntityEffect {
+  constructor(direction, magnitude, duration = 0.2) {
+    super(duration);
+    this.direction = direction.normalize();
+    this.magnitude = magnitude;
+  }
+
+  update(entity) {
+    const percent = 1 - this.timer.getPercent();
+    // Use a square decay for a punchier start
+    const p = percent * percent;
+    const shift = this.direction.scale(this.magnitude * p);
+    entity.pos = entity.pos.add(shift);
+  }
+
+  getOffset() {
+    return vec2(0);
+  }
+}
+
+/**
  * Draws a configurable outline around an entity.
  */
 export class OutlineEffect extends EntityEffect {
@@ -400,6 +425,33 @@ export class TrailEffect extends EntityEffect {
         entity.mirrorX,
       );
     });
+  }
+}
+
+/**
+ * Pulsing flash effect that oscillates the entity's brightness.
+ */
+export class PulseEffect extends EntityEffect {
+  constructor(color = new Color(1, 1, 1, 0.5), speed = 4.0) {
+    super(null); // Persistent effect
+    this.color = color;
+    this.speed = speed;
+  }
+
+  render(entity, renderPos, drawSize) {
+    // Sin wave from 0 to peak alpha
+    const p = (Math.sin(time * this.speed) + 1) / 2;
+    const color = this.color.copy();
+    color.a *= p;
+
+    drawEntityFlash(
+      renderPos,
+      drawSize,
+      entity.sprite,
+      color,
+      entity.angle,
+      entity.mirrorX,
+    );
   }
 }
 
