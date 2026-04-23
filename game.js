@@ -20,12 +20,16 @@ import {
   engineObjects,
   time,
   sin,
+  engineObjectsDestroy,
+  keyWasPressed,
+  setPaused,
 } from "./src/engine.js";
 
 import {
   system,
   engine,
   settings,
+  GAME_STATES,
   starfield as starCfg,
 } from "./src/config.js";
 import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
@@ -45,7 +49,6 @@ import { enemy as enemyCfg } from "./src/config.js";
 import { Boundary } from "./src/entities/boundary.js";
 import { initUI, updateUI } from "./src/ui.js";
 
-
 let bossSpawned = false;
 let bossMusicPlaying = false;
 let currentBoss = null;
@@ -56,6 +59,7 @@ const boundaries = [];
 let gameMusicIntroStarted = false;
 let gameMusicVerseStarted = false;
 let activeMusicInstance = null;
+export let gameState = GAME_STATES.TITLE;
 
 async function gameInit() {
   setupSharpenShader();
@@ -63,6 +67,7 @@ async function gameInit() {
   setCameraPos(system.cameraPos);
   setTileDefaultSize(vec2(1));
   setObjectMaxSpeed(engine.objectMaxSpeed);
+  setPaused(true);
 
   // Load all spritesheets defined in config
   await setupSpritesheets();
@@ -73,18 +78,23 @@ async function gameInit() {
     system.particleSheetName,
   );
 
-  player = spawnPlayer();
-
-  // Straight to boss level
-  currentBoss = new Boss(
-    vec2(system.levelSize.x / 2, system.levelSize.y - 4),
-  );
-  bossSpawned = true;
-
-  setupBoundaries();
   initUI();
 }
 
+export function resetGame() {
+  engineObjectsDestroy();
+  player = spawnPlayer();
+
+  // Straight to boss level
+  currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
+  bossSpawned = true;
+  bossMusicPlaying = false;
+  gameMusicIntroStarted = false;
+  gameMusicVerseStarted = false;
+
+  setupBoundaries();
+  gameState = GAME_STATES.PLAYING;
+}
 
 async function setupSpritesheets() {
   for (let i = 0; i < system.spriteSheetLists.length; i++) {
@@ -145,14 +155,50 @@ function setupBoundaries() {
 }
 
 function gameUpdate() {
-  if (system.enableDPSLog) updateDPSLog();
+  if (gameState !== GAME_STATES.PLAYING) return;
 
+  if (system.enableDPSLog) updateDPSLog();
   updatePinata();
+
+  if (player && player.hp <= 0) {
+    gameState = GAME_STATES.GAMEOVER;
+    setPaused(true);
+  }
+}
+
+function gameUpdatePost() {
+  if (gameState === GAME_STATES.TITLE) {
+    if (keyWasPressed("Enter") || keyWasPressed("Space")) {
+      resetGame();
+      setPaused(false);
+    }
+  } else if (gameState === GAME_STATES.PLAYING) {
+    if (keyWasPressed("Escape") || keyWasPressed("KeyP")) {
+      gameState = GAME_STATES.PAUSE;
+      setPaused(true);
+    }
+  } else if (gameState === GAME_STATES.PAUSE) {
+    if (
+      keyWasPressed("Escape") ||
+      keyWasPressed("KeyP") ||
+      keyWasPressed("Enter") ||
+      keyWasPressed("Space")
+    ) {
+      gameState = GAME_STATES.PLAYING;
+      setPaused(false);
+    }
+  } else if (gameState === GAME_STATES.GAMEOVER) {
+    if (keyWasPressed("Enter") || keyWasPressed("Space")) {
+      resetGame();
+      setPaused(false);
+    }
+  }
+
+  // Music and UI update even when paused or in title
   updateGameMusic();
   updateBossMusic();
   updateUI();
 }
-
 
 function updateDPSLog() {
   const enemies = engineObjects.filter((o) => o.isEnemy);
@@ -191,7 +237,9 @@ function updateBossMusic() {
       activeMusicInstance.stop();
     }
 
-    activeMusicInstance = soundBossMusic.playMusic(settings.musicEnabled ? 1.2 : 0);
+    activeMusicInstance = soundBossMusic.playMusic(
+      settings.musicEnabled ? 1.2 : 0,
+    );
     bossMusicPlaying = true;
   }
 }
@@ -205,19 +253,23 @@ function updateGameMusic() {
 
   if (!gameMusicIntroStarted) {
     if (soundMusicIntro.isLoaded()) {
-      activeMusicInstance = soundMusicIntro.playMusic(settings.musicEnabled ? 0.8 : 0, false); // Play once
+      activeMusicInstance = soundMusicIntro.playMusic(
+        settings.musicEnabled ? 0.8 : 0,
+        false,
+      ); // Play once
       gameMusicIntroStarted = true;
     }
   } else if (!gameMusicVerseStarted) {
     // Wait for intro to finish
     if (!activeMusicInstance || !activeMusicInstance.isPlaying()) {
-      activeMusicInstance = soundMusicVerse.playMusic(settings.musicEnabled ? 0.8 : 0, true); // Start loop
+      activeMusicInstance = soundMusicVerse.playMusic(
+        settings.musicEnabled ? 0.8 : 0,
+        true,
+      ); // Start loop
       gameMusicVerseStarted = true;
     }
   }
 }
-
-function gameUpdatePost() {}
 
 function gameRender() {
   drawPlayField();
@@ -295,7 +347,6 @@ function drawMarquee() {
 function drawUI() {
   if (settings.customDebug) drawDebug();
 }
-
 
 function drawDebug() {
   const debugX = 120;

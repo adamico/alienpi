@@ -1,5 +1,12 @@
 import { vec2, rgb, PI } from "./engine.js";
 
+export const GAME_STATES = {
+  TITLE: "TITLE",
+  PLAYING: "PLAYING",
+  PAUSE: "PAUSE",
+  GAMEOVER: "GAMEOVER",
+};
+
 const ASSET_PATH = "public/assets/";
 const SPRITE_SHEET_NAME = "spaceShooter2_spritesheet";
 const SPRITE_SHEET2_NAME = "sheet";

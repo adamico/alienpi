@@ -430,7 +430,9 @@ export class Player extends BaseEntity {
     gameEffects.applyScreenShake(0.3, 0.1);
     this.startInvulnerability({ duration: 2 });
 
-    if (this.hp <= 0) location.reload();
+    if (this.hp <= 0) {
+      // Game state will handle death
+    }
     return true;
   }
 

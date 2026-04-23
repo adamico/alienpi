@@ -15,13 +15,15 @@ import {
 
 import { player } from "./entities/player.js";
 import { sprites } from "./sprites.js";
-import { player as playerCfg, loot as lootCfg, settings } from "./config.js";
+import { player as playerCfg, loot as lootCfg, settings, GAME_STATES } from "./config.js";
+import { gameState } from "../game.js";
 
 let uiRoot;
 let scoreText, timeText;
 let healthIcons = [];
 let weaponIcons = [];
 let settingsText, musicText;
+let hudGroup, titleGroup, pauseGroup, gameOverGroup;
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 const WEAPON_LOOT_MAPPING = {
@@ -39,21 +41,25 @@ export function initUI() {
   uiRoot.color = new Color(0, 0, 0, 0);
   uiRoot.lineWidth = 0;
 
-  // Root positioning is handled in update to keep it responsive
+  // HUD Group (Score, Time, Health, Weapons, Settings)
+  hudGroup = new UIObject(vec2(0, 0), mainCanvasSize);
+  hudGroup.color = new Color(0, 0, 0, 0);
+  hudGroup.lineWidth = 0;
+  uiRoot.addChild(hudGroup);
 
   // Score (Placeholder)
   scoreText = new UIText(vec2(0, 0), vec2(300, 30), "SCORE: 000000");
   scoreText.textColor = WHITE.copy();
   scoreText.textAlign = "left";
   scoreText.fontShadow = true;
-  uiRoot.addChild(scoreText);
+  hudGroup.addChild(scoreText);
 
   // Time
   timeText = new UIText(vec2(0, 0), vec2(300, 30), "TIME: 00:00");
   timeText.textColor = WHITE.copy();
   timeText.textAlign = "right";
   timeText.fontShadow = true;
-  uiRoot.addChild(timeText);
+  hudGroup.addChild(timeText);
 
   // Health Icons
   setupHealthUI();
@@ -66,13 +72,62 @@ export function initUI() {
   settingsText.textColor = WHITE.copy();
   settingsText.textAlign = "right";
   settingsText.fontShadow = true;
-  uiRoot.addChild(settingsText);
+  hudGroup.addChild(settingsText);
 
   musicText = new UIText(vec2(0, 0), vec2(300, 30), "MUSIC: OFF");
   musicText.textColor = WHITE.copy();
   musicText.textAlign = "right";
   musicText.fontShadow = true;
-  uiRoot.addChild(musicText);
+  hudGroup.addChild(musicText);
+
+  // Title Screen
+  titleGroup = new UIObject(vec2(0, 0), mainCanvasSize);
+  titleGroup.color = new Color(0, 0, 0.1, 0.5);
+  titleGroup.lineWidth = 0;
+  uiRoot.addChild(titleGroup);
+
+  const titleText = new UIText(vec2(0, 80), vec2(800, 100), "ALIEN PI");
+  titleText.textHeight = 100;
+  titleText.fontShadow = true;
+  titleGroup.addChild(titleText);
+
+  const startText = new UIText(vec2(0, -60), vec2(800, 50), "PRESS SPACE TO START");
+  startText.textHeight = 30;
+  startText.fontShadow = true;
+  titleGroup.addChild(startText);
+
+  // Pause Screen
+  pauseGroup = new UIObject(vec2(0, 0), mainCanvasSize);
+  pauseGroup.color = new Color(0, 0, 0, 0.5);
+  pauseGroup.lineWidth = 0;
+  uiRoot.addChild(pauseGroup);
+
+  const pauseText = new UIText(vec2(0, 40), vec2(800, 100), "PAUSED");
+  pauseText.textHeight = 80;
+  pauseText.fontShadow = true;
+  pauseGroup.addChild(pauseText);
+
+  const resumeText = new UIText(vec2(0, -40), vec2(800, 50), "PRESS ESC TO RESUME");
+  resumeText.textHeight = 24;
+  resumeText.fontShadow = true;
+  pauseGroup.addChild(resumeText);
+
+  // Game Over Screen
+  gameOverGroup = new UIObject(vec2(0, 0), mainCanvasSize);
+  gameOverGroup.color = new Color(0.2, 0, 0, 0.6);
+  gameOverGroup.lineWidth = 0;
+  uiRoot.addChild(gameOverGroup);
+
+  const gameOverText = new UIText(vec2(0, 60), vec2(800, 100), "MISSION FAILED");
+  gameOverText.textHeight = 80;
+  gameOverText.textColor = rgb(1, 0.2, 0.2);
+  gameOverText.fontShadow = true;
+  gameOverGroup.addChild(gameOverText);
+
+  const retryText = new UIText(vec2(0, -60), vec2(800, 50), "PRESS SPACE TO RETRY");
+  retryText.textHeight = 24;
+  retryText.fontShadow = true;
+  gameOverGroup.addChild(retryText);
 }
 
 function setupHealthUI() {
@@ -86,7 +141,7 @@ function setupHealthUI() {
     );
     // Tint to white - high values help wash out the original color
     icon.color = new Color(5, 5, 5, 1);
-    uiRoot.addChild(icon);
+    hudGroup.addChild(icon);
     healthIcons.push(icon);
   }
 }
@@ -101,7 +156,7 @@ function setupWeaponUI() {
     const container = new UIObject(vec2(0, 0), vec2(200, 40));
     container.color = new Color(0, 0, 0, 0);
     container.lineWidth = 0;
-    uiRoot.addChild(container);
+    hudGroup.addChild(container);
 
     // Icon on the left
     const icon = new UITile(vec2(-70, 0), vec2(40, 40), lootSprite);
@@ -122,6 +177,16 @@ export function updateUI() {
   // Keep root centered and sized to canvas
   uiRoot.pos = mainCanvasSize.scale(0.5);
   uiRoot.size = mainCanvasSize;
+
+  hudGroup.size = mainCanvasSize;
+  titleGroup.size = mainCanvasSize;
+  pauseGroup.size = mainCanvasSize;
+  gameOverGroup.size = mainCanvasSize;
+
+  hudGroup.visible = gameState !== GAME_STATES.TITLE;
+  titleGroup.visible = gameState === GAME_STATES.TITLE;
+  pauseGroup.visible = gameState === GAME_STATES.PAUSE;
+  gameOverGroup.visible = gameState === GAME_STATES.GAMEOVER;
 
   const uiCenterX = mainCanvasSize.x / 2;
   const uiCenterY = mainCanvasSize.y / 2;
