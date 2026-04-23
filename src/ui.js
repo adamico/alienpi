@@ -13,11 +13,12 @@ import {
   Color,
   BLACK,
   UISlider,
-  setSoundVolume,
+  mouseWasReleased,
 } from "./engine.js";
 
 import { player } from "./entities/player.js";
 import { sprites } from "./sprites.js";
+import { soundShoot } from "./sounds.js";
 import {
   player as playerCfg,
   loot as lootCfg,
@@ -193,11 +194,7 @@ export function initUI() {
   pauseSfxToggleText.textColor = rgb(0.2, 0.2, 0.2);
   pausePanel.addChild(pauseSfxToggleText);
 
-  pauseSfxSlider = new UISlider(
-    vec2(0, 80),
-    vec2(400, 20),
-    settings.sfxVolume,
-  );
+  pauseSfxSlider = new UISlider(vec2(0, 80), vec2(400, 20), settings.sfxVolume);
   pauseSfxSlider.color = rgb(0.2, 1, 0.2);
   pausePanel.addChild(pauseSfxSlider);
 
@@ -413,39 +410,47 @@ export function updateUI() {
 
     backPromptText.localPos = vec2(0, 220 * scale);
     backPromptText.textHeight = 24 * scale;
+
+    if (mouseWasReleased(0) && settingsSfxSlider.isHoverObject()) {
+      soundShoot.play();
+    }
   }
 
   if (pauseGroup.visible) {
     const scale = hudScale;
     pausePanel.size = vec2(600, 400).scale(scale);
-    
+
     // pauseText
     pausePanel.children[0].textHeight = 80 * scale;
     pausePanel.children[0].localPos = vec2(0, -150 * scale);
-    
+
     // pauseMusicToggleText
     pauseMusicToggleText.textHeight = 30 * scale;
     pauseMusicToggleText.localPos = vec2(0, -80 * scale);
     pauseMusicToggleText.text = `${strings.ui.musicLabel}${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.musicHotkey}`;
-    
+
     // pauseMusicSlider
     pauseMusicSlider.localPos = vec2(0, -40 * scale);
     pauseMusicSlider.size = vec2(400, 20).scale(scale);
     settings.musicVolume = pauseMusicSlider.value;
-    
+
     // pauseSfxToggleText
     pauseSfxToggleText.textHeight = 30 * scale;
     pauseSfxToggleText.localPos = vec2(0, 40 * scale);
     pauseSfxToggleText.text = `${strings.ui.sfxLabel}${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.sfxHotkey}`;
-    
+
     // pauseSfxSlider
     pauseSfxSlider.localPos = vec2(0, 80 * scale);
     pauseSfxSlider.size = vec2(400, 20).scale(scale);
     settings.sfxVolume = pauseSfxSlider.value;
-    
+
     // resumeText
     pausePanel.children[5].textHeight = 24 * scale;
     pausePanel.children[5].localPos = vec2(0, 150 * scale);
+
+    if (mouseWasReleased(0) && pauseSfxSlider.isHoverObject()) {
+      soundShoot.play();
+    }
   }
 
   if (gameOverGroup.visible) {
