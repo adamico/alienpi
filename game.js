@@ -62,6 +62,7 @@ let gameMusicVerseStarted = false;
 let activeMusicInstance = null;
 export let gameState = GAME_STATES.TITLE;
 let previousState = GAME_STATES.TITLE;
+let gameOverTime = 0;
 
 async function gameInit() {
   setupSharpenShader();
@@ -166,6 +167,7 @@ function gameUpdate() {
   if (player && player.hp <= 0) {
     gameState = GAME_STATES.GAMEOVER;
     setPaused(true);
+    gameOverTime = timeReal;
   }
 }
 
@@ -199,9 +201,11 @@ function gameUpdatePost() {
       gameState = previousState;
     }
   } else if (gameState === GAME_STATES.GAMEOVER) {
-    if (keyWasPressed("Enter")) {
-      resetGame();
-      setPaused(false);
+    if (timeReal - gameOverTime > 1.0) {
+      if (keyWasPressed("Enter") || keyWasPressed("Space")) {
+        resetGame();
+        setPaused(false);
+      }
     }
   }
 
@@ -246,7 +250,14 @@ function updatePinata() {
 }
 
 function updateBossMusic() {
-  if (!bossSpawned || gameState === GAME_STATES.TITLE) return;
+  if (!bossSpawned) return;
+
+  if (gameState === GAME_STATES.TITLE || gameState === GAME_STATES.GAMEOVER) {
+    if (activeMusicInstance) {
+      activeMusicInstance.setVolume(0);
+    }
+    return;
+  }
 
   if (activeMusicInstance) {
     activeMusicInstance.setVolume(settings.musicEnabled ? 1.2 : 0);
@@ -266,12 +277,9 @@ function updateBossMusic() {
 }
 
 function updateGameMusic() {
-  if (gameState === GAME_STATES.TITLE) {
+  if (gameState === GAME_STATES.TITLE || gameState === GAME_STATES.GAMEOVER) {
     if (activeMusicInstance) {
-      activeMusicInstance.stop();
-      activeMusicInstance = null;
-      gameMusicIntroStarted = false;
-      gameMusicVerseStarted = false;
+      activeMusicInstance.setVolume(0);
     }
     return;
   }

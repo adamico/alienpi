@@ -11,7 +11,6 @@ import {
   timeReal,
   mainCanvasSize,
   Color,
-  keyWasPressed,
   BLACK,
 } from "./engine.js";
 
@@ -41,6 +40,7 @@ let playPromptText,
   settingsPromptText;
 let settingsTitle, musicToggleText, sfxToggleText, backPromptText;
 let pausePanel, pauseMusicToggleText, pauseSfxToggleText;
+let retryText;
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 const WEAPON_LOOT_MAPPING = {
@@ -197,7 +197,7 @@ export function initUI() {
   uiRoot.addChild(gameOverGroup);
 
   const gameOverText = new UIText(
-    vec2(0, 60),
+    vec2(0, -60),
     vec2(800, 100),
     strings.ui.gameOverTitle,
   );
@@ -206,12 +206,9 @@ export function initUI() {
   gameOverText.fontShadow = true;
   gameOverGroup.addChild(gameOverText);
 
-  const retryText = new UIText(
-    vec2(0, -60),
-    vec2(800, 50),
-    strings.ui.retryPrompt,
-  );
+  retryText = new UIText(vec2(0, 60), vec2(800, 50), strings.ui.retryPrompt);
   retryText.textHeight = 24;
+  retryText.textColor = WHITE.copy();
   retryText.fontShadow = true;
   gameOverGroup.addChild(retryText);
 
@@ -397,6 +394,14 @@ export function updateUI() {
     // resumeText
     pausePanel.children[3].textHeight = 24 * scale;
     pausePanel.children[3].localPos = vec2(0, 130 * scale);
+  }
+
+  if (gameOverGroup.visible) {
+    const scale = hudScale;
+    retryText.localPos = vec2(0, 60 * scale);
+    retryText.textHeight = 24 * scale;
+    // Blinking effect
+    retryText.visible = (timeReal * 2) % 2 < 1.2;
   }
 
   const uiCenterX = mainCanvasSize.x / 2;
