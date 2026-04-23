@@ -1,15 +1,15 @@
 import {
-  ParticleEmitter,
   Color,
-  PI,
-  EngineObject,
-  vec2,
-  Timer,
   drawCircle,
-  setCameraPos,
+  drawTile,
+  EngineObject,
+  ParticleEmitter,
+  PI,
   rand,
   setBlendMode,
-  drawTile,
+  setCameraPos,
+  Timer,
+  vec2,
 } from "./engine.js";
 import { sprites } from "./sprites.js";
 import { system } from "./config.js";
@@ -254,11 +254,12 @@ class ScreenShaker extends EngineObject {
  */
 export class EntityEffect {
   constructor(duration) {
-    this.timer = new Timer(duration);
+    this.timer = duration ? new Timer(duration) : null;
+    this.renderUnder = false;
   }
 
   isDone() {
-    return this.timer.elapsed();
+    return this.timer ? this.timer.elapsed() : false;
   }
 
   update() {}
@@ -279,13 +280,13 @@ export class FlashEffect extends EntityEffect {
     this.color = color;
   }
 
-  render(entity) {
+  render(entity, renderPos, drawSize) {
     const color = this.color.copy();
     color.a *= 1 - this.timer.getPercent();
 
     drawEntityFlash(
-      entity.pos,
-      entity.visualSize,
+      renderPos,
+      drawSize,
       entity.sprite,
       color,
       entity.angle,
@@ -312,5 +313,43 @@ export class ShakeEffect extends EntityEffect {
 
   getOffset() {
     return this.offset;
+  }
+}
+
+/**
+ * Draws a configurable outline around an entity.
+ */
+export class OutlineEffect extends EntityEffect {
+  constructor(color, thickness = 0.05, duration = null) {
+    super(duration);
+    this.color = color;
+    this.thickness = thickness;
+    this.renderUnder = true;
+  }
+
+  render(entity, renderPos, drawSize) {
+    // Draw the sprite 8 times at small offsets to create an outline
+    const t = this.thickness;
+    const offsets = [
+      vec2(-t, 0),
+      vec2(t, 0),
+      vec2(0, -t),
+      vec2(0, t),
+      vec2(-t, -t),
+      vec2(t, -t),
+      vec2(-t, t),
+      vec2(t, t),
+    ];
+
+    offsets.forEach((offset) => {
+      drawTile(
+        renderPos.add(offset),
+        drawSize,
+        entity.sprite,
+        this.color,
+        entity.angle,
+        entity.mirrorX,
+      );
+    });
   }
 }

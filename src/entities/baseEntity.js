@@ -108,6 +108,11 @@ export class BaseEntity extends EngineObject {
         renderPos = renderPos.add(e.getOffset());
       });
 
+      // Effect passes: (Under)
+      this.effects.forEach((e) => {
+        if (e.renderUnder) e.render(this, renderPos, drawSize);
+      });
+
       // Base pass: Draw normally
       drawTile(
         renderPos,
@@ -118,8 +123,10 @@ export class BaseEntity extends EngineObject {
         this.mirrorX,
       );
 
-      // Effect passes: (e.g. flashes, glows)
-      this.effects.forEach((e) => e.render(this));
+      // Effect passes: (Over)
+      this.effects.forEach((e) => {
+        if (!e.renderUnder) e.render(this, renderPos, drawSize);
+      });
     }
   }
 }

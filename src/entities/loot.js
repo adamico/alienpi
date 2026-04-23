@@ -1,7 +1,8 @@
-import { vec2, WHITE } from "../engine.js";
+import { vec2, WHITE, rgb } from "../engine.js";
 import { loot as lootCfg, player as playerCfg } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
+import { OutlineEffect } from "../gameEffects.js";
 
 export class Loot extends BaseEntity {
   constructor(pos, typeKey) {
@@ -23,6 +24,9 @@ export class Loot extends BaseEntity {
     this.velocity = vec2(0, -lootCfg.speed);
     this.mirrorY = lootCfg.mirrorY;
     this.explodeOnDestroy = false;
+
+    // Add green outline effect (approx 2px thickness)
+    this.applyEffect(new OutlineEffect(rgb(0, 1, 0), 0.1));
   }
 
   update() {
