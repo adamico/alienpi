@@ -12,6 +12,7 @@ import {
   mainCanvasSize,
   Color,
   keyWasPressed,
+  BLACK,
 } from "./engine.js";
 
 import { player } from "./entities/player.js";
@@ -40,6 +41,7 @@ let playPromptText,
   controlsBody,
   settingsPromptText;
 let settingsTitle, musicToggleText, sfxToggleText, backPromptText;
+let pausePanel, pauseMusicToggleText, pauseSfxToggleText;
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 const WEAPON_LOOT_MAPPING = {
@@ -178,23 +180,46 @@ export function initUI() {
   pauseGroup.lineWidth = 0;
   uiRoot.addChild(pauseGroup);
 
+  pausePanel = new UIObject(vec2(0, 0), vec2(600, 400));
+  pausePanel.color = new Color(1, 1, 1, 0.8);
+  pausePanel.cornerRadius = 10;
+  pauseGroup.addChild(pausePanel);
+
   const pauseText = new UIText(
-    vec2(0, 40),
-    vec2(800, 100),
+    vec2(0, -110),
+    vec2(500, 100),
     strings.ui.pauseTitle,
   );
   pauseText.textHeight = 80;
-  pauseText.fontShadow = true;
-  pauseGroup.addChild(pauseText);
+  pauseText.textColor = BLACK.copy();
+  pausePanel.addChild(pauseText);
+
+  pauseMusicToggleText = new UIText(
+    vec2(0, -10),
+    vec2(500, 50),
+    "",
+  );
+  pauseMusicToggleText.textHeight = 30;
+  pauseMusicToggleText.textColor = rgb(0.2, 0.2, 0.2);
+  pausePanel.addChild(pauseMusicToggleText);
+
+  pauseSfxToggleText = new UIText(
+    vec2(0, 50),
+    vec2(500, 50),
+    "",
+  );
+  pauseSfxToggleText.textHeight = 30;
+  pauseSfxToggleText.textColor = rgb(0.2, 0.2, 0.2);
+  pausePanel.addChild(pauseSfxToggleText);
 
   const resumeText = new UIText(
-    vec2(0, -40),
-    vec2(800, 50),
+    vec2(0, 130),
+    vec2(500, 50),
     strings.ui.resumePrompt,
   );
   resumeText.textHeight = 24;
-  resumeText.fontShadow = true;
-  pauseGroup.addChild(resumeText);
+  resumeText.textColor = rgb(0.4, 0.4, 0.4);
+  pausePanel.addChild(resumeText);
 
   // Game Over Screen
   gameOverGroup = new UIObject(vec2(0, 0), mainCanvasSize);
@@ -380,6 +405,29 @@ export function updateUI() {
 
     backPromptText.localPos = vec2(0, 200 * scale);
     backPromptText.textHeight = 24 * scale;
+  }
+
+  if (pauseGroup.visible) {
+    const scale = hudScale;
+    pausePanel.size = vec2(600, 400).scale(scale);
+    
+    // pauseText
+    pausePanel.children[0].textHeight = 80 * scale;
+    pausePanel.children[0].localPos = vec2(0, -110 * scale);
+    
+    // pauseMusicToggleText
+    pauseMusicToggleText.textHeight = 30 * scale;
+    pauseMusicToggleText.localPos = vec2(0, -10 * scale);
+    pauseMusicToggleText.text = `${strings.ui.musicLabel}${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.musicHotkey}`;
+    
+    // pauseSfxToggleText
+    pauseSfxToggleText.textHeight = 30 * scale;
+    pauseSfxToggleText.localPos = vec2(0, 50 * scale);
+    pauseSfxToggleText.text = `${strings.ui.sfxLabel}${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.sfxHotkey}`;
+    
+    // resumeText
+    pausePanel.children[3].textHeight = 24 * scale;
+    pausePanel.children[3].localPos = vec2(0, 130 * scale);
   }
 
   const uiCenterX = mainCanvasSize.x / 2;

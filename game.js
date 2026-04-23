@@ -23,6 +23,7 @@ import {
   engineObjectsDestroy,
   keyWasPressed,
   setPaused,
+  setDebugKey,
 } from "./src/engine.js";
 
 import {
@@ -69,6 +70,7 @@ async function gameInit() {
   setTileDefaultSize(vec2(1));
   setObjectMaxSpeed(engine.objectMaxSpeed);
   setPaused(true);
+  setDebugKey("Backquote");
 
   // Load all spritesheets defined in config
   await setupSpritesheets();
@@ -191,10 +193,6 @@ function gameUpdatePost() {
     ) {
       gameState = GAME_STATES.PLAYING;
       setPaused(false);
-    }
-    if (keyWasPressed("KeyS")) {
-      previousState = gameState;
-      gameState = GAME_STATES.SETTINGS;
     }
   } else if (gameState === GAME_STATES.SETTINGS) {
     if (keyWasPressed("Escape")) {
