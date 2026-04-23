@@ -1,10 +1,8 @@
 import {
   vec2,
-  ParticleEmitter,
   Color,
   rgb,
   rand,
-  PI,
   engineObjectsCallback,
   Timer,
   EngineObject,
@@ -14,6 +12,7 @@ import {
   lerp,
 } from "../engine.js";
 import * as gameEffects from "../gameEffects.js";
+
 import {
   system,
   boss as bossCfg,
@@ -31,9 +30,9 @@ import { soundBossBeam } from "../sounds.js";
  * Defensive pods that orbit the boss
  */
 export class BossOrbiter extends BaseEntity {
-  constructor(initialAngle) {
+  constructor(initialAngle, pos = vec2()) {
     super(
-      vec2(), // pos overridden by parent transform
+      pos,
       orbCfg.sprite,
       orbCfg.sheet,
       orbCfg.hitboxScale,
@@ -55,22 +54,22 @@ export class BossOrbiter extends BaseEntity {
     );
     this.warningTimer = new Timer();
     this.tetherColor = this.color.copy();
-    this.workingPos = vec2();
     this.isEnemy = true;
+    this.spawnPos = this.pos.copy();
   }
 
   update() {
-    if (!this.parent) return;
-
-    const speedScale = 1 + this.parent.stage * 0.25;
-    this.angleOffset += orbCfg.speed * speedScale;
-
+    // Handle state transitions
     if (this.state === "appearing") {
-      this.updateOrbit();
       if (this.appearTimer.elapsed()) {
         this.state = "orbiting";
         this.setCollision(true, false);
       }
+    }
+
+    // AI/Movement logic
+    if (this.state === "appearing") {
+      this.updateOrbit();
     } else if (this.state === "orbiting") {
       this.updateOrbit();
       if (this.diveTimer.elapsed()) {
@@ -90,10 +89,15 @@ export class BossOrbiter extends BaseEntity {
       this.updateReturn();
     }
 
+    if (this.parent) {
+      const speedScale = 1 + this.parent.stage * 0.25;
+      this.angleOffset += orbCfg.speed * speedScale;
+    }
+
     super.update();
 
+    // Collision check - required because LittleJS ignores children in its main loop
     if (this.state !== "returning") {
-      // The engine skips collision for child objects (o.parent check in the collision loop).
       engineObjectsCallback(this.pos, this.size, (o) => {
         if (!o.destroyed && o !== this && this.isOverlappingObject(o)) {
           this.collideWithObject(o);
@@ -104,11 +108,15 @@ export class BossOrbiter extends BaseEntity {
   }
 
   updateOrbit() {
-    this.localAngle = this.angleOffset;
-    this.localPos = vec2(
-      Math.cos(this.angleOffset),
-      Math.sin(this.angleOffset),
-    ).scale(orbCfg.radius);
+    if (this.parent) {
+      this.localAngle = this.angleOffset;
+      this.localPos = vec2(
+        Math.cos(this.angleOffset),
+        Math.sin(this.angleOffset),
+      ).scale(orbCfg.radius);
+    } else {
+      this.pos = this.spawnPos.copy();
+    }
 
     if (this.state === "appearing") {
       // Blink 10Hz
@@ -139,12 +147,15 @@ export class BossOrbiter extends BaseEntity {
     // We want worldX to stay diveX, and worldY to decrease.
 
     const worldY = this.pos.y - orbCfg.diveSpeed;
-
-    // Convert back to local space: localPos = (worldPos - parent.pos).rotate(-parent.angle)
     const worldPos = vec2(this.diveX, worldY);
-    this.localPos = worldPos
-      .subtract(this.parent.pos)
-      .rotate(-this.parent.angle);
+
+    if (this.parent) {
+      this.localPos = worldPos
+        .subtract(this.parent.pos)
+        .rotate(-this.parent.angle);
+    } else {
+      this.pos = worldPos;
+    }
 
     // If far below player or off screen, transition to returning state
     if (this.pos.y < -5) {
@@ -153,21 +164,37 @@ export class BossOrbiter extends BaseEntity {
   }
 
   updateReturn() {
-    // Calculate the target position in local space
-    const targetLocalPos = vec2(
-      Math.cos(this.angleOffset),
-      Math.sin(this.angleOffset),
-    ).scale(orbCfg.radius);
-
-    const toTarget = targetLocalPos.subtract(this.localPos);
+    // Calculate the target position
+    let toTarget;
     const speed = orbCfg.diveSpeed * 0.8; // fly back up slightly slower
 
-    if (toTarget.length() <= speed) {
-      // Arrived back at orbit slot
-      this.localPos = targetLocalPos;
-      this.state = "orbiting";
-      const actualDiveRate = orbCfg.diveRate || 600;
-      this.diveTimer.set(rand(actualDiveRate * 0.8, actualDiveRate * 1.2) / 60);
+    if (this.parent) {
+      const targetLocalPos = vec2(
+        Math.cos(this.angleOffset),
+        Math.sin(this.angleOffset),
+      ).scale(orbCfg.radius);
+      toTarget = targetLocalPos.subtract(this.localPos);
+
+      if (toTarget.length() <= speed) {
+        this.localPos = targetLocalPos;
+        this.state = "orbiting";
+        this.resetDiveTimer();
+      } else {
+        this.localPos = this.localPos.add(toTarget.normalize().scale(speed));
+      }
+    } else {
+      toTarget = this.spawnPos.subtract(this.pos);
+
+      if (toTarget.length() <= speed) {
+        this.pos = this.spawnPos.copy();
+        this.state = "orbiting";
+        this.resetDiveTimer();
+      } else {
+        this.pos = this.pos.add(toTarget.normalize().scale(speed));
+      }
+    }
+
+    if (this.state === "orbiting") {
       this.color.set(
         orbCfg.color.r,
         orbCfg.color.g,
@@ -175,12 +202,14 @@ export class BossOrbiter extends BaseEntity {
         orbCfg.color.a,
       );
     } else {
-      // Move towards the slot in local space
-      this.localPos = this.localPos.add(toTarget.normalize().scale(speed));
-
-      // Render semi-transparent while retreating to avoid confusing the player
+      // Render semi-transparent while retreating
       this.color.set(0.7, 0.7, 0.7, 0.4);
     }
+  }
+
+  resetDiveTimer() {
+    const actualDiveRate = orbCfg.diveRate || 600;
+    this.diveTimer.set(rand(actualDiveRate * 0.8, actualDiveRate * 1.2) / 60);
   }
 
   collideWithObject(other) {
@@ -223,43 +252,6 @@ export class BossOrbiter extends BaseEntity {
     }
     super.render();
   }
-
-  destroy() {
-    if (this.destroyed) return;
-
-    // Cosmetic explosion effect
-    gameEffects.explode(this.pos);
-
-    // Secondary smoke burst
-    new ParticleEmitter(
-      this.pos,
-      0,
-      0.3,
-      0.1,
-      50,
-      PI * 2,
-      sprites.get("smoke_04.png", system.particleSheetName),
-      rgb(0.8, 0.8, 0.8, 0.5),
-      rgb(0.4, 0.4, 0.4, 0.3),
-      rgb(0, 0, 0, 0),
-      rgb(0, 0, 0, 0),
-      0.8,
-      1.0,
-      2.5,
-      0.02,
-      0.01,
-      0.95,
-      1,
-      -0.01, // slight upward drift
-      PI * 2,
-      0.05,
-      0.2,
-      false,
-      false,
-    );
-
-    super.destroy();
-  }
 }
 
 /**
@@ -268,7 +260,7 @@ export class BossOrbiter extends BaseEntity {
 export class BossMissile extends BaseEntity {
   /**
    * @param {Vector2} pos
-   * @param {Vector2} initialVel
+   * @param {Vector2} [initialVel]
    * @param {number} [lifetime]
    */
   constructor(pos, initialVel, lifetime) {
@@ -282,7 +274,7 @@ export class BossMissile extends BaseEntity {
       missileCfg.mirrorY,
     );
     this.hp = missileCfg.hp;
-    this.velocity = initialVel;
+    this.velocity = initialVel ?? vec2(0, -missileCfg.speed);
     this.setCollision(true, false);
     this.mass = 0;
     this.isEnemy = true; // so player bullets recognise it
@@ -396,33 +388,7 @@ class MissileExplosion extends EngineObject {
     this.lingerTimer = new Timer(this.duration);
     this.timeAlive = 0;
 
-    // Burst of explosion particles - scaled by diameter
-    new ParticleEmitter(
-      this.pos,
-      0, // angle
-      diameter, // emitSize (radius-ish spread)
-      0.2, // emitTime
-      diameter * 50, // emitRate scaled by area/size
-      PI * 2, // emitConeAngle
-      sprites.get("scorch_03.png", system.particleSheetName),
-      rgb(1, 0.5, 0.2), // colorStartA
-      rgb(1, 1, 0.5), // colorStartB
-      rgb(0.2, 0.2, 0.2, 0), // colorEndA
-      rgb(0.1, 0.1, 0.1, 0), // colorEndB
-      0.5, // particleTime
-      diameter * 0.2, // sizeStart
-      diameter * 0.05, // sizeEnd
-      0.1, // speed
-      0.05, // angleSpeed
-      0.9, // damping
-      0.9, // angleDamping
-      0, // gravityScale
-      PI * 2, // particleConeAngle
-      0.1, // fadeRate
-      0.5, // randomness
-      false, // collideTiles
-      true, // additive
-    );
+    gameEffects.missileExplode(this.pos, diameter);
   }
 
   render() {

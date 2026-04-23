@@ -119,7 +119,7 @@ export class BaseEntity extends EngineObject {
     if (this.explodeOnDestroy) {
       soundExplosion2.play();
       soundExplosion1.play();
-      gameEffects.explode(this.pos);
+      gameEffects.explode(this.pos, this.visualSize.x);
     }
     super.destroy();
   }

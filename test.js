@@ -26,6 +26,8 @@ import {
   starfield as starCfg,
   enemy as enemyCfg,
   boss as bossCfg,
+  orbiter as orbCfg,
+  missile as missileCfg,
 } from "./src/config.js";
 
 import {
@@ -37,6 +39,7 @@ import { spawnPlayer } from "./src/entities/player.js";
 import { BaseEntity } from "./src/entities/baseEntity.js";
 import { Enemy } from "./src/entities/enemy.js";
 import { Boss } from "./src/entities/boss.js";
+import { BossOrbiter, BossMissile } from "./src/entities/bossChildren.js";
 import { Pinata } from "./src/entities/pinata.js";
 import { Loot } from "./src/entities/loot.js";
 
@@ -78,6 +81,10 @@ function setupUIListeners() {
       defaultHp = enemyCfg.swarm.pinata.hp;
     } else if (type === "boss") {
       defaultHp = bossCfg.hp;
+    } else if (type === "orbiter") {
+      defaultHp = orbCfg.hp;
+    } else if (type === "missile") {
+      defaultHp = missileCfg.hp;
     } else if (type.startsWith("loot_")) {
       defaultHp = 1; // Loot typically doesn't have HP, but we'll set it to 1
     }
@@ -146,6 +153,12 @@ function handleSpawn() {
     entity.maxHp = hpValue;
     entity.state = "active"; // Skip glide-in
     entity.initOrbiters(); // Orbiters need explicit init if skipping state change
+  } else if (entityType === "orbiter") {
+    entity = new BossOrbiter(0, spawnPos.copy());
+    entity.hp = hpValue;
+  } else if (entityType === "missile") {
+    entity = new BossMissile(spawnPos.copy());
+    entity.hp = hpValue;
   } else if (entityType.startsWith("loot_")) {
     const lootKey = entityType.replace("loot_", "");
     entity = new Loot(spawnPos.copy(), lootKey);
