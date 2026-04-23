@@ -47,6 +47,7 @@ export class BaseEntity extends EngineObject {
     this.mirrorY = mirrorY;
 
     this.hitEffectTimer = new Timer();
+    this.flashTimer = new Timer();
     this.hitConfig = null;
 
     this.invulnerable = false;
@@ -70,6 +71,7 @@ export class BaseEntity extends EngineObject {
       ...config,
     };
     this.hitEffectTimer.set(this.hitConfig.duration);
+    this.flashTimer.set(config.flashDuration ?? this.hitConfig.duration);
 
     if (this.hitConfig.screenShake > 0) {
       gameEffects.applyScreenShake(
@@ -135,9 +137,11 @@ export class BaseEntity extends EngineObject {
           );
         }
 
-        if (this.hitConfig.flashColor) {
+        if (this.hitConfig.flashColor && !this.flashTimer.elapsed()) {
           doFlash = true;
-          flashColor = this.hitConfig.flashColor;
+          flashColor = this.hitConfig.flashColor.copy();
+          // Smooth fade out
+          flashColor.a *= 1 - this.flashTimer.getPercent();
         }
       }
 
