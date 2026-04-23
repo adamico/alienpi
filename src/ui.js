@@ -31,7 +31,6 @@ let uiRoot;
 let scoreText, timeText;
 let healthIcons = [];
 let weaponIcons = [];
-let settingsText, musicText;
 let hudGroup, titleGroup, pauseGroup, gameOverGroup, settingsGroup;
 let playPromptText,
   titleText,
@@ -90,29 +89,7 @@ export function initUI() {
   // Health Icons
   setupHealthUI();
 
-  // Weapon Icons
   setupWeaponUI();
-
-  // Settings
-  settingsText = new UIText(
-    vec2(0, 0),
-    vec2(300, 30),
-    strings.ui.sfxLabel + strings.ui.onLabel,
-  );
-  settingsText.textColor = WHITE.copy();
-  settingsText.textAlign = "right";
-  settingsText.fontShadow = true;
-  hudGroup.addChild(settingsText);
-
-  musicText = new UIText(
-    vec2(0, 0),
-    vec2(300, 30),
-    strings.ui.musicLabel + strings.ui.offLabel,
-  );
-  musicText.textColor = WHITE.copy();
-  musicText.textAlign = "right";
-  musicText.fontShadow = true;
-  hudGroup.addChild(musicText);
 
   // Title Screen
   titleGroup = new UIObject(vec2(0, 0), mainCanvasSize);
@@ -194,20 +171,12 @@ export function initUI() {
   pauseText.textColor = BLACK.copy();
   pausePanel.addChild(pauseText);
 
-  pauseMusicToggleText = new UIText(
-    vec2(0, -10),
-    vec2(500, 50),
-    "",
-  );
+  pauseMusicToggleText = new UIText(vec2(0, -10), vec2(500, 50), "");
   pauseMusicToggleText.textHeight = 30;
   pauseMusicToggleText.textColor = rgb(0.2, 0.2, 0.2);
   pausePanel.addChild(pauseMusicToggleText);
 
-  pauseSfxToggleText = new UIText(
-    vec2(0, 50),
-    vec2(500, 50),
-    "",
-  );
+  pauseSfxToggleText = new UIText(vec2(0, 50), vec2(500, 50), "");
   pauseSfxToggleText.textHeight = 30;
   pauseSfxToggleText.textColor = rgb(0.2, 0.2, 0.2);
   pausePanel.addChild(pauseSfxToggleText);
@@ -410,21 +379,21 @@ export function updateUI() {
   if (pauseGroup.visible) {
     const scale = hudScale;
     pausePanel.size = vec2(600, 400).scale(scale);
-    
+
     // pauseText
     pausePanel.children[0].textHeight = 80 * scale;
     pausePanel.children[0].localPos = vec2(0, -110 * scale);
-    
+
     // pauseMusicToggleText
     pauseMusicToggleText.textHeight = 30 * scale;
     pauseMusicToggleText.localPos = vec2(0, -10 * scale);
     pauseMusicToggleText.text = `${strings.ui.musicLabel}${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.musicHotkey}`;
-    
+
     // pauseSfxToggleText
     pauseSfxToggleText.textHeight = 30 * scale;
     pauseSfxToggleText.localPos = vec2(0, 50 * scale);
     pauseSfxToggleText.text = `${strings.ui.sfxLabel}${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.sfxHotkey}`;
-    
+
     // resumeText
     pausePanel.children[3].textHeight = 24 * scale;
     pausePanel.children[3].localPos = vec2(0, 130 * scale);
@@ -497,25 +466,4 @@ export function updateUI() {
   const minutes = Math.floor(time / 60);
   const seconds = Math.floor(time % 60);
   timeText.text = `${strings.ui.timePrefix}${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-
-  // Update Settings
-  if (keyWasPressed("KeyS")) {
-    settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
-  }
-  settingsText.text = `${strings.ui.sfxLabel}${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.sfxHotkey}`;
-  settingsText.localPos = vec2(-uiAnchor.x, uiAnchor.y + 50 * hudScale);
-  settingsText.size = vec2(300, 40).scale(hudScale);
-  settingsText.textHeight = 20 * hudScale;
-  settingsText.textColor = settings.soundEffectsEnabled
-    ? WHITE.copy()
-    : rgb(1, 0.5, 0.5);
-
-  if (keyWasPressed("KeyM")) {
-    settings.musicEnabled = !settings.musicEnabled;
-  }
-  musicText.text = `${strings.ui.musicLabel}${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}${strings.ui.musicHotkey}`;
-  musicText.localPos = vec2(-uiAnchor.x, uiAnchor.y + 90 * hudScale);
-  musicText.size = vec2(300, 40).scale(hudScale);
-  musicText.textHeight = 20 * hudScale;
-  musicText.textColor = settings.musicEnabled ? WHITE.copy() : rgb(1, 0.5, 0.5);
 }

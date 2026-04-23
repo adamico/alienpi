@@ -205,6 +205,16 @@ function gameUpdatePost() {
     }
   }
 
+  // Audio toggles (only in non-playing states to avoid accidental presses)
+  if (gameState !== GAME_STATES.PLAYING) {
+    if (keyWasPressed("KeyM")) {
+      settings.musicEnabled = !settings.musicEnabled;
+    }
+    if (keyWasPressed("KeyS")) {
+      settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
+    }
+  }
+
   // Music and UI update even when paused or in title
   updateGameMusic();
   updateBossMusic();
