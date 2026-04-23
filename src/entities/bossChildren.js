@@ -280,6 +280,7 @@ export class BossMissile extends BaseEntity {
     this.isEnemy = true; // so player bullets recognise it
     this.renderOrder = 8;
     this.lifeTimer = new Timer(lifetime ?? missileCfg.lifetime);
+    this.explosionCallback = null; // We handle explosion manually in destroy()
   }
 
   update() {

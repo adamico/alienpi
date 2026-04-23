@@ -47,6 +47,9 @@ export function explode(pos, size) {
 
   // --- STAGE 3: Lingering Smoke ---
   spawnSmokeBurst(pos, size);
+
+  // --- STAGE 4: Textureless Debris ---
+  spawnDebris(pos, size);
 }
 
 /**
@@ -83,6 +86,39 @@ export function missileExplode(pos, diameter) {
   );
 
   spawnSmokeBurst(pos, diameter);
+  spawnDebris(pos, diameter);
+}
+
+/**
+ * Helper to spawn drifting space debris.
+ * @param {import('./engine.js').Vector2} pos
+ * @param {number} size
+ */
+function spawnDebris(pos, size) {
+  new ParticleEmitter(
+    pos,
+    0, // angle
+    size * 0.3, // emitSize
+    0.1, // emitTime
+    size * 100, // emitRate
+    PI * 2, // emitConeAngle
+    0, // <--- Textureless
+    new Color(0.8, 0.8, 0.8, 1), // colorStartA (Grayscale / Silver)
+    new Color(0.3, 0.3, 0.3, 1), // colorStartB (Dark Grey)
+    new Color(0.1, 0.1, 0.1, 0), // colorEndA
+    new Color(0, 0, 0, 0), // colorEndB
+    1.5, // particleTime
+    0.15, // sizeStart
+    0.1, // sizeEnd
+    0.1, // speed (Slower drift)
+    0.1, // angleSpeed
+    0.99, // damping (High damping for slow space drift)
+    0.99, // angleDamping
+    0, // gravityScale (No gravity in space)
+    PI * 2, // particleConeAngle
+    0.05, // fadeRate
+    0.8, // randomness
+  );
 }
 
 /**
@@ -94,7 +130,7 @@ function spawnSmokeBurst(pos, size) {
   new ParticleEmitter(
     pos,
     0,
-    size * 1.5, // Larger initial spread
+    size, // Larger initial spread
     0.3,
     size * 60,
     PI,
@@ -103,9 +139,9 @@ function spawnSmokeBurst(pos, size) {
     new Color(0.4, 0.4, 0.4, 0.2),
     new Color(0, 0, 0, 0),
     new Color(0, 0, 0, 0),
-    1.5, // particleTime
-    Math.max(1.5, size * 0.8), // sizeStart
-    Math.max(6.0, size * 5.0), // sizeEnd
+    3.0, // particleTime
+    Math.max(1.2, size * 0.5), // sizeStart
+    Math.max(2.5, size * 0.8), // sizeEnd (Reduced from 5.0x to be proportional)
     0.02,
     0.01,
     0.99,
