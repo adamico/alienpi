@@ -18,6 +18,20 @@
         transform: translate(-50%, -50%);
         z-index: 1;
       }
+      #hint-overlay {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 280px;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 32px;
+        box-sizing: border-box;
+        pointer-events: none;
+        z-index: 100;
+      }
       #ui-overlay {
         position: absolute;
         top: 0;
@@ -34,6 +48,22 @@
         z-index: 100;
         box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
         pointer-events: auto;
+        overflow-y: auto;
+      }
+
+      /* Custom Scrollbar */
+      #ui-overlay::-webkit-scrollbar {
+        width: 6px;
+      }
+      #ui-overlay::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      #ui-overlay::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+      #ui-overlay::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
       }
       h1 {
         font-size: 1.4rem;
@@ -129,55 +159,55 @@
         display: none;
       }
       .checkbox-container {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      font-size: 0.85rem;
-      color: #888;
-      user-select: none;
-      gap: 12px;
-      margin-top: 10px;
-      transition: color 0.2s;
-    }
-    .checkbox-container:hover {
-      color: #fff;
-    }
-    .checkbox-container input {
-      display: none;
-    }
-    .checkmark {
-      width: 20px;
-      height: 20px;
-      background-color: #1a1a2e;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 6px;
-      position: relative;
-      transition: all 0.2s;
-    }
-    .checkbox-container:hover .checkmark {
-      border-color: rgba(0, 242, 254, 0.5);
-    }
-    .checkbox-container input:checked + .checkmark {
-      background-color: #00f2fe;
-      border-color: #00f2fe;
-      box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
-    }
-    .checkmark:after {
-      content: "";
-      position: absolute;
-      display: none;
-      left: 6px;
-      top: 2px;
-      width: 5px;
-      height: 10px;
-      border: solid #000;
-      border-width: 0 2px 2px 0;
-      transform: rotate(45deg);
-    }
-    .checkbox-container input:checked + .checkmark:after {
-      display: block;
-    }
-    .hint {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #888;
+        user-select: none;
+        gap: 12px;
+        margin-top: 10px;
+        transition: color 0.2s;
+      }
+      .checkbox-container:hover {
+        color: #fff;
+      }
+      .checkbox-container input {
+        display: none;
+      }
+      .checkmark {
+        width: 20px;
+        height: 20px;
+        background-color: #1a1a2e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        position: relative;
+        transition: all 0.2s;
+      }
+      .checkbox-container:hover .checkmark {
+        border-color: rgba(0, 242, 254, 0.5);
+      }
+      .checkbox-container input:checked + .checkmark {
+        background-color: #00f2fe;
+        border-color: #00f2fe;
+        box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+      }
+      .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+        left: 6px;
+        top: 2px;
+        width: 5px;
+        height: 10px;
+        border: solid #000;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+      .checkbox-container input:checked + .checkmark:after {
+        display: block;
+      }
+      .hint {
         margin-top: auto;
         font-size: 0.8rem;
         color: #555;
@@ -224,7 +254,9 @@
         </select>
       </div>
 
+
       <div class="control-group">
+        <h3>Stats & Debug</h3>
         <label for="hp-input">Spawn HP</label>
         <div class="hp-controls">
           <button id="hp-minus" class="btn-ctrl">−</button>
@@ -232,14 +264,70 @@
           <button id="hp-plus" class="btn-ctrl">+</button>
         </div>
       </div>
-    <div class="control-group">
-      <label class="checkbox-container">
-        <input type="checkbox" id="behavior-toggle" checked />
-        <span class="checkmark"></span>
-        Enable AI / Behavior
-      </label>
+      <div class="control-group">
+        <label class="checkbox-container">
+          <input type="checkbox" id="behavior-toggle" checked />
+          <span class="checkmark"></span>
+          Enable AI / Behavior
+        </label>
+      </div>
+
+      <div class="control-group">
+        <h3>Weapon Power Levels</h3>
+        <div class="control-row">
+          <label for="vulcanLevel">Vulcan:</label>
+          <div class="hp-input-group">
+            <button
+              class="weapon-btn"
+              data-target="vulcanLevel"
+              data-delta="-1"
+            >
+              -
+            </button>
+            <input type="number" id="vulcanLevel" value="1" min="0" max="3" />
+            <button class="weapon-btn" data-target="vulcanLevel" data-delta="1">
+              +
+            </button>
+          </div>
+        </div>
+        <div class="control-row">
+          <label for="shotgunLevel">Shotgun:</label>
+          <div class="hp-input-group">
+            <button
+              class="weapon-btn"
+              data-target="shotgunLevel"
+              data-delta="-1"
+            >
+              -
+            </button>
+            <input type="number" id="shotgunLevel" value="0" min="0" max="3" />
+            <button
+              class="weapon-btn"
+              data-target="shotgunLevel"
+              data-delta="1"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div class="control-row">
+          <label for="latchLevel">Latch:</label>
+          <div class="hp-input-group">
+            <button class="weapon-btn" data-target="latchLevel" data-delta="-1">
+              -
+            </button>
+            <input type="number" id="latchLevel" value="0" min="0" max="3" />
+            <button class="weapon-btn" data-target="latchLevel" data-delta="1">
+              +
+            </button>
+          </div>
+        </div>
+      </div>
+
+      </div>
     </div>
 
+    <div id="hint-overlay">
       <div class="hint">
         <p><kbd>Left Click</kbd> Spawn at cursor</p>
         <p><kbd>WASD</kbd> Move Ship</p>
@@ -261,20 +349,20 @@
         hpInput.value = Math.max(1, parseInt(hpInput.value) - 1);
       });
 
-    // Prevent LittleJS from capturing events on the UI
-    [
-      "mousedown",
-      "mouseup",
-      "click",
-      "mousemove",
-      "contextmenu",
-      "wheel",
-      "keydown",
-      "keyup",
-      "change",
-    ].forEach((eventName) => {
-      overlay.addEventListener(eventName, (e) => e.stopPropagation());
-    });
+      // Prevent LittleJS from capturing events on the UI
+      [
+        "mousedown",
+        "mouseup",
+        "click",
+        "mousemove",
+        "contextmenu",
+        "wheel",
+        "keydown",
+        "keyup",
+        "change",
+      ].forEach((eventName) => {
+        overlay.addEventListener(eventName, (e) => e.stopPropagation());
+      });
     </script>
     <script src="test.js" type="module"></script>
   </body>

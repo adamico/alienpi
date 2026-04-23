@@ -28,6 +28,7 @@ import {
   boss as bossCfg,
   orbiter as orbCfg,
   missile as missileCfg,
+  player as playerCfg,
 } from "./src/config.js";
 
 import {
@@ -35,7 +36,7 @@ import {
   loadDynamicSpritesheet as setupParticleSpritesheet,
 } from "./src/sprites.js";
 
-import { spawnPlayer } from "./src/entities/player.js";
+import { spawnPlayer, player } from "./src/entities/player.js";
 import { BaseEntity } from "./src/entities/baseEntity.js";
 import { Enemy } from "./src/entities/enemy.js";
 import { Boss } from "./src/entities/boss.js";
@@ -66,6 +67,12 @@ function setupUIListeners() {
   const entitySelect = document.getElementById("entity-select");
   const hpInput = document.getElementById("hp-input");
   const behaviorToggle = document.getElementById("behavior-toggle");
+  const maxWepLevel = playerCfg.weaponSystem.maxLevel;
+
+  // Sync HTML inputs with config
+  ["vulcanLevel", "shotgunLevel", "latchLevel"].forEach((id) => {
+    document.getElementById(id).max = maxWepLevel;
+  });
 
   behaviorToggle.addEventListener("change", (e) => {
     behaviorEnabled = e.target.checked;
@@ -91,6 +98,50 @@ function setupUIListeners() {
 
     hpInput.value = defaultHp;
   });
+
+  // --- Weapon Level Listeners ---
+  document.querySelectorAll(".weapon-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.dataset.target;
+      const delta = parseInt(btn.dataset.delta);
+      const input = document.getElementById(targetId);
+      const newValue = Math.min(
+        maxWepLevel,
+        Math.max(0, parseInt(input.value) + delta),
+      );
+      input.value = newValue;
+      applyWeaponLevels();
+    });
+  });
+
+  ["vulcanLevel", "shotgunLevel", "latchLevel"].forEach((id) => {
+    document.getElementById(id).addEventListener("change", applyWeaponLevels);
+  });
+
+  function applyWeaponLevels() {
+    if (!player) return;
+    player.weaponLevels.vulcan = parseInt(
+      document.getElementById("vulcanLevel").value,
+    );
+    player.weaponLevels.shotgun = parseInt(
+      document.getElementById("shotgunLevel").value,
+    );
+    player.weaponLevels.latch = parseInt(
+      document.getElementById("latchLevel").value,
+    );
+
+    // If current weapon became 0, switch to first available
+    if (player.weaponLevels[player.currentWeaponKey] === 0) {
+      for (let i = 0; i < 3; i++) {
+        const key = ["vulcan", "shotgun", "latch"][i];
+        if (player.weaponLevels[key] > 0) {
+          player.weaponIndex = i;
+          break;
+        }
+      }
+    }
+    player.updateWeaponSprite();
+  }
 }
 
 async function setupSpritesheets() {
