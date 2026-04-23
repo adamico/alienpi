@@ -5,12 +5,12 @@ import { Loot } from "./loot.js";
 import { soundExplosion1 } from "../sounds.js";
 
 export class Pinata extends BaseEntity {
-  constructor(pos) {
+  constructor(pos, stage = 0) {
     const cfg = enemyCfg.swarm.pinata;
     super(pos, cfg.sprite, cfg.sheet, cfg.hitboxScale, cfg.size);
 
-    this.hp = cfg.hp;
-    this.moveSpeed = cfg.moveSpeed;
+    this.hp = cfg.hp * (1 + stage * 0.5);
+    this.moveSpeed = cfg.moveSpeed * (1 + stage * 0.1);
     this.state = "WAITING";
     this.moveTimer = new Timer(1);
     this.targetPos = pos.copy();

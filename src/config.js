@@ -140,7 +140,7 @@ export const weapons = {
     label: "LATCH",
     count: [3, 5, 7], // max simultaneous beams
     cooldown: [40, 32, 24], // frames between damage ticks per beam
-    damage: [1, 1, 1],
+    damage: [1, 1, 1], // fixed damage at all levels
     range: [8, 12, 16], // max lock distance in world units
     nozzle: vec2(53.5, 40),
     lineWidth: 0.2,
@@ -365,7 +365,6 @@ export const loot = {
 export const settings = {
   musicEnabled: true,
   enableDPSLog: false,
-  playBossOnly: false,
   customDebug: true,
 };
 
