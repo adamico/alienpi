@@ -363,7 +363,7 @@ export const loot = {
 };
 
 export const settings = {
-  musicEnabled: true,
+  musicEnabled: false,
   enableDPSLog: false,
   customDebug: true,
 };

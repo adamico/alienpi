@@ -156,13 +156,19 @@ function updateDPSLog() {
 
 function updatePinata() {
   const pinataAlive = engineObjects.some((o) => o instanceof Pinata);
-  if (!pinataAlive && pinataTimer.elapsed()) {
+  if (pinataAlive) {
+    // Keep resetting the timer while a pinata is active so it only starts
+    // counting down once the current one is gone.
+    pinataTimer.set(enemyCfg.swarm.pinata.spawnInterval);
+    return;
+  }
+
+  if (pinataTimer.elapsed()) {
     const stage = currentBoss ? currentBoss.stage : 0;
     new Pinata(
       vec2(rand(5, system.levelSize.x - 5), system.levelSize.y - 2),
       stage,
     );
-    pinataTimer.set(enemyCfg.swarm.pinata.spawnInterval);
   }
 }
 
