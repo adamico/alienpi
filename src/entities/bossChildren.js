@@ -6,10 +6,12 @@ import {
   engineObjectsCallback,
   Timer,
   EngineObject,
+  ParticleEmitter,
   drawCircle,
   drawLine,
   time,
   lerp,
+  PI,
 } from "../engine.js";
 import * as gameEffects from "../gameEffects.js";
 
@@ -60,6 +62,47 @@ export class BossOrbiter extends BaseEntity {
     this.tetherColor = this.color.copy();
     this.isEnemy = true;
     this.spawnPos = this.pos.copy();
+
+    if (this.hasLoot) {
+      // Golden outline to signify valuable cargo
+      this.applyEffect(new gameEffects.OutlineEffect(rgb(1, 0.8, 0), 0.08));
+      // Subtle golden pulse
+      this.applyEffect(new gameEffects.PulseEffect(rgb(1, 0.9, 0.2, 0.3), 3.0));
+      this.initLootSparkles();
+    }
+  }
+
+  initLootSparkles() {
+    const sparkles = new ParticleEmitter(
+      this.pos,
+      0, // angle
+      this.size.x * 0.5, // emitSize
+      0, // emitTime (loop)
+      15, // emitRate
+      PI * 2, // emitConeAngle
+      sprites.get("spark_01.png", system.particleSheetName),
+      rgb(1, 1, 0.5), // colorStartA
+      rgb(1, 0.8, 0.2), // colorStartB
+      rgb(1, 0.5, 0, 0), // colorEndA
+      rgb(1, 0.2, 0, 0), // colorEndB
+      0.6, // particleTime
+      0.1, // sizeStart
+      0.02, // sizeEnd
+      0.02, // speed
+      0.05, // angleSpeed
+      0.95, // damping
+      1, // angleDamping
+      -0.01, // gravityScale (slight float up)
+      PI * 2, // particleConeAngle
+      0.1, // fadeRate
+      0.5, // randomness
+      false, // collideTiles
+      true, // additive
+      true, // randomColorLinear
+      10, // renderOrder
+      true, // localSpace
+    );
+    this.addChild(sparkles);
   }
 
   destroy() {

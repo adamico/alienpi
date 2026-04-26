@@ -27,7 +27,7 @@ import {
   strings,
   system,
 } from "./config.js";
-import { gameState } from "../game.js";
+import { gameState, gameTime } from "../game.js";
 
 let uiRoot;
 let scoreText, timeText;
@@ -525,7 +525,7 @@ export function updateUI() {
   });
 
   // Update Time
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60);
+  const minutes = Math.floor(gameTime / 60);
+  const seconds = Math.floor(gameTime % 60);
   timeText.text = `${strings.ui.timePrefix}${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }

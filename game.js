@@ -17,6 +17,7 @@ import {
   PostProcessPlugin,
   engineObjects,
   timeReal,
+  timeDelta,
   sin,
   engineObjectsDestroy,
   keyWasPressed,
@@ -58,6 +59,7 @@ let activeMusicInstance = null;
 export let gameState = GAME_STATES.TITLE;
 let previousState = GAME_STATES.TITLE;
 let gameOverTime = 0;
+export let gameTime = 0;
 
 async function gameInit() {
   setupSharpenShader();
@@ -81,7 +83,9 @@ async function gameInit() {
 }
 
 export function resetGame() {
+  system.isResetting = true;
   engineObjectsDestroy();
+  system.isResetting = false;
   player = spawnPlayer();
 
   // Straight to boss level
@@ -92,6 +96,7 @@ export function resetGame() {
   gameMusicVerseStarted = false;
 
   setupBoundaries();
+  gameTime = 0;
   gameState = GAME_STATES.PLAYING;
 }
 
@@ -157,6 +162,8 @@ function gameUpdate() {
   if (gameState !== GAME_STATES.PLAYING) return;
 
   if (system.enableDPSLog) updateDPSLog();
+
+  gameTime += timeDelta;
 
   if (player && player.hp <= 0) {
     gameState = GAME_STATES.GAMEOVER;

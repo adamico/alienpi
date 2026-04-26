@@ -1,5 +1,5 @@
 import { Sound, SoundInstance } from "./engine.js";
-import { settings } from "./config.js";
+import { settings, system } from "./config.js";
 
 // Keep track of which sounds are music to apply different volume settings
 const musicSounds = new Set();
@@ -8,6 +8,8 @@ const musicSounds = new Set();
 const originalPlay = Sound.prototype.play;
 Sound.prototype.play = function(pos, volume = 1, pitch = 1, randomPitch = 0, loop = false, paused) {
   const isMusic = musicSounds.has(this);
+  if (system.isResetting && !isMusic) return;
+
   if (isMusic) {
     // Music uses musicVolume and musicEnabled toggle
     const vol = settings.musicEnabled ? volume * settings.musicVolume : 0;

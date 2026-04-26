@@ -25,6 +25,7 @@ export const system = {
   levelSize: LEVEL_SIZE,
   cameraPos: LEVEL_SIZE.scale(0.5),
   enableSharpenShader: true,
+  isResetting: false,
   spriteSheetLists: SPRITE_SHEET_PATHS.map((p) => `${p}.png`),
   particleSheetName: "particles",
   particleLists: [
@@ -317,7 +318,7 @@ export const enemy = {
 export const boss = {
   sheet: SPRITE_SHEET_NAME,
   sprite: "spaceShips_007.png",
-  hp: 500,
+  hp: 1000,
   speed: 0.05,
   size: vec2(6, 6),
   color: rgb(1, 1, 1),
@@ -326,9 +327,9 @@ export const boss = {
   hitboxScale: 0.8,
   mirrorY: true,
   regen: {
-    baseTime: 30,
+    baseTime: 20,
     timeStep: 2,
-    minTime: 10,
+    minTime: 5,
     maxOrbiters: 7,
   },
 };
@@ -408,7 +409,8 @@ export const strings = {
     title: "ALIEN ORBIT ASSAULT",
     subtitle: "ARCADE DEFENSE SYSTEM",
     controlsTitle: "CONTROLS",
-    controlsBody: "WASD / ARROWS : MOVE\nSPACE : PRIMARY WEAPON\nSHIFT : FOCUS SPEED\nQ : SWITCH WEAPON",
+    controlsBody:
+      "WASD / ARROWS : MOVE\nSPACE : PRIMARY WEAPON\nSHIFT : FOCUS SPEED\nQ : SWITCH WEAPON",
     startPrompt: "PRESS ENTER TO BEGIN",
     playPrompt: "PRESS <KEY> TO PLAY",
     pauseTitle: "PAUSED",
