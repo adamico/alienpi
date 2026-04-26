@@ -1,4 +1,11 @@
-import { vec2, rand, Timer, Color, engineObjects } from "../engine.js";
+import {
+  vec2,
+  rand,
+  Timer,
+  Color,
+  engineObjects,
+  timeDelta,
+} from "../engine.js";
 import { enemy as enemyCfg, system, player as playerCfg } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { Loot } from "./loot.js";
@@ -13,19 +20,39 @@ export class Pinata extends BaseEntity {
 
     this.hp = cfg.hp * (1 + stage * 0.5);
     this.moveSpeed = cfg.moveSpeed * (1 + stage * 0.1);
-    this.state = "WAITING";
+    this.state = "SPAWNING";
+    this.spawnTimer = new Timer(cfg.spawnTime);
     this.moveTimer = new Timer(1);
     this.targetPos = pos.copy();
-    this.color = new Color(1, 1, 1); // No flash config for now, just white
+    this.color = new Color(1, 1, 1);
+    this.blinkPhase = 0;
 
-    this.setCollision(true);
-    this.mass = 1;
+    this.setCollision(false, false);
     this.damping = 0.95;
     this.isEnemy = true;
     this.mirrorY = cfg.mirrorY;
   }
 
   update() {
+    if (this.state === "SPAWNING") {
+      const p = this.spawnTimer.getPercent();
+      // Increasing frequency: starts slow, ends fast
+      const freq = 5 + 25 * p;
+      this.blinkPhase += freq * timeDelta;
+      const visible = this.blinkPhase % 1 < 0.5;
+      this.color.a = visible ? 1 : 0;
+
+      if (this.spawnTimer.elapsed()) {
+        this.state = "WAITING";
+        this.color.a = 1;
+        this.setCollision(true, true);
+        this.mass = 1;
+        this.moveTimer.set(1);
+      }
+      super.update();
+      return;
+    }
+
     if (this.state === "WAITING") {
       this.velocity = this.velocity.scale(0.8);
       if (this.moveTimer.elapsed()) {

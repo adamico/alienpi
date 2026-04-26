@@ -286,6 +286,7 @@ export const enemy = {
       hitboxScale: 0.8,
       mirrorY: true,
       spawnInterval: 15,
+      spawnTime: 2,
     },
   },
   flocking: {
