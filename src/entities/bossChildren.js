@@ -26,11 +26,14 @@ import { sprites } from "../sprites.js";
 import { player } from "./player.js";
 import { soundBossBeam } from "../sounds.js";
 
+import { Loot } from "./loot.js";
+import { player as playerCfg } from "../config.js";
+
 /**
  * Defensive pods that orbit the boss
  */
 export class BossOrbiter extends BaseEntity {
-  constructor(initialAngle, pos = vec2()) {
+  constructor(initialAngle, hp, hasLoot = false, pos = vec2()) {
     super(
       pos,
       orbCfg.sprite,
@@ -41,7 +44,8 @@ export class BossOrbiter extends BaseEntity {
       orbCfg.mirrorY,
     );
     this.angleOffset = initialAngle;
-    this.hp = orbCfg.hp;
+    this.hp = hp ?? orbCfg.baseHp;
+    this.hasLoot = hasLoot;
     this.color = orbCfg.color.copy();
     this.mass = 0;
     this.isSolid = false;
@@ -56,6 +60,21 @@ export class BossOrbiter extends BaseEntity {
     this.tetherColor = this.color.copy();
     this.isEnemy = true;
     this.spawnPos = this.pos.copy();
+  }
+
+  destroy() {
+    if (this.destroyed) return;
+
+    if (this.hasLoot) {
+      const lootKeys =
+        playerCfg.weaponSystem.mode === "ACTIVE"
+          ? ["star"]
+          : ["blue", "green", "red", "star"];
+      const key = lootKeys[Math.floor(rand(lootKeys.length))];
+      new Loot(this.pos.copy(), key);
+    }
+
+    super.destroy();
   }
 
   update() {

@@ -1,4 +1,12 @@
-import { vec2, ParticleEmitter, Color, rgb, rand, PI } from "../engine.js";
+import {
+  vec2,
+  ParticleEmitter,
+  Color,
+  rgb,
+  rand,
+  PI,
+  Timer,
+} from "../engine.js";
 import {
   system,
   boss as bossCfg,
@@ -60,6 +68,10 @@ export class Boss extends BaseEntity {
     this.initFireEmitters();
     this.workingVec = vec2();
     this.workingVec2 = vec2();
+
+    this.orbiterCount = 1;
+    this.regenTimer = new Timer();
+    this.regenCycle = 0;
   }
 
   initFireEmitters() {
@@ -98,9 +110,19 @@ export class Boss extends BaseEntity {
     }
   }
 
-  initOrbiters() {
-    for (const angle of [0, PI, PI / 2, (3 * PI) / 2]) {
-      const orbiter = new BossOrbiter(angle);
+  initOrbiters(count) {
+    // Determine HP for this cycle (exponential curve)
+    const hp = Math.min(
+      orbCfg.maxHp,
+      orbCfg.baseHp * Math.pow(orbCfg.hpCurve, this.regenCycle),
+    );
+
+    // Pick one orbiter to carry loot
+    const lootIndex = Math.floor(rand(count));
+
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * PI * 2;
+      const orbiter = new BossOrbiter(angle, hp, i === lootIndex);
       this.addChild(orbiter);
       this.orbiters.push(orbiter);
     }
@@ -126,7 +148,7 @@ export class Boss extends BaseEntity {
       const toEntry = this.targetPos.subtract(this.pos);
       if (toEntry.length() < 0.5) {
         this.state = "active";
-        this.initOrbiters();
+        this.initOrbiters(this.orbiterCount);
         this.moveTimer = 0; // trigger an immediate first random move
       } else {
         const accel = toEntry.normalize(bossCfg.speed * 0.1);
@@ -169,16 +191,36 @@ export class Boss extends BaseEntity {
       }
       // Shield is UP: Only fire nova pulses
       this.updateNovaPulse(rateScale);
+      // Ensure regen timer is NOT running while shield is up
+      this.regenTimer.unset();
     } else {
       // Destroy shield if it is still active
       if (this.shield && !this.shield.destroyed) {
         this.shield.destroy();
       }
+
+      // Shield is DOWN: Handle regeneration timer
+      if (!this.regenTimer.isSet()) {
+        const regenTime = Math.max(
+          bossCfg.regen.minTime,
+          bossCfg.regen.baseTime - this.regenCycle * bossCfg.regen.timeStep,
+        );
+        this.regenTimer.set(regenTime);
+      }
+
+      if (this.regenTimer.elapsed()) {
+        this.regenCycle++;
+        this.orbiterCount = Math.min(
+          bossCfg.regen.maxOrbiters,
+          this.orbiterCount + 1,
+        );
+        this.respawnOrbiters();
+        this.regenTimer.unset();
+      }
+
       // Shield is DOWN: Alternate between beams and missiles
       this.updateVulnerableAttacks(rateScale);
     }
-
-    this.checkThresholds();
   }
 
   updateNovaPulse(rateScale) {
@@ -213,21 +255,11 @@ export class Boss extends BaseEntity {
     }
   }
 
-  checkThresholds() {
-    if (this.thresholds.length > 0) {
-      const healthPercent = this.hp / this.maxHp;
-      if (healthPercent <= this.thresholds[0]) {
-        this.thresholds.shift();
-        this.respawnOrbiters();
-      }
-    }
-  }
-
   respawnOrbiters() {
     // Destroy existing orbiters and re-init for a clean "shield phase"
     this.orbiters.forEach((o) => o.destroy());
     this.orbiters = [];
-    this.initOrbiters();
+    this.initOrbiters(this.orbiterCount);
 
     // Visual feedback for shield recharge
     this.applyEffect(new gameEffects.FlashEffect(new Color(0.2, 0.5, 1), 0.5));

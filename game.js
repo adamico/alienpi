@@ -9,8 +9,6 @@ import {
   setTileDefaultSize,
   setObjectMaxSpeed,
   engineInit,
-  Timer,
-  rand,
   drawTextScreen,
   WHITE,
   glSetAntialias,
@@ -45,8 +43,6 @@ import {
   soundMusicIntro,
   soundMusicVerse,
 } from "./src/sounds.js";
-import { Pinata } from "./src/entities/pinata.js";
-import { enemy as enemyCfg } from "./src/config.js";
 import { Boundary } from "./src/entities/boundary.js";
 import { initUI, updateUI } from "./src/ui.js";
 
@@ -54,7 +50,6 @@ let bossSpawned = false;
 let bossMusicPlaying = false;
 let currentBoss = null;
 let player = null;
-let pinataTimer = new Timer(enemyCfg.swarm.pinata.spawnInterval);
 const boundaries = [];
 
 let gameMusicIntroStarted = false;
@@ -162,7 +157,6 @@ function gameUpdate() {
   if (gameState !== GAME_STATES.PLAYING) return;
 
   if (system.enableDPSLog) updateDPSLog();
-  updatePinata();
 
   if (player && player.hp <= 0) {
     gameState = GAME_STATES.GAMEOVER;
@@ -229,24 +223,6 @@ function updateDPSLog() {
   const enemies = engineObjects.filter((o) => o.isEnemy);
   setEnemyCount(enemies.length);
   tickDPSLog();
-}
-
-function updatePinata() {
-  const pinataAlive = engineObjects.some((o) => o instanceof Pinata);
-  if (pinataAlive) {
-    // Keep resetting the timer while a pinata is active so it only starts
-    // counting down once the current one is gone.
-    pinataTimer.set(enemyCfg.swarm.pinata.spawnInterval);
-    return;
-  }
-
-  if (pinataTimer.elapsed()) {
-    const stage = currentBoss ? currentBoss.stage : 0;
-    new Pinata(
-      vec2(rand(5, system.levelSize.x - 5), system.levelSize.y - 2),
-      stage,
-    );
-  }
 }
 
 function updateBossMusic() {

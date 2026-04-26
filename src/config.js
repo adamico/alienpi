@@ -325,6 +325,12 @@ export const boss = {
   fireLocations: [vec2(-1.5, 2), vec2(1.5, 2), vec2(-1.5, -1), vec2(1.5, -1)],
   hitboxScale: 0.8,
   mirrorY: true,
+  regen: {
+    baseTime: 30,
+    timeStep: 2,
+    minTime: 10,
+    maxOrbiters: 7,
+  },
 };
 
 export const beam = {
@@ -340,7 +346,9 @@ export const beam = {
 export const orbiter = {
   sheet: SPRITE_SHEET2_NAME,
   sprite: "ufoRed.png",
-  hp: 25,
+  baseHp: 20,
+  maxHp: 100,
+  hpCurve: 1.3,
   radius: 6,
   speed: 0.03,
   size: vec2(2),
