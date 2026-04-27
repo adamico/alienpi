@@ -110,7 +110,7 @@ const VULCAN_DAMAGE_STEP = 0.15;
 const vulcanBullet = {
   sheet: SPRITE_SHEET2_NAME,
   sprite: "laserBlue04.png",
-  speed: [VULCAN_BASE_SPEED, VULCAN_BASE_SPEED * 2, VULCAN_BASE_SPEED * 3],
+  speed: [VULCAN_BASE_SPEED, VULCAN_BASE_SPEED * 1.25, VULCAN_BASE_SPEED * 1.5],
   size: vec2(0.2, 0.2),
   despawnRadius: 0.5,
   hitboxScale: 1.0,
