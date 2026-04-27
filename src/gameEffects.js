@@ -4,6 +4,7 @@ import {
   drawTile,
   EngineObject,
   ParticleEmitter,
+  Particle,
   PI,
   rand,
   rgb,
@@ -564,6 +565,104 @@ export class ShockwaveEffect extends EntityEffect {
 
       // Draw as an outline for a "ring" look
       drawCircle(renderPos, radius, color, 0.15);
+    }
+  }
+}
+
+/**
+ * Swarm of energy particles gathering into the entity center.
+ * Uses a particle emitter for an organic, textured energy look.
+ */
+export class GatheringChargeEffect extends EntityEffect {
+  constructor(
+    color = new Color(1, 1, 1, 0.5),
+    duration = 1.5,
+    radius = 6.0,
+    count = 16,
+  ) {
+    super(duration);
+    this.color = color;
+    this.radius = radius;
+    this.count = count;
+    this.renderUnder = true;
+
+    // Create a manual emitter (emitRate = 0) to handle the visuals
+    this.emitter = new ParticleEmitter(
+      vec2(0),
+      0,
+      0,
+      0,
+      0,
+      0,
+      sprites.get("star_02.png", system.particleSheetName),
+      color,
+      color,
+      color,
+      color,
+      0.15,
+      0.5,
+      0.3,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0.2,
+      false,
+      true, // additive
+      true, // randomColorLinear
+      -1, // renderOrder: set to -1 to render behind the boss
+    );
+  }
+
+  isDone() {
+    const done = super.isDone();
+    if (done) this.emitter.destroy(); // Clean up emitter when effect is done
+    return done;
+  }
+
+  render(entity, renderPos) {
+    const p = this.timer.getPercent();
+
+    for (let i = 0; i < this.count; i++) {
+      // Add slight randomness to seeds to make it less 'grid-like'
+      const seed = i * 1.5 + (i % 3) * 0.2;
+      const angle = (seed + time * 5) % (PI * 2);
+
+      // particleP goes from 0 to 1 repeatedly, offset by seed
+      const particleP = (p + seed) % 1;
+
+      // Particles move from outer radius to center
+      const dist = this.radius * (1 - particleP);
+
+      // Calculate position around the entity
+      const pos = renderPos.add(
+        vec2(Math.cos(angle), Math.sin(angle)).scale(dist),
+      );
+
+      // Scale and alpha increase as they get closer to the center
+      const size = 1.6 * particleP;
+      const color = this.color.copy();
+      color.a *= particleP;
+
+      // Manually spawn a particle at the calculated spiral point
+      // We add a tiny bit of jitter to the position for variety
+      const particlePos = pos.add(vec2(rand(-0.1, 0.1), rand(-0.1, 0.1)));
+      const particle = new Particle(
+        this.emitter,
+        particlePos,
+        0, // angle
+        color,
+        color, // colorStart/End
+        0.15, // lifetime
+        size,
+        size * 0.5, // sizeStart/End
+        vec2(0), // velocity
+        0, // angleVelocity
+      );
+      this.emitter.particles.push(particle);
     }
   }
 }

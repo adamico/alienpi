@@ -263,12 +263,20 @@ export class Boss extends BaseEntity {
       this.telegraphTimer.set(1.5); // Slightly longer telegraph for vulnerable attacks
       if (this.nextAttackIsBeam) {
         this.telegraphAction = () => this.fireBeams();
+        this.applyEffect(
+          new gameEffects.GatheringChargeEffect(
+            new Color(1, 0, 0, 0.6),
+            1.5,
+            8.0,
+            32,
+          ),
+        );
       } else {
         this.telegraphAction = () => this.fireMissiles();
+        this.applyEffect(
+          new gameEffects.GatheringChargeEffect(new Color(1, 0.2, 0, 0.8), 1.5),
+        );
       }
-      this.applyEffect(
-        new gameEffects.PulseEffect(new Color(1, 0, 0, 0.8), 16, 1.5),
-      );
     }
   }
 
