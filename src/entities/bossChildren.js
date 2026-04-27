@@ -8,6 +8,7 @@ import {
   EngineObject,
   ParticleEmitter,
   drawCircle,
+  drawRect,
   drawLine,
   time,
   lerp,
@@ -608,6 +609,40 @@ export class BossBeam extends EngineObject {
 
     this.size.x = lerp(0, beamCfg.length, p);
     this.size.y = lerp(0, beamCfg.width, p);
+  }
+
+  render() {
+    if (this.state === "starting") {
+      super.render();
+      return;
+    }
+
+    const color = this.color;
+    const glowColor = color.copy();
+    glowColor.a *= 0.3;
+    // Scale core alpha based on the beam's current alpha (for fading)
+    const coreColor = rgb(1, 1, 1, 0.8 * (color.a / 0.7));
+
+    // Add slight rotation jitter for an "unstable energy" effect
+    const jitter = rand(-0.01, 0.01);
+    const renderAngle = this.angle + jitter;
+
+    // 1. Subtle Glow (Close to hitbox to avoid confusion)
+    drawRect(
+      this.pos,
+      vec2(this.size.x, this.size.y * 1.2),
+      glowColor,
+      renderAngle,
+    );
+    // 2. Main Beam (Matches hitbox)
+    drawRect(this.pos, this.size, color, renderAngle);
+    // 3. Hot Core (Thin and bright)
+    drawRect(
+      this.pos,
+      vec2(this.size.x, this.size.y * 0.3),
+      coreColor,
+      renderAngle,
+    );
   }
 }
 

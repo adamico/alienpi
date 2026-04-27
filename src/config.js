@@ -409,7 +409,7 @@ export const beam = {
   rotationSpeed: 0.007,
   count: 3,
   length: 60,
-  width: 0.6,
+  width: 1.2,
 };
 
 export const orbiter = {
