@@ -140,15 +140,15 @@ function spawnSmokeBurst(pos, size) {
     pos,
     0,
     size, // Larger initial spread
-    0.3,
-    size * 60,
+    0.2,
+    size * 30,
     PI,
     sprites.get("smoke_04.png", system.particleSheetName),
     new Color(0.8, 0.8, 0.8, 0.4),
     new Color(0.4, 0.4, 0.4, 0.2),
     new Color(0, 0, 0, 0),
     new Color(0, 0, 0, 0),
-    3.0, // particleTime
+    1.5, // particleTime
     Math.max(1.2, size * 0.5), // sizeStart
     Math.max(2.5, size * 0.8), // sizeEnd (Reduced from 5.0x to be proportional)
     0.02,
@@ -712,5 +712,3 @@ export class TargetingFrameEffect extends EntityEffect {
     }
   }
 }
-
-
