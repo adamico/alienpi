@@ -10,7 +10,6 @@ import {
   lerp,
   rand,
   engineObjects,
-  time,
 } from "../engine.js";
 import {
   system,
@@ -49,8 +48,7 @@ export class Player extends BaseEntity {
     this.hp = maxHp || playerCfg.hp;
     this.shootTimer = 0;
     this.minShootTimer = 0;
-    this.volleyId = 0;
-    this.lastResetVolleyId = 0;
+    this.activeVulcanBullets = 0;
     this.setCollision(true, true);
     this.isPlayer = true;
     this.mass = 1;
@@ -235,6 +233,7 @@ export class Player extends BaseEntity {
     if (level === 0) return; // Weapon disabled
 
     const key = this.currentWeaponKey;
+    const cfg = weaponsCfg[key];
     const firing = keyIsDown(system.shootKey);
 
     if (key === "latch") {
@@ -242,17 +241,16 @@ export class Player extends BaseEntity {
       return;
     }
 
-    if (!firing || this.shootTimer > 0 || this.minShootTimer > 0) return;
+    if (!firing || this.minShootTimer > 0) return;
 
     if (key === "vulcan") {
+      if (this.activeVulcanBullets > 0) return;
       this.fireVulcan();
-      this.minShootTimer = weaponsCfg.vulcan.cooldown[2]; // Level 3 is the floor
     } else if (key === "shotgun") {
+      if (this.shootTimer > 0) return;
       this.fireShotgun();
-      this.minShootTimer = 0;
+      this.shootTimer = cfg.cooldown[level - 1];
     }
-
-    this.shootTimer = this.currentWeapon.cooldown[level - 1];
   }
 
   /**
@@ -267,26 +265,26 @@ export class Player extends BaseEntity {
   }
 
   fireVulcan() {
-    this.volleyId++;
-    console.log(`[SHOOT] Time: ${time.toFixed(3)} | Volley: ${this.volleyId} | Timer: ${this.shootTimer} | Min: ${this.minShootTimer}`);
-    soundShoot.play();
-    const cfg = weaponsCfg.vulcan;
     const level = this.weaponLevels.vulcan;
-    const offsets = cfg.cannonOffsets[level - 1];
+    const cfg = weaponsCfg.vulcan;
     const bulletSpeed = cfg.bullet.speed[level - 1];
+    soundShoot.play();
+    const offsets = cfg.cannonOffsets[level - 1];
 
     for (const muzzle of offsets) {
       const offset = this.muzzleLocalOffset(muzzle);
       const jitter = vec2(rand(-cfg.spawnJitterX, cfg.spawnJitterX), 0);
+      const velocity = vec2(0, bulletSpeed);
       const b = new Bullet(
-        this.pos.add(offset).add(jitter),
-        vec2(0, bulletSpeed),
+        this.pos.add(offset).add(jitter).subtract(velocity),
+        velocity,
         "player",
         cfg.bullet,
-        cfg.damage,
+        cfg.damage[level - 1],
       );
       b.weaponKey = "vulcan";
-      b.volleyId = this.volleyId;
+      b.player = this;
+      this.activeVulcanBullets++;
       gameEffects.spawnMuzzleFlash(this, offset);
     }
   }
@@ -312,7 +310,7 @@ export class Player extends BaseEntity {
       const angle = -cone / 2 + t * cone;
       // Rotate the base upward velocity by `angle` around Z
       const vel = vec2(Math.sin(angle) * speed, Math.cos(angle) * speed);
-      const b = new Bullet(spawnPos, vel, "player", cfg.bullet, damage);
+      const b = new Bullet(spawnPos.subtract(vel), vel, "player", cfg.bullet, damage);
       b.weaponKey = "shotgun";
       b.pierce = cfg.pierce;
       b.angle = angle; // sprite leans with its direction

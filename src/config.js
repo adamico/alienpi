@@ -103,10 +103,14 @@ export const player = {
   },
 };
 
+const VULCAN_BASE_SPEED = 0.4;
+const VULCAN_BASE_DAMAGE = 0.6;
+const VULCAN_DAMAGE_STEP = 0.15;
+
 const vulcanBullet = {
   sheet: SPRITE_SHEET2_NAME,
   sprite: "laserBlue04.png",
-  speed: [0.5, 0.65, 0.8], // Level-based speeds
+  speed: [VULCAN_BASE_SPEED, VULCAN_BASE_SPEED * 2, VULCAN_BASE_SPEED * 3],
   size: vec2(0.2, 0.2),
   despawnRadius: 0.5,
   hitboxScale: 1.0,
@@ -125,13 +129,14 @@ const shotgunBullet = {
   trailLength: 3,
 };
 
-// Planned at MAX power level. A single `powerLevel` field on Player is the
-// hook for scaling these down later (fewer bullets, slower rate, no pierce).
 export const weapons = {
   vulcan: {
     label: "VULCAN",
-    cooldown: [12, 8, 4],
-    damage: 0.6,
+    damage: [
+      VULCAN_BASE_DAMAGE,
+      VULCAN_BASE_DAMAGE + VULCAN_DAMAGE_STEP,
+      VULCAN_BASE_DAMAGE + VULCAN_DAMAGE_STEP * 2,
+    ],
     cannonOffsets: [
       [vec2(53.5, 40)], // Level 1
       [vec2(22, 40), vec2(85, 40)], // Level 2

@@ -1,4 +1,4 @@
-import { WHITE, ParticleEmitter, rgb, engineObjects, time } from "../engine.js";
+import { WHITE, ParticleEmitter, rgb, vec2 } from "../engine.js";
 import {
   engine,
   weapons,
@@ -30,7 +30,8 @@ export class Bullet extends BaseEntity {
       finalCfg.mirrorY,
     );
 
-    this.velocity = vel;
+    this.projectileVelocity = vel;
+    this.velocity = vec2(0);
     this.angle = type === "player" ? 0 : vel.angle();
     this.renderOrder = type === "player" ? -1 : 10;
     this.setCollision(true, false); // Trigger only, not solid
@@ -96,22 +97,20 @@ export class Bullet extends BaseEntity {
     ) {
       this.destroy();
     }
+
+    // Manually move based on our velocity to bypass the engine's 0.4 clamp.
+    this.pos = this.pos.add(this.projectileVelocity);
     super.update();
   }
 
-  destroy(hitTarget = false) {
+  destroy() {
     if (this.destroyed) return;
     if (this.type === "player") {
       // Cooldown reset mechanic for Vulcan bullets
-      if (this.weaponKey === "vulcan" && hitTarget) {
-        const p = engineObjects.find((o) => o.isPlayer);
-        if (p && this.volleyId > p.lastResetVolleyId) {
-          console.log(`[HIT]   Time: ${time.toFixed(3)} | Volley: ${this.volleyId} (RESET)`);
-          p.shootTimer = 0;
-          p.lastResetVolleyId = this.volleyId;
-        } else if (p) {
-          console.log(`[HIT]   Time: ${time.toFixed(3)} | Volley: ${this.volleyId} (IGNORE)`);
-        }
+      if (this.weaponKey === "vulcan" && this.player) {
+        this.player.activeVulcanBullets--;
+        this.player.updateShooting(); // Check for immediate fire
+        this.player = null; // Prevent double decrement
       }
 
       new ParticleEmitter(
