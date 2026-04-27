@@ -464,19 +464,33 @@ export class Player extends BaseEntity {
 
   updateLatchBeams(firing) {
     const level = this.weaponLevels.latch;
+    const cfg = weaponsCfg.latch;
     if (!firing) {
       this.clearLatchBeams();
       this.latchSoundTimer = 0;
       return;
     }
-    const cooldown = weaponsCfg.latch.cooldown[level - 1];
+
+    const count = cfg.count[level - 1];
+    const cooldown = cfg.cooldown[level - 1];
     if (this.latchSoundTimer <= 0) {
       soundLatch.play();
       this.latchSoundTimer = cooldown;
     } else {
       this.latchSoundTimer--;
     }
+
     this.acquireLatchTargets();
+
+    // Fixed fan distribution
+    const cone = cfg.fanCone;
+    for (let i = 0; i < count; i++) {
+      const beam = this.latchBeams[i];
+      beam.isFiring = true;
+      const t = count === 1 ? 0.5 : i / (count - 1);
+      beam.fanAngle = -cone / 2 + t * cone;
+    }
+
     this.assignLatchEndOffsets(this.pos);
   }
 

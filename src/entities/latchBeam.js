@@ -6,6 +6,7 @@ import {
   ParticleEmitter,
   PI,
   rand,
+  rgb,
 } from "../engine.js";
 import { system, weapons } from "../config.js";
 import { sprites } from "../sprites.js";
@@ -26,6 +27,43 @@ export class LatchBeam extends EngineObject {
     this.target = null;
     this.damageFrame = 0;
     this.endOffset = null;
+    this.fanAngle = 0;
+    this.isFiring = false;
+
+    // Continuous star emitter at the latch point
+    const cfg = weapons.latch;
+    const color = cfg.muzzleColor.copy();
+    color.a *= cfg.muzzleAlpha;
+    this.latchEmitter = new ParticleEmitter(
+      vec2(),
+      0,
+      0,
+      0,
+      0,
+      0,
+      sprites.get("star_09.png", system.particleSheetName),
+      color,
+      color,
+      rgb(0, 1, 0, 0),
+      rgb(0, 0.5, 0, 0),
+      0.2, // particleTime
+      0.8, // sizeStart
+      0.1, // sizeEnd
+      0.05, // speed
+      0.05, // angleSpeed
+      0.9, // damping
+      0.9, // angleDamping
+      0, // gravityScale
+      PI, // particleConeAngle
+      0.1, // fadeRate
+      0.2, // randomness
+      false, // collideTiles
+      true, // additive
+      true, // randomColorLinear
+      this.renderOrder + 1,
+      true, // localSpace
+    );
+    this.addChild(this.latchEmitter);
   }
 
   setTarget(target) {
@@ -38,36 +76,57 @@ export class LatchBeam extends EngineObject {
   clear() {
     this.target = null;
     this.damageFrame = 0;
+    this.isFiring = false;
   }
 
   update() {
     super.update();
-    if (!this.target || this.target.destroyed || this.target.hp <= 0) {
-      this.target = null;
-      return;
-    }
+
     const cfg = weapons.latch;
     const level = this.parent?.weaponLevels?.latch || 1;
-    const interval = cfg.cooldown[level - 1];
-    const dmg = cfg.damage[level - 1];
+    const range = cfg.range[level - 1];
 
-    this.damageFrame++;
-    if (this.damageFrame >= interval) {
-      this.damageFrame = 0;
-      this.target.hp -= dmg;
-      recordDamage("latch", dmg, this.target);
-      if (typeof this.target.applyEffect === "function") {
-        this.target.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05));
-      }
-      this.emitImpactSparks();
-      if (this.target.hp <= 0) {
-        soundExplosion1.play();
-        this.target.destroy();
-        this.target = null;
-        return;
+    let endPos;
+    if (this.target && !this.target.destroyed && this.target.hp > 0) {
+      const interval = cfg.cooldown[level - 1];
+      const dmg = cfg.damage[level - 1];
+
+      this.damageFrame++;
+      if (this.damageFrame >= interval) {
+        this.damageFrame = 0;
+        this.target.hp -= dmg;
+        recordDamage("latch", dmg, this.target);
+        if (typeof this.target.applyEffect === "function") {
+          this.target.applyEffect(
+            new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05),
+          );
+        }
+        this.emitImpactSparks();
+        if (this.target.hp <= 0) {
+          soundExplosion1.play();
+          this.target.destroy();
+          this.target = null;
+        }
       }
     }
-    this.emitBeamSparks(this.pos);
+
+    if (this.target) {
+      endPos = this.endOffset
+        ? this.target.pos.add(this.endOffset)
+        : this.target.pos;
+    } else if (this.isFiring) {
+      // Fan pattern endpoint
+      const dir = vec2(Math.sin(this.fanAngle), Math.cos(this.fanAngle));
+      endPos = this.pos.add(dir.scale(range));
+    }
+
+    if (endPos) {
+      this.latchEmitter.localPos = endPos.subtract(this.pos);
+      this.latchEmitter.emitRate = 40;
+      this.emitBeamSparks(this.pos, endPos);
+    } else {
+      this.latchEmitter.emitRate = 0;
+    }
   }
 
   emitImpactSparks() {
@@ -77,12 +136,9 @@ export class LatchBeam extends EngineObject {
     this.spawnSparkEmitter(pos, weapons.latch.sparks);
   }
 
-  emitBeamSparks(fromPos) {
+  emitBeamSparks(fromPos, endPos) {
     const s = weapons.latch.beamSparks;
     if (rand() > s.spawnChance) return;
-    const endPos = this.endOffset
-      ? this.target.pos.add(this.endOffset)
-      : this.target.pos;
     const t = rand();
     const pos = fromPos.lerp(endPos, t);
     this.spawnSparkEmitter(pos, s);
@@ -123,11 +179,25 @@ export class LatchBeam extends EngineObject {
   }
 
   render() {
-    if (!this.target) return;
+    if (!this.target && !this.isFiring) return;
+
     const cfg = weapons.latch;
-    const endPos = this.endOffset
-      ? this.target.pos.add(this.endOffset)
-      : this.target.pos;
-    drawLine(this.pos, endPos, cfg.lineWidth, cfg.color);
+    const level = this.parent?.weaponLevels?.latch || 1;
+    const range = cfg.range[level - 1];
+
+    let endPos;
+    if (this.target) {
+      endPos = this.endOffset
+        ? this.target.pos.add(this.endOffset)
+        : this.target.pos;
+    } else {
+      // Use the stored angle for the fan pattern
+      const dir = vec2(Math.sin(this.fanAngle), Math.cos(this.fanAngle));
+      endPos = this.pos.add(dir.scale(range));
+    }
+
+    if (endPos) {
+      drawLine(this.pos, endPos, cfg.lineWidth, cfg.color);
+    }
   }
 }
