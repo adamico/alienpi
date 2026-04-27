@@ -4,17 +4,12 @@ import {
   vec2,
   rgb,
   drawRect,
-  setCanvasFixedSize,
-  setCameraPos,
-  setTileDefaultSize,
-  setObjectMaxSpeed,
   engineInit,
   drawTextScreen,
   WHITE,
   glSetAntialias,
   setCanvasPixelated,
   setTilesPixelated,
-  PostProcessPlugin,
   engineObjects,
   timeReal,
   timeDelta,
@@ -22,22 +17,16 @@ import {
   engineObjectsDestroy,
   keyWasPressed,
   setPaused,
-  setDebugKey,
 } from "./src/engine.js";
 
 import {
   system,
-  engine,
   settings,
   GAME_STATES,
   starfield as starCfg,
 } from "./src/config.js";
 import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
-import {
-  loadSprites,
-  loadDynamicSpritesheet as setupParticleSpritesheet,
-} from "./src/sprites.js";
-import { spawnPlayer } from "./src/entities/player.js";
+import { initializeGameAssets, initializePlayer } from "./src/commonSetup.js";
 import { Boss } from "./src/entities/boss.js";
 import {
   soundBossMusic,
@@ -62,23 +51,8 @@ let gameOverTime = 0;
 export let gameTime = 0;
 
 async function gameInit() {
-  setupSharpenShader();
-  setCanvasFixedSize(system.canvasSize);
-  setCameraPos(system.cameraPos);
-  setTileDefaultSize(vec2(1));
-  setObjectMaxSpeed(engine.objectMaxSpeed);
+  await initializeGameAssets();
   setPaused(true);
-  setDebugKey("Backquote");
-
-  // Load all spritesheets defined in config
-  await setupSpritesheets();
-
-  // Generate dynamic particle sprite sheet
-  await setupParticleSpritesheet(
-    system.particleLists,
-    system.particleSheetName,
-  );
-
   initUI();
 }
 
@@ -86,7 +60,7 @@ export function resetGame() {
   system.isResetting = true;
   engineObjectsDestroy();
   system.isResetting = false;
-  player = spawnPlayer();
+  player = initializePlayer();
 
   // Straight to boss level
   currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
@@ -98,31 +72,6 @@ export function resetGame() {
   setupBoundaries();
   gameTime = 0;
   gameState = GAME_STATES.PLAYING;
-}
-
-async function setupSpritesheets() {
-  for (let i = 0; i < system.spriteSheetLists.length; i++) {
-    const fullPath = system.spriteSheetLists[i].replace(".png", "");
-    await loadSprites(fullPath, i);
-  }
-}
-
-function setupSharpenShader() {
-  const sharpenShader = `
-  void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-      vec2 uv = fragCoord.xy / iResolution.xy;
-      vec2 step = 1.0 / iResolution.xy;
-      
-      vec4 tex0 = texture(iChannel0, uv);
-      vec4 tex1 = texture(iChannel0, uv + vec2(step.x, 0.0));
-      vec4 tex2 = texture(iChannel0, uv + vec2(-step.x, 0.0));
-      vec4 tex3 = texture(iChannel0, uv + vec2(0.0, step.y));
-      vec4 tex4 = texture(iChannel0, uv + vec2(0.0, -step.y));
-      
-      // Simple 5-tap sharpening kernel
-      fragColor = tex0 * 5.0 - (tex1 + tex2 + tex3 + tex4);
-  }`;
-  new PostProcessPlugin(sharpenShader);
 }
 
 function setupBoundaries() {

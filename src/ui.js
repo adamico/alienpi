@@ -291,7 +291,7 @@ export function initUI() {
 }
 
 function setupHealthUI() {
-  const heartSprite = sprites.get("playerLife2_blue.png", playerCfg.sheet);
+  const heartSprite = sprites.get(playerCfg.hpIcon, playerCfg.hpIconSheet);
 
   for (let i = 0; i < playerCfg.hp; i++) {
     const icon = new UITile(
@@ -300,7 +300,7 @@ function setupHealthUI() {
       heartSprite,
     );
     // Tint to white - high values help wash out the original color
-    icon.color = new Color(5, 5, 5, 1);
+    icon.color = WHITE.copy();
     hudGroup.addChild(icon);
     healthIcons.push(icon);
   }

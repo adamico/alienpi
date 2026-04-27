@@ -20,6 +20,7 @@ import {
   boss as bossCfg,
   beam as beamCfg,
   orbiter as orbCfg,
+  orbiterLooter as orbLootCfg,
   missile as missileCfg,
   shield as shieldCfg,
 } from "../config.js";
@@ -36,27 +37,29 @@ import { player as playerCfg } from "../config.js";
  */
 export class BossOrbiter extends BaseEntity {
   constructor(initialAngle, hp, hasLoot = false, pos = vec2()) {
+    const cfg = hasLoot ? orbLootCfg : orbCfg;
     super(
       pos,
-      orbCfg.sprite,
-      orbCfg.sheet,
-      orbCfg.hitboxScale,
-      orbCfg.size,
-      orbCfg.mirrorX,
-      orbCfg.mirrorY,
+      cfg.sprite,
+      cfg.sheet,
+      cfg.hitboxScale,
+      cfg.size,
+      cfg.mirrorX,
+      cfg.mirrorY,
     );
+    this.cfg = cfg;
     this.angleOffset = initialAngle;
-    this.hp = hp ?? orbCfg.baseHp;
+    this.hp = hp ?? cfg.baseHp;
     this.hasLoot = hasLoot;
-    this.color = orbCfg.color.copy();
+    this.color = cfg.color.copy();
     this.mass = 0;
     this.isSolid = false;
     this.setCollision(false, false); // No collision while appearing
     this.renderOrder = -1; // Render below the boss
     this.state = "appearing";
-    this.appearTimer = new Timer(orbCfg.appearTime);
+    this.appearTimer = new Timer(cfg.appearTime);
     this.diveTimer = new Timer(
-      rand(orbCfg.diveRate * 0.5, orbCfg.diveRate * 1.5) / 60,
+      rand(cfg.diveRate * 0.5, cfg.diveRate * 1.5) / 60,
     );
     this.warningTimer = new Timer();
     this.tetherColor = this.color.copy();
@@ -136,7 +139,7 @@ export class BossOrbiter extends BaseEntity {
       this.updateOrbit();
       if (this.diveTimer.elapsed()) {
         this.state = "warning";
-        this.warningTimer.set(orbCfg.warningTime);
+        this.warningTimer.set(this.cfg.warningTime);
       }
     } else if (this.state === "warning") {
       this.updateOrbit(); // still orbit while warning
@@ -153,7 +156,7 @@ export class BossOrbiter extends BaseEntity {
 
     if (this.parent) {
       const speedScale = 1 + this.parent.stage * 0.25;
-      this.angleOffset += orbCfg.speed * speedScale;
+      this.angleOffset += this.cfg.speed * speedScale;
     }
 
     super.update();
@@ -175,7 +178,7 @@ export class BossOrbiter extends BaseEntity {
       this.localPos = vec2(
         Math.cos(this.angleOffset),
         Math.sin(this.angleOffset),
-      ).scale(orbCfg.radius);
+      ).scale(this.cfg.radius);
     } else {
       this.pos = this.spawnPos.copy();
     }
@@ -183,18 +186,18 @@ export class BossOrbiter extends BaseEntity {
     if (this.state === "appearing") {
       // Blink 10Hz
       const isVisible = ((time * 10) | 0) % 2;
-      this.color.a = isVisible ? orbCfg.color.a : 0;
+      this.color.a = isVisible ? this.cfg.color.a : 0;
     } else if (this.state === "warning") {
       // Reuse missile blinking logic: 10Hz red blink
       const isRedPhase = ((time * 20) | 0) % 2;
       if (isRedPhase) this.color.set(1, 0, 0);
-      else this.color.set(orbCfg.color.r, orbCfg.color.g, orbCfg.color.b);
+      else this.color.set(this.cfg.color.r, this.cfg.color.g, this.cfg.color.b);
     } else {
       this.color.set(
-        orbCfg.color.r,
-        orbCfg.color.g,
-        orbCfg.color.b,
-        orbCfg.color.a,
+        this.cfg.color.r,
+        this.cfg.color.g,
+        this.cfg.color.b,
+        this.cfg.color.a,
       );
     }
   }
@@ -208,7 +211,7 @@ export class BossOrbiter extends BaseEntity {
     // Since it's a child, worldPos = parent.pos + localPos.rotate(parent.angle)
     // We want worldX to stay diveX, and worldY to decrease.
 
-    const worldY = this.pos.y - orbCfg.diveSpeed;
+    const worldY = this.pos.y - this.cfg.diveSpeed;
     const worldPos = vec2(this.diveX, worldY);
 
     if (this.parent) {
@@ -228,13 +231,13 @@ export class BossOrbiter extends BaseEntity {
   updateReturn() {
     // Calculate the target position
     let toTarget;
-    const speed = orbCfg.diveSpeed * 0.8; // fly back up slightly slower
+    const speed = this.cfg.diveSpeed * 0.8; // fly back up slightly slower
 
     if (this.parent) {
       const targetLocalPos = vec2(
         Math.cos(this.angleOffset),
         Math.sin(this.angleOffset),
-      ).scale(orbCfg.radius);
+      ).scale(this.cfg.radius);
       toTarget = targetLocalPos.subtract(this.localPos);
 
       if (toTarget.length() <= speed) {
@@ -258,10 +261,10 @@ export class BossOrbiter extends BaseEntity {
 
     if (this.state === "orbiting") {
       this.color.set(
-        orbCfg.color.r,
-        orbCfg.color.g,
-        orbCfg.color.b,
-        orbCfg.color.a,
+        this.cfg.color.r,
+        this.cfg.color.g,
+        this.cfg.color.b,
+        this.cfg.color.a,
       );
     } else {
       // Render semi-transparent while retreating
@@ -270,7 +273,7 @@ export class BossOrbiter extends BaseEntity {
   }
 
   resetDiveTimer() {
-    const actualDiveRate = orbCfg.diveRate || 600;
+    const actualDiveRate = this.cfg.diveRate || 600;
     this.diveTimer.set(rand(actualDiveRate * 0.8, actualDiveRate * 1.2) / 60);
   }
 
@@ -614,7 +617,7 @@ export class BossBeam extends EngineObject {
  */
 export class BossShield extends EngineObject {
   constructor() {
-    const tileInfo = sprites.get(shieldCfg.sprite, system.particleSheetName);
+    const tileInfo = sprites.get(shieldCfg.sprite, shieldCfg.sheet);
     super(
       vec2(),
       vec2((bossCfg.size.x / 2 + shieldCfg.radiusOffset) * 2),

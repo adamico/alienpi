@@ -4,15 +4,10 @@ import {
   vec2,
   rgb,
   drawRect,
-  setCanvasFixedSize,
-  setCameraPos,
-  setTileDefaultSize,
-  setObjectMaxSpeed,
   engineInit,
   glSetAntialias,
   setCanvasPixelated,
   setTilesPixelated,
-  PostProcessPlugin,
   mousePos,
   mouseWasPressed,
   time,
@@ -22,7 +17,6 @@ import {
 
 import {
   system,
-  engine,
   starfield as starCfg,
   enemy as enemyCfg,
   boss as bossCfg,
@@ -31,12 +25,9 @@ import {
   player as playerCfg,
 } from "./src/config.js";
 
-import {
-  loadSprites,
-  loadDynamicSpritesheet as setupParticleSpritesheet,
-} from "./src/sprites.js";
+import { initializeGameAssets, initializePlayer } from "./src/commonSetup.js";
 
-import { spawnPlayer, player } from "./src/entities/player.js";
+import { player } from "./src/entities/player.js";
 import { BaseEntity } from "./src/entities/baseEntity.js";
 import { Enemy } from "./src/entities/enemy.js";
 import { Boss } from "./src/entities/boss.js";
@@ -47,19 +38,8 @@ import * as gameEffects from "./src/gameEffects.js";
 let behaviorEnabled = true;
 
 async function gameInit() {
-  setupSharpenShader();
-  setCanvasFixedSize(system.canvasSize);
-  setCameraPos(system.cameraPos);
-  setTileDefaultSize(vec2(1));
-  setObjectMaxSpeed(engine.objectMaxSpeed);
-
-  await setupSpritesheets();
-  await setupParticleSpritesheet(
-    system.particleLists,
-    system.particleSheetName,
-  );
-
-  spawnPlayer(999);
+  await initializeGameAssets();
+  initializePlayer(999);
   setupUIListeners();
 
   // Hide loading indicator
@@ -147,29 +127,7 @@ function setupUIListeners() {
   }
 }
 
-async function setupSpritesheets() {
-  for (let i = 0; i < system.spriteSheetLists.length; i++) {
-    const fullPath = system.spriteSheetLists[i].replace(".png", "");
-    await loadSprites(fullPath, i);
-  }
-}
-
-function setupSharpenShader() {
-  const sharpenShader = `
-  void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-      vec2 uv = fragCoord.xy / iResolution.xy;
-      vec2 step = 1.0 / iResolution.xy;
-      
-      vec4 tex0 = texture(iChannel0, uv);
-      vec4 tex1 = texture(iChannel0, uv + vec2(step.x, 0.0));
-      vec4 tex2 = texture(iChannel0, uv + vec2(-step.x, 0.0));
-      vec4 tex3 = texture(iChannel0, uv + vec2(0.0, step.y));
-      vec4 tex4 = texture(iChannel0, uv + vec2(0.0, -step.y));
-      
-      fragColor = tex0 * 5.0 - (tex1 + tex2 + tex3 + tex4);
-  }`;
-  new PostProcessPlugin(sharpenShader);
-}
+// common setup functions removed as they are now in commonSetup.js
 
 function gameUpdate() {
   if (mouseWasPressed(0)) {

@@ -55,7 +55,7 @@ export async function loadSprites(sheetPath, textureIndex) {
  */
 export const sprites = {
   get: (name, sheet) => {
-    const key = `${sheet}:${name}`;
+    const key = sheet ? `${sheet}:${name}` : name;
     const sprite = spritesMap.get(key);
     if (!sprite) {
       console.warn(`Sprite not found: ${key}`);
@@ -161,7 +161,8 @@ export async function loadDynamicSpritesheet(imageUrls, sheetName) {
       vec2(img.width - bleedShrink * 2, img.height - bleedShrink * 2),
       tInfo,
     );
-    spritesMap.set(`${sheetName}:${name}`, tile);
+    const key = sheetName ? `${sheetName}:${name}` : name;
+    spritesMap.set(key, tile);
   }
 
   return textureInfos.indexOf(tInfo);

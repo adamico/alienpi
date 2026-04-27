@@ -40,7 +40,7 @@ export class Player extends BaseEntity {
       weaponsCfg[WEAPON_ORDER[0]].playerSprite || playerCfg.sprite,
       playerCfg.sheet,
       playerCfg.hitboxScale,
-      null,
+      playerCfg.size,
       playerCfg.mirrorX,
       playerCfg.mirrorY,
     );
@@ -105,7 +105,7 @@ export class Player extends BaseEntity {
       -2, // renderOrder
       true, // localSpace
     );
-    this.addChild(this.exhaustEmitter, vec2(0, -0.7), PI);
+    this.addChild(this.exhaustEmitter, vec2(0, -1.8), PI);
   }
 
   get currentWeaponKey() {
@@ -170,9 +170,12 @@ export class Player extends BaseEntity {
   updateWeaponSprite() {
     const spriteName = this.currentWeapon.playerSprite;
     if (spriteName) {
-      this.sprite = sprites.get(spriteName, playerCfg.sheet);
+      const sheet = playerCfg.sheet;
+      this.sprite = sprites.get(spriteName, sheet);
       if (this.sprite) {
-        this.visualSize = this.sprite.size.scale(engine.worldScale);
+        this.visualSize = playerCfg.size
+          ? sprites.getSize(spriteName, sheet, playerCfg.size)
+          : this.sprite.size.scale(engine.worldScale);
         this.size = this.visualSize.scale(this.hitboxScale);
       }
     }
@@ -260,9 +263,14 @@ export class Player extends BaseEntity {
    * computing the world spawn position of bullets.
    */
   muzzleLocalOffset(pixelOffset) {
+    if (!this.sprite) return vec2(0);
     const center = this.visualSize.scale(0.5);
-    const muzzleWorld = pixelOffset.scale(engine.worldScale);
-    return vec2(muzzleWorld.x - center.x, -(muzzleWorld.y - center.y));
+    const pixelSize = this.sprite.size;
+    const worldOffset = vec2(
+      (pixelOffset.x / pixelSize.x) * this.visualSize.x,
+      (pixelOffset.y / pixelSize.y) * this.visualSize.y,
+    );
+    return vec2(worldOffset.x - center.x, -(worldOffset.y - center.y));
   }
 
   fireVulcan() {
@@ -314,7 +322,13 @@ export class Player extends BaseEntity {
       const angle = -cone / 2 + t * cone;
       // Rotate the base upward velocity by `angle` around Z
       const vel = vec2(Math.sin(angle) * speed, Math.cos(angle) * speed);
-      const b = new Bullet(spawnPos.subtract(vel), vel, "player", cfg.bullet, damage);
+      const b = new Bullet(
+        spawnPos.subtract(vel),
+        vel,
+        "player",
+        cfg.bullet,
+        damage,
+      );
       b.weaponKey = "shotgun";
       b.pierce = cfg.pierce;
       b.angle = angle; // sprite leans with its direction

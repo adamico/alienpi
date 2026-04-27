@@ -9,8 +9,8 @@ export const GAME_STATES = {
 };
 
 const ASSET_PATH = "public/assets/";
-const SPRITE_SHEET_NAME = "spaceShooter2_spritesheet";
-const SPRITE_SHEET2_NAME = "sheet";
+export const SPRITE_SHEET_NAME = "spaceShooter2_spritesheet";
+export const SPRITE_SHEET2_NAME = "sheet";
 
 export const SPRITE_SHEET_PATHS = [
   `${ASSET_PATH}${SPRITE_SHEET_NAME}`,
@@ -76,6 +76,14 @@ export const system = {
     if (p.startsWith("crosshair")) return `public/assets/crosshairs/${p}`;
     return `public/assets/particles/${p}`;
   }),
+  standaloneSprites: [
+    "boss2.png",
+    "drone.png",
+    "drone-looter.png",
+    "shipA3.png",
+    "shipB2.png",
+    "shipC3.png",
+  ].map((p) => `${ASSET_PATH}${p}`),
   shootKey: "Space",
   focusKey: "ShiftLeft",
   switchKey: "KeyQ",
@@ -88,13 +96,16 @@ export const engine = {
 };
 
 export const player = {
-  sheet: SPRITE_SHEET2_NAME,
-  sprite: "playerShip2_blue.png",
+  sheet: "",
+  sprite: "shipA3.png",
+  hpIcon: "shipA3.png",
+  hpIconSheet: "",
   accel: 0.3,
   damping: 0.5,
+  size: vec2(2.5),
   focusSpeedScale: 0.5,
   hp: 5,
-  hitboxScale: 0.25,
+  hitboxScale: 0.2,
   mirrorX: false,
   mirrorY: true,
   exhaust: {
@@ -149,13 +160,13 @@ export const weapons = {
       VULCAN_BASE_DAMAGE + VULCAN_DAMAGE_STEP * 2,
     ],
     cannonOffsets: [
-      [vec2(53.5, 40)], // Level 1
-      [vec2(22, 40), vec2(85, 40)], // Level 2
-      [vec2(22, 40), vec2(53.5, 40), vec2(85, 40)], // Level 3
+      [vec2(128, 64)], // Level 1
+      [vec2(80, 64), vec2(176, 64)], // Level 2
+      [vec2(80, 64), vec2(128, 64), vec2(176, 64)], // Level 3
     ],
     spawnJitterX: 0.05, // ± world units of random x jitter at spawn
     bullet: vulcanBullet,
-    playerSprite: "playerShip2_blue.png",
+    playerSprite: "shipA3.png",
     closeRangeThreshold: 6,
     closeRangeCooldown: [6, 6, 6],
   },
@@ -168,9 +179,9 @@ export const weapons = {
     coneBase: (40 * PI) / 180,
     coneMin: (16 * PI) / 180,
     coneMax: (80 * PI) / 180,
-    nozzle: vec2(53.5, 40),
+    nozzle: vec2(128, 64),
     bullet: shotgunBullet,
-    playerSprite: "playerShip2_orange.png",
+    playerSprite: "shipB2.png",
   },
   latch: {
     label: "LATCH",
@@ -178,7 +189,7 @@ export const weapons = {
     cooldown: [40, 32, 24], // frames between damage ticks per beam
     damage: [1, 1, 1], // fixed damage at all levels
     range: [8, 12, 16], // max lock distance in world units
-    nozzle: vec2(53.5, 40),
+    nozzle: vec2(128, 64),
     lineWidth: 0.2,
     color: rgb(0.4, 1, 0.4, 0.9),
     renderOrder: -1,
@@ -228,7 +239,7 @@ export const weapons = {
       renderOrder: 1, // renderOrder
       localSpace: true, // localSpace
     },
-    playerSprite: "playerShip2_green.png",
+    playerSprite: "shipC3.png",
   },
 };
 
@@ -322,11 +333,10 @@ export const enemy = {
 };
 
 export const boss = {
-  sheet: SPRITE_SHEET_NAME,
-  sprite: "spaceShips_007.png",
+  sprite: "boss2.png",
   hp: 1000,
   speed: 0.05,
-  size: vec2(6, 6),
+  size: vec2(8),
   color: rgb(1, 1, 1),
   novaRate: 180,
   fireLocations: [vec2(-1.5, 2), vec2(1.5, 2), vec2(-1.5, -1), vec2(1.5, -1)],
@@ -351,14 +361,29 @@ export const beam = {
 };
 
 export const orbiter = {
-  sheet: SPRITE_SHEET2_NAME,
-  sprite: "ufoRed.png",
+  sprite: "drone.png",
   baseHp: 20,
   maxHp: 100,
   hpCurve: 1.3,
   radius: 6,
   speed: 0.03,
-  size: vec2(2),
+  size: vec2(4),
+  color: rgb(1, 1, 1),
+  hitboxScale: 0.8,
+  diveRate: 600,
+  diveSpeed: 0.4,
+  warningTime: 1.5, // seconds to blink before diving
+  appearTime: 1.0, // seconds to blink into existence
+};
+
+export const orbiterLooter = {
+  sprite: "drone-looter.png",
+  baseHp: 20,
+  maxHp: 100,
+  hpCurve: 1.3,
+  radius: 6,
+  speed: 0.03,
+  size: vec2(4),
   color: rgb(1, 1, 1),
   hitboxScale: 0.8,
   diveRate: 600,
@@ -368,6 +393,7 @@ export const orbiter = {
 };
 
 export const shield = {
+  sheet: "particles",
   sprite: "circle_01.png",
   radiusOffset: 2.4,
   pulseSpeed: 4,
@@ -402,6 +428,7 @@ export const settings = {
   sfxVolume: 0.8,
   enableDPSLog: false,
   customDebug: false,
+  debugKey: "F1",
 };
 
 export const ui = {
