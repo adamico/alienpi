@@ -10,6 +10,7 @@ import {
   lerp,
   rand,
   engineObjects,
+  time,
 } from "../engine.js";
 import {
   system,
@@ -47,6 +48,9 @@ export class Player extends BaseEntity {
 
     this.hp = maxHp || playerCfg.hp;
     this.shootTimer = 0;
+    this.minShootTimer = 0;
+    this.volleyId = 0;
+    this.lastResetVolleyId = 0;
     this.setCollision(true, true);
     this.isPlayer = true;
     this.mass = 1;
@@ -225,6 +229,7 @@ export class Player extends BaseEntity {
 
   updateShooting() {
     if (this.shootTimer > 0) this.shootTimer--;
+    if (this.minShootTimer > 0) this.minShootTimer--;
 
     const level = this.currentWeaponLevel;
     if (level === 0) return; // Weapon disabled
@@ -237,10 +242,15 @@ export class Player extends BaseEntity {
       return;
     }
 
-    if (!firing || this.shootTimer > 0) return;
+    if (!firing || this.shootTimer > 0 || this.minShootTimer > 0) return;
 
-    if (key === "vulcan") this.fireVulcan();
-    else if (key === "shotgun") this.fireShotgun();
+    if (key === "vulcan") {
+      this.fireVulcan();
+      this.minShootTimer = weaponsCfg.vulcan.cooldown[2]; // Level 3 is the floor
+    } else if (key === "shotgun") {
+      this.fireShotgun();
+      this.minShootTimer = 0;
+    }
 
     this.shootTimer = this.currentWeapon.cooldown[level - 1];
   }
@@ -257,6 +267,8 @@ export class Player extends BaseEntity {
   }
 
   fireVulcan() {
+    this.volleyId++;
+    console.log(`[SHOOT] Time: ${time.toFixed(3)} | Volley: ${this.volleyId} | Timer: ${this.shootTimer} | Min: ${this.minShootTimer}`);
     soundShoot.play();
     const cfg = weaponsCfg.vulcan;
     const level = this.weaponLevels.vulcan;
@@ -274,6 +286,7 @@ export class Player extends BaseEntity {
         cfg.damage,
       );
       b.weaponKey = "vulcan";
+      b.volleyId = this.volleyId;
       gameEffects.spawnMuzzleFlash(this, offset);
     }
   }

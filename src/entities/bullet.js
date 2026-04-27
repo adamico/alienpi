@@ -1,4 +1,4 @@
-import { WHITE, ParticleEmitter, rgb, engineObjects } from "../engine.js";
+import { WHITE, ParticleEmitter, rgb, engineObjects, time } from "../engine.js";
 import {
   engine,
   weapons,
@@ -105,8 +105,12 @@ export class Bullet extends BaseEntity {
       // Cooldown reset mechanic for Vulcan bullets
       if (this.weaponKey === "vulcan" && hitTarget) {
         const p = engineObjects.find((o) => o.isPlayer);
-        if (p) {
-          p.shootTimer = Math.min(p.shootTimer, weapons.vulcan.cooldown[2]);
+        if (p && this.volleyId > p.lastResetVolleyId) {
+          console.log(`[HIT]   Time: ${time.toFixed(3)} | Volley: ${this.volleyId} (RESET)`);
+          p.shootTimer = 0;
+          p.lastResetVolleyId = this.volleyId;
+        } else if (p) {
+          console.log(`[HIT]   Time: ${time.toFixed(3)} | Volley: ${this.volleyId} (IGNORE)`);
         }
       }
 
