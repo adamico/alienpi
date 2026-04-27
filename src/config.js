@@ -241,7 +241,6 @@ export const weapons = {
       emitSize: 0.15,
       emitTime: 0.08,
       emitRate: 80,
-      coneAngle: PI,
       colorStartA: rgb(0, 1, 0.5, 1),
       colorStartB: rgb(0, 1, 0.2, 1),
       colorEndA: rgb(0, 1, 0.1, 0),
@@ -250,19 +249,13 @@ export const weapons = {
       sizeStart: 0.35,
       sizeEnd: 0.05,
       speed: 0.12,
-      angleSpeed: 0.3,
-      damping: 0.9,
-      angleDamping: 0.9,
-      fadeRate: 0.3,
-      randomness: 0.5,
     },
     beamSparks: {
       sprites: ["spark_01.png", "spark_02.png", "spark_03.png", "spark_04.png"],
-      spawnChance: 0.6, // per-frame probability of emitting a trail spark
+      spawnChance: 0.6,
       emitSize: 0.05,
       emitTime: 0.05,
       emitRate: 300,
-      coneAngle: PI,
       colorStartA: rgb(0, 1, 0.5, 1),
       colorStartB: rgb(0, 1, 0.2, 1),
       colorEndA: rgb(0, 1, 0.1, 0),
@@ -271,16 +264,6 @@ export const weapons = {
       sizeStart: 1.18,
       sizeEnd: 0.2,
       speed: 0.06,
-      angleSpeed: 0.2,
-      damping: 0.9,
-      angleDamping: 0.9,
-      fadeRate: 0.4,
-      randomness: 0.6,
-      collideTiles: false, // collideTiles
-      additive: true, // additive
-      randomColorLinear: true, // randomColorLinear
-      renderOrder: 1, // renderOrder
-      localSpace: true, // localSpace
     },
     playerSprite: "shipC3.png",
     exhaustColor: rgb(0.4, 1, 0.4),

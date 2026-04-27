@@ -134,7 +134,7 @@ export class LatchBeam extends EngineObject {
     const pos = this.endOffset
       ? this.target.pos.add(this.endOffset)
       : this.target.pos;
-    this.spawnSparkEmitter(pos, weapons.latch.sparks);
+    gameEffects.spawnLatchImpactSpark(pos, weapons.latch.sparks);
   }
 
   emitBeamSparks(fromPos, endPos) {
@@ -142,41 +142,7 @@ export class LatchBeam extends EngineObject {
     if (rand() > s.spawnChance) return;
     const t = rand();
     const pos = fromPos.lerp(endPos, t);
-    this.spawnSparkEmitter(pos, s);
-  }
-
-  spawnSparkEmitter(pos, s) {
-    const spriteName = s.sprites[Math.floor(rand(s.sprites.length))];
-    const tile = sprites.get(spriteName, system.particleSheetName);
-    new ParticleEmitter(
-      pos,
-      0,
-      s.emitSize,
-      s.emitTime,
-      s.emitRate,
-      s.coneAngle,
-      tile,
-      s.colorStartA,
-      s.colorStartB,
-      s.colorEndA,
-      s.colorEndB,
-      s.particleTime,
-      s.sizeStart,
-      s.sizeEnd,
-      s.speed,
-      s.angleSpeed,
-      s.damping,
-      s.angleDamping,
-      0, // gravityScale
-      PI, // particleConeAngle
-      s.fadeRate,
-      s.randomness,
-      false, // collideTiles
-      true, // additive
-      s.randomColorLinear,
-      s.renderOrder,
-      s.localSpace,
-    );
+    gameEffects.spawnLatchBeamSpark(pos, s);
   }
 
   render() {

@@ -18,6 +18,81 @@ import { sprites } from "./sprites.js";
 import { system } from "./config.js";
 
 /**
+ * Spawns a high-energy impact spark burst for the latch weapon.
+ * Technical parameters are handled here to keep config.js clean.
+ */
+export function spawnLatchImpactSpark(pos, s) {
+  const spriteName = s.sprites[Math.floor(rand(s.sprites.length))];
+  const tile = sprites.get(spriteName, system.particleSheetName);
+  new ParticleEmitter(
+    pos,
+    0,
+    s.emitSize,
+    s.emitTime,
+    s.emitRate,
+    PI, // coneAngle
+    tile,
+    s.colorStartA,
+    s.colorStartB,
+    s.colorEndA,
+    s.colorEndB,
+    s.particleTime,
+    s.sizeStart,
+    s.sizeEnd,
+    s.speed,
+    0.3, // angleSpeed
+    0.9, // damping
+    0.9, // angleDamping
+    0, // gravityScale
+    PI, // particleConeAngle
+    0.3, // fadeRate
+    0.5, // randomness
+    false, // collideTiles
+    true, // additive
+    true, // randomColorLinear
+    10, // renderOrder (on top of most objects)
+    false, // localSpace
+  );
+}
+
+/**
+ * Spawns a soft trail spark along the latch beam.
+ */
+export function spawnLatchBeamSpark(pos, s) {
+  const spriteName = s.sprites[Math.floor(rand(s.sprites.length))];
+  const tile = sprites.get(spriteName, system.particleSheetName);
+  new ParticleEmitter(
+    pos,
+    0,
+    s.emitSize,
+    s.emitTime,
+    s.emitRate,
+    PI, // coneAngle
+    tile,
+    s.colorStartA,
+    s.colorStartB,
+    s.colorEndA,
+    s.colorEndB,
+    s.particleTime,
+    s.sizeStart,
+    s.sizeEnd,
+    s.speed,
+    0.2, // angleSpeed
+    0.9, // damping
+    0.9, // angleDamping
+    0, // gravityScale
+    PI, // particleConeAngle
+    0.4, // fadeRate
+    0.6, // randomness
+    false, // collideTiles
+    true, // additive
+    true, // randomColorLinear
+    1, // renderOrder
+    true, // localSpace
+  );
+}
+
+/**
  * Creates a standard explosion at the given position.
  * @param {import('./engine.js').Vector2} pos
  */
