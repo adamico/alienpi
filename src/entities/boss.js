@@ -328,14 +328,13 @@ export class Boss extends BaseEntity {
         this.applyEffect(
           new gameEffects.FlashEffect(new Color(0.2, 0.5, 1), 0.1),
         );
-        other.destroy();
+        other.destroy(true);
         return false;
       }
 
       const result = other.hitTarget(this);
       if (result === "ignore") return false;
       this.hp -= other.damage;
-      if (result === "destroy") other.destroy();
       this.applyEffect(new gameEffects.FlashEffect(new Color(1, 0, 0), 0.1));
       this.applyEffect(new gameEffects.ShakeEffect(0.05, 0.1));
       if (this.hp <= 0) {

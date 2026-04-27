@@ -186,7 +186,6 @@ export class Enemy extends BaseEntity {
       const result = other.hitTarget(this);
       if (result === "ignore") return false;
       this.hp -= other.damage;
-      if (result === "destroy") other.destroy();
       this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 0), 0.1));
 
       if (this.hp <= 0) {

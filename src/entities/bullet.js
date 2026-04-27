@@ -1,4 +1,4 @@
-import { WHITE, ParticleEmitter, rgb } from "../engine.js";
+import { WHITE, ParticleEmitter, rgb, engineObjects } from "../engine.js";
 import {
   engine,
   weapons,
@@ -68,6 +68,7 @@ export class Bullet extends BaseEntity {
    * shot doesn't tick damage every frame it overlaps a single target.
    */
   hitTarget(target) {
+    if (this.destroyed) return "ignore";
     if (this.hitTargets && this.hitTargets.has(target)) return "ignore";
     if (!this.hitTargets) this.hitTargets = new Set();
     this.hitTargets.add(target);
@@ -77,6 +78,7 @@ export class Bullet extends BaseEntity {
       spawnPierceEffect(target.pos, this.velocity.angle(), target.size.x);
       return "damage";
     }
+    this.destroy(true);
     return "destroy";
   }
 
@@ -97,9 +99,15 @@ export class Bullet extends BaseEntity {
     super.update();
   }
 
-  destroy() {
+  destroy(hitTarget = false) {
     if (this.destroyed) return;
     if (this.type === "player") {
+      // Cooldown reset mechanic for Vulcan bullets
+      if (this.weaponKey === "vulcan" && hitTarget) {
+        const p = engineObjects.find((o) => o.isPlayer);
+        if (p) p.shootTimer = 0;
+      }
+
       new ParticleEmitter(
         this.pos,
         0, // angle

@@ -280,7 +280,6 @@ export class BossOrbiter extends BaseEntity {
       const result = other.hitTarget(this);
       if (result === "ignore") return false;
       this.hp -= other.damage;
-      if (result === "destroy") other.destroy();
       this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 0), 0.1));
       this.applyEffect(new gameEffects.ShakeEffect(0.2, 0.1));
       if (this.hp <= 0) this.destroy();
@@ -411,7 +410,6 @@ export class BossMissile extends BaseEntity {
       const result = other.hitTarget(this);
       if (result === "ignore") return false;
       this.hp -= other.damage;
-      if (result === "destroy") other.destroy();
       this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 0), 0.1));
       this.applyEffect(new gameEffects.ShakeEffect(0.15, 0.1));
       this.applyEffect(new gameEffects.KnockbackEffect(other.velocity, 0.1));
@@ -649,7 +647,7 @@ export class BossShield extends EngineObject {
     engineObjectsCallback(this.pos, this.size, (o) => {
       if (o.isBullet && !o.isEnemy) {
         if (o.pos.distanceSquared(this.pos) < radius * radius) {
-          o.destroy();
+          o.destroy(true);
           // Hit flash
           this.color.set(
             this.hitColor.r,
