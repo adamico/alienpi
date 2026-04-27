@@ -41,7 +41,6 @@ import { BaseEntity } from "./src/entities/baseEntity.js";
 import { Enemy } from "./src/entities/enemy.js";
 import { Boss } from "./src/entities/boss.js";
 import { BossOrbiter, BossMissile } from "./src/entities/bossChildren.js";
-import { Pinata } from "./src/entities/pinata.js";
 import { Loot } from "./src/entities/loot.js";
 import * as gameEffects from "./src/gameEffects.js";
 
@@ -62,6 +61,11 @@ async function gameInit() {
 
   spawnPlayer(999);
   setupUIListeners();
+
+  // Hide loading indicator
+  const loader = document.getElementById("loading-overlay");
+  if (loader) loader.style.opacity = "0";
+  setTimeout(() => loader?.remove(), 500);
 }
 
 function setupUIListeners() {
@@ -85,8 +89,6 @@ function setupUIListeners() {
 
     if (type.startsWith("type")) {
       defaultHp = enemyCfg.swarm[type].hp;
-    } else if (type === "pinata") {
-      defaultHp = enemyCfg.swarm.pinata.hp;
     } else if (type === "boss" || type === "boss_no_orbiters") {
       defaultHp = bossCfg.hp;
     } else if (type === "orbiter") {
@@ -194,9 +196,6 @@ function handleSpawn() {
   if (entityType.startsWith("type")) {
     entity = new Enemy(spawnPos.copy(), entityType);
     entity.hp = hpValue;
-  } else if (entityType === "pinata") {
-    entity = new Pinata(spawnPos.copy());
-    entity.hp = hpValue;
   } else if (entityType === "boss" || entityType === "boss_no_orbiters") {
     // Adjust Boss constructor behavior for immediate spawn at mouse
     entity = new Boss(spawnPos.copy());
@@ -208,8 +207,7 @@ function handleSpawn() {
       entity.initOrbiters(); // Only init if full boss selected
     }
   } else if (entityType === "orbiter") {
-    entity = new BossOrbiter(0, spawnPos.copy());
-    entity.hp = hpValue;
+    entity = new BossOrbiter(0, hpValue, false, spawnPos.copy());
   } else if (entityType === "missile") {
     entity = new BossMissile(spawnPos.copy());
     entity.hp = hpValue;

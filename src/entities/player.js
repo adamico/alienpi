@@ -256,7 +256,6 @@ export class Player extends BaseEntity {
     return vec2(muzzleWorld.x - center.x, -(muzzleWorld.y - center.y));
   }
 
-
   fireVulcan() {
     soundShoot.play();
     const cfg = weaponsCfg.vulcan;
