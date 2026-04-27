@@ -105,7 +105,9 @@ export class Bullet extends BaseEntity {
       // Cooldown reset mechanic for Vulcan bullets
       if (this.weaponKey === "vulcan" && hitTarget) {
         const p = engineObjects.find((o) => o.isPlayer);
-        if (p) p.shootTimer = 0;
+        if (p) {
+          p.shootTimer = Math.min(p.shootTimer, weapons.vulcan.cooldown[2]);
+        }
       }
 
       new ParticleEmitter(
