@@ -212,7 +212,7 @@ export const weapons = {
     count: [3, 5, 7], // max simultaneous beams
     cooldown: [40, 32, 24], // frames between damage ticks per beam
     damage: [1, 1, 1], // fixed damage at all levels
-    range: [8, 12, 18], // max lock distance in world units
+    range: [16, 16, 16], // max lock distance in world units
     muzzleOffsets: [
       [vec2(0, 0)], // Level 1
       [vec2(0, 0)], // Level 2
@@ -227,7 +227,15 @@ export const weapons = {
     muzzleSize: 0.8,
     muzzleRate: 30,
     fanCone: (60 * PI) / 180,
-    renderOrder: 1,
+    latchPoint: {
+      sizeStart: 2.4,
+      sizeEnd: 0.1,
+      particleTime: 0.2,
+      emitRate: 40,
+      color: rgb(0.4, 1, 0.4),
+      alpha: 1.0,
+    },
+    renderOrder: 10,
     sparks: {
       sprites: ["spark_01.png", "spark_02.png", "spark_03.png", "spark_04.png"],
       emitSize: 0.15,

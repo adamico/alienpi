@@ -482,11 +482,17 @@ export class Player extends BaseEntity {
 
     this.acquireLatchTargets();
 
+    // Check if we have any active connections
+    const anyTarget = this.latchBeams.some((b) => b.target);
+
     // Fixed fan distribution
     const cone = cfg.fanCone;
     for (let i = 0; i < count; i++) {
       const beam = this.latchBeams[i];
-      beam.isFiring = true;
+      // If any beam is connected, only show those with targets.
+      // If none are connected, show all in a fan pattern.
+      beam.isFiring = !anyTarget || !!beam.target;
+
       const t = count === 1 ? 0.5 : i / (count - 1);
       beam.fanAngle = -cone / 2 + t * cone;
     }

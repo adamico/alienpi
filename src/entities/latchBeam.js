@@ -32,8 +32,9 @@ export class LatchBeam extends EngineObject {
 
     // Continuous star emitter at the latch point
     const cfg = weapons.latch;
-    const color = cfg.muzzleColor.copy();
-    color.a *= cfg.muzzleAlpha;
+    const lp = cfg.latchPoint;
+    const color = lp.color.copy();
+    color.a = lp.alpha;
     this.latchEmitter = new ParticleEmitter(
       vec2(),
       0,
@@ -46,9 +47,9 @@ export class LatchBeam extends EngineObject {
       color,
       rgb(0, 1, 0, 0),
       rgb(0, 0.5, 0, 0),
-      0.2, // particleTime
-      0.8, // sizeStart
-      0.1, // sizeEnd
+      lp.particleTime,
+      lp.sizeStart,
+      lp.sizeEnd,
       0.05, // speed
       0.05, // angleSpeed
       0.9, // damping
@@ -122,7 +123,7 @@ export class LatchBeam extends EngineObject {
 
     if (endPos) {
       this.latchEmitter.localPos = endPos.subtract(this.pos);
-      this.latchEmitter.emitRate = 40;
+      this.latchEmitter.emitRate = cfg.latchPoint.emitRate;
       this.emitBeamSparks(this.pos, endPos);
     } else {
       this.latchEmitter.emitRate = 0;
@@ -197,7 +198,22 @@ export class LatchBeam extends EngineObject {
     }
 
     if (endPos) {
-      drawLine(this.pos, endPos, cfg.lineWidth, cfg.color);
+      const color = cfg.color;
+      const glowColor = color.copy();
+      glowColor.a *= 0.3;
+      const coreColor = rgb(1, 1, 1, 0.8);
+
+      // Add slight jitter to the endpoint for a more "energetic" feel
+      const jitter = vec2(rand(-0.05, 0.05), rand(-0.05, 0.05));
+      const jEndPos = endPos.add(jitter);
+
+      // 1. Outer Glow (Thick and soft)
+      drawLine(this.pos, jEndPos, cfg.lineWidth * 3, glowColor);
+      // 2. Main Beam (Medium)
+      drawLine(this.pos, jEndPos, cfg.lineWidth, color);
+      // 3. Hot Core (Thin and bright)
+      drawLine(this.pos, jEndPos, cfg.lineWidth * 0.3, coreColor);
     }
+    super.render();
   }
 }
