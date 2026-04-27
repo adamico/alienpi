@@ -1,14 +1,23 @@
-import { Sound, SoundInstance } from "./engine.js";
+import { Sound, SoundInstance, timeReal } from "./engine.js";
 import { settings, system } from "./config.js";
 
 // Keep track of which sounds are music to apply different volume settings
 const musicSounds = new Set();
+
+// Kind throttling for SFX: track last time each sound was played
+const lastPlayTime = new Map();
 
 // Global sound effect and volume control
 const originalPlay = Sound.prototype.play;
 Sound.prototype.play = function(pos, volume = 1, pitch = 1, randomPitch = 0, loop = false, paused) {
   const isMusic = musicSounds.has(this);
   if (system.isResetting && !isMusic) return;
+
+  // Throttling: only play one instance of the same sound per frame
+  if (!isMusic) {
+    if (lastPlayTime.get(this) === timeReal) return;
+    lastPlayTime.set(this, timeReal);
+  }
 
   if (isMusic) {
     // Music uses musicVolume and musicEnabled toggle
@@ -19,6 +28,13 @@ Sound.prototype.play = function(pos, volume = 1, pitch = 1, randomPitch = 0, loo
     if (!settings.soundEffectsEnabled) return;
     return originalPlay.call(this, pos, volume * settings.sfxVolume, pitch, randomPitch, loop, paused);
   }
+};
+
+// Also patch playMusic to automatically register music sounds
+const originalPlayMusic = Sound.prototype.playMusic;
+Sound.prototype.playMusic = function(volume, loop) {
+  musicSounds.add(this);
+  return originalPlayMusic.call(this, volume, loop);
 };
 
 // Also patch setVolume for active sound instances (like music)

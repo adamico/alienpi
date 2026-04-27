@@ -190,7 +190,6 @@ export class Enemy extends BaseEntity {
       this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 0), 0.1));
 
       if (this.hp <= 0) {
-        soundExplosion1.play();
         this.destroy();
       }
       return false;

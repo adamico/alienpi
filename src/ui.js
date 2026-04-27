@@ -7,7 +7,6 @@ import {
   UIObject,
   UIText,
   UITile,
-  time,
   timeReal,
   mainCanvasSize,
   Color,
