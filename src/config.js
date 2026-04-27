@@ -145,6 +145,8 @@ export const weapons = {
     spawnJitterX: 0.05, // ± world units of random x jitter at spawn
     bullet: vulcanBullet,
     playerSprite: "playerShip2_blue.png",
+    closeRangeThreshold: 6,
+    closeRangeCooldown: [8, 6, 5],
   },
   shotgun: {
     label: "SHOTGUN",
@@ -388,6 +390,7 @@ export const settings = {
   musicVolume: 0.8,
   sfxVolume: 0.8,
   enableDPSLog: false,
+  enableVulcanLog: true,
   customDebug: false,
 };
 

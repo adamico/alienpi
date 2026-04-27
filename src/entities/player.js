@@ -138,6 +138,10 @@ export class Player extends BaseEntity {
   update() {
     this.updateWeaponSwitch();
     this.updateMoving();
+
+    if (this.shootTimer > 0) this.shootTimer--;
+    if (this.minShootTimer > 0) this.minShootTimer--;
+
     this.updateShooting();
     this.updateExhaust();
     super.update();
@@ -226,9 +230,6 @@ export class Player extends BaseEntity {
   }
 
   updateShooting() {
-    if (this.shootTimer > 0) this.shootTimer--;
-    if (this.minShootTimer > 0) this.minShootTimer--;
-
     const level = this.currentWeaponLevel;
     if (level === 0) return; // Weapon disabled
 
@@ -244,7 +245,7 @@ export class Player extends BaseEntity {
     if (!firing || this.minShootTimer > 0) return;
 
     if (key === "vulcan") {
-      if (this.activeVulcanBullets > 0) return;
+      if (this.activeVulcanBullets > 0 || this.shootTimer > 0) return;
       this.fireVulcan();
     } else if (key === "shotgun") {
       if (this.shootTimer > 0) return;
