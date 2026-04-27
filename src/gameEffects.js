@@ -510,7 +510,18 @@ export function spawnPierceEffect(pos, angle, size) {
  * @param {import('./engine.js').Vector2} offset
  * @param {number} sizeScale
  */
-export function spawnMuzzleFlash(entity, offset, sizeScale = 1) {
+export function spawnMuzzleFlash(
+  entity,
+  offset,
+  sizeScale = 1,
+  renderOrder = -1,
+  duration = 0.15,
+  alpha = 1,
+  spriteName = "muzzle_05.png",
+  color = rgb(1, 1, 1),
+) {
+  const colorStart = color.copy();
+  colorStart.a *= alpha;
   const flashEmitter = new ParticleEmitter(
     entity.pos,
     0, // angle
@@ -518,12 +529,12 @@ export function spawnMuzzleFlash(entity, offset, sizeScale = 1) {
     0.6, // emitTime
     1, // emitRate
     0, // emitConeAngle
-    sprites.get("muzzle_05.png", system.particleSheetName),
-    rgb(1, 1, 1),
-    rgb(1, 1, 1),
+    sprites.get(spriteName, system.particleSheetName),
+    colorStart,
+    colorStart,
     rgb(1, 0.2, 0, 0),
     rgb(1, 0, 0, 0),
-    0.15, // particleTime
+    duration, // particleTime
     3.5 * sizeScale, // sizeStart
     0.2 * sizeScale, // sizeEnd
     0, // speed
@@ -537,7 +548,7 @@ export function spawnMuzzleFlash(entity, offset, sizeScale = 1) {
     false, // collideTiles
     true, // additive
     true, // randomColorLinear
-    -1, // renderOrder
+    renderOrder, // renderOrder
     true, // localSpace
   );
   // Push the flash further forward as it grows to keep it clear of the body

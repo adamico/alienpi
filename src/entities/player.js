@@ -71,41 +71,15 @@ export class Player extends BaseEntity {
       () => new LatchBeam(),
     );
 
-    const latchLocalOffset = this.muzzleLocalOffset(weaponsCfg.latch.nozzle);
-    for (const beam of this.latchBeams) this.addChild(beam, latchLocalOffset);
+    this.updateLatchBeamPositions();
+    for (const beam of this.latchBeams) this.addChild(beam);
     this.latchSoundTimer = 0;
 
-    // Jet exhaust emitter — parented so the engine syncs its position automatically
-    this.exhaustEmitter = new ParticleEmitter(
-      this.pos,
-      0, // angle
-      0.1, // emitSize
-      0, // emitTime (0 = loop)
-      playerCfg.exhaust.emitRateBase, // emitRate
-      0.3, // emitConeAngle
-      sprites.get("muzzle_02.png", system.particleSheetName),
-      rgb(1, 1, 1), // colorStartA
-      rgb(1, 1, 1), // colorStartB
-      rgb(1, 0.2, 0, 0), // colorEndA
-      rgb(1, 0, 0, 0), // colorEndB
-      0.15, // particleTime
-      playerCfg.exhaust.sizeStart, // sizeStart
-      0, // sizeEnd
-      0.05, // speed
-      0, // angleSpeed
-      0.8, // damping
-      0, // angleDamping
-      0, // gravityScale
-      0, // particleConeAngle
-      0.1, // fadeRate
-      0.05, // randomness
-      false, // collideTiles
-      true, // additive
-      true, // randomColorLinear
-      -2, // renderOrder
-      true, // localSpace
-    );
-    this.addChild(this.exhaustEmitter, vec2(0, -1.8), PI);
+    this.exhaustEmitters = [];
+    this.updateExhaustEmitters();
+
+    this.muzzleEmitters = [];
+    this.updateMuzzleEmitters();
   }
 
   get currentWeaponKey() {
@@ -179,6 +153,128 @@ export class Player extends BaseEntity {
         this.size = this.visualSize.scale(this.hitboxScale);
       }
     }
+    this.updateExhaustEmitters();
+    this.updateMuzzleEmitters();
+    this.updateLatchBeamPositions();
+  }
+
+  updateMuzzleEmitters() {
+    // 1. Clean up old emitters
+    if (this.muzzleEmitters) {
+      for (const e of this.muzzleEmitters) e.destroy();
+    }
+    this.muzzleEmitters = [];
+
+    const cfg = this.currentWeapon;
+    // Only Latch uses persistent muzzles for now
+    if (this.currentWeaponKey !== "latch") return;
+
+    const level = this.weaponLevels.latch;
+    const muzzles = cfg.muzzleOffsets[Math.max(1, level) - 1];
+
+    for (const localOffset of muzzles) {
+      const offset = this.muzzleLocalOffset(localOffset);
+      const color = cfg.muzzleColor.copy();
+      color.a *= cfg.muzzleAlpha;
+      const emitter = new ParticleEmitter(
+        this.pos,
+        0, // angle
+        0, // emitSize
+        0, // emitTime (0 = loop)
+        0, // emitRate (start at 0, only emit when firing)
+        0, // emitConeAngle
+        sprites.get(cfg.muzzleSprite, system.particleSheetName),
+        color,
+        color,
+        rgb(1, 0.2, 0, 0),
+        rgb(1, 0, 0, 0),
+        cfg.muzzleDuration, // particleTime
+        3.5 * cfg.muzzleSize, // sizeStart
+        0.2 * cfg.muzzleSize, // sizeEnd
+        0, // speed
+        0, // angleSpeed
+        0, // damping
+        0, // angleDamping
+        0, // gravityScale
+        0, // particleConeAngle
+        0.1, // fadeRate
+        0.1, // randomness
+        false, // collideTiles
+        true, // additive
+        true, // randomColorLinear
+        1, // renderOrder (above ship)
+        true, // localSpace
+      );
+      this.addChild(emitter, offset);
+      this.muzzleEmitters.push(emitter);
+    }
+  }
+
+  updateLatchBeamPositions() {
+    if (!this.latchBeams) return;
+    const cfg = weaponsCfg.latch;
+    const level = Math.max(1, this.weaponLevels.latch);
+    const muzzles = cfg.muzzleOffsets[level - 1];
+    const nBeams = this.latchBeams.length;
+    const nMuzzles = muzzles.length;
+
+    for (let i = 0; i < nBeams; i++) {
+      const beam = this.latchBeams[i];
+      const muzzleIdx = i % nMuzzles;
+      const offset = this.muzzleLocalOffset(muzzles[muzzleIdx]);
+      // Update local position to the chosen muzzle
+      beam.localPos = offset;
+    }
+  }
+
+  updateExhaustEmitters() {
+    // 1. Clean up old emitters
+    if (this.exhaustEmitters) {
+      for (const e of this.exhaustEmitters) e.destroy();
+    }
+    this.exhaustEmitters = [];
+
+    const cfg = this.currentWeapon;
+    if (!cfg.exhaustOffsets) return;
+
+    const colorStart = cfg.exhaustColor;
+    const colorEnd = colorStart.copy();
+    colorEnd.a = 0;
+
+    for (const pixelOffset of cfg.exhaustOffsets) {
+      const worldOffset = this.muzzleLocalOffset(pixelOffset);
+      const emitter = new ParticleEmitter(
+        this.pos,
+        0, // angle
+        0.1, // emitSize
+        0, // emitTime (0 = loop)
+        playerCfg.exhaust.emitRateBase, // emitRate
+        0.3, // emitConeAngle
+        sprites.get("muzzle_02.png", system.particleSheetName),
+        colorStart,
+        colorStart,
+        colorEnd,
+        colorEnd,
+        0.15, // particleTime
+        playerCfg.exhaust.sizeStart, // sizeStart
+        0, // sizeEnd
+        0.05, // speed
+        0, // angleSpeed
+        0.8, // damping
+        0, // angleDamping
+        0, // gravityScale
+        0, // particleConeAngle
+        0.1, // fadeRate
+        0.05, // randomness
+        false, // collideTiles
+        true, // additive
+        true, // randomColorLinear
+        -2, // renderOrder
+        true, // localSpace
+      );
+      this.addChild(emitter, worldOffset, PI);
+      this.exhaustEmitters.push(emitter);
+    }
   }
 
   clearLatchBeams() {
@@ -186,14 +282,17 @@ export class Player extends BaseEntity {
   }
 
   updateExhaust() {
-    if (!this.exhaustEmitter) return;
+    if (!this.exhaustEmitters) return;
     const input = keyDirection();
     const { emitRateBase, emitRateRange, sizeStart, sizeStartBoost } =
       playerCfg.exhaust;
     this._exhaustEmitRate = emitRateBase + input.y * emitRateRange;
-    this.exhaustEmitter.emitRate = this._exhaustEmitRate;
-    this.exhaustEmitter.sizeStart =
-      sizeStart + Math.max(0, input.y) * sizeStartBoost;
+    this._exhaustSizeStart = sizeStart + Math.max(0, input.y) * sizeStartBoost;
+
+    for (const emitter of this.exhaustEmitters) {
+      emitter.emitRate = this._exhaustEmitRate;
+      emitter.sizeStart = this._exhaustSizeStart;
+    }
   }
 
   render() {
@@ -202,16 +301,19 @@ export class Player extends BaseEntity {
       Math.floor(this.invulnerableTimer.get() * 15) % 2 === 0;
 
     if (blinkHide) {
-      if (this.exhaustEmitter) {
-        this.exhaustEmitter.emitRate = 0;
-        for (const p of this.exhaustEmitter.particles) p.destroy();
+      if (this.exhaustEmitters) {
+        for (const e of this.exhaustEmitters) {
+          e.emitRate = 0;
+          for (const p of e.particles) p.destroy();
+        }
       }
       return;
     }
 
-    if (this.exhaustEmitter) {
-      this.exhaustEmitter.emitRate =
-        this._exhaustEmitRate ?? playerCfg.exhaust.emitRateBase;
+    if (this.exhaustEmitters) {
+      for (const e of this.exhaustEmitters) {
+        e.emitRate = this._exhaustEmitRate ?? playerCfg.exhaust.emitRateBase;
+      }
     }
 
     super.render();
@@ -240,6 +342,13 @@ export class Player extends BaseEntity {
     const cfg = weaponsCfg[key];
     const firing = keyIsDown(system.shootKey);
 
+    // Update persistent muzzle muzzles (for Latch)
+    if (this.muzzleEmitters.length > 0) {
+      for (const e of this.muzzleEmitters) {
+        e.emitRate = firing ? cfg.muzzleRate : 0;
+      }
+    }
+
     if (key === "latch") {
       this.updateLatchBeams(firing);
       return;
@@ -262,15 +371,8 @@ export class Player extends BaseEntity {
    * world-space (Y-up) offset used for parenting muzzle flashes and for
    * computing the world spawn position of bullets.
    */
-  muzzleLocalOffset(pixelOffset) {
-    if (!this.sprite) return vec2(0);
-    const center = this.visualSize.scale(0.5);
-    const pixelSize = this.sprite.size;
-    const worldOffset = vec2(
-      (pixelOffset.x / pixelSize.x) * this.visualSize.x,
-      (pixelOffset.y / pixelSize.y) * this.visualSize.y,
-    );
-    return vec2(worldOffset.x - center.x, -(worldOffset.y - center.y));
+  muzzleLocalOffset(offset) {
+    return offset;
   }
 
   fireVulcan() {
@@ -297,7 +399,16 @@ export class Player extends BaseEntity {
       b.weaponKey = "vulcan";
       b.player = this;
       b.volleyState = volleyState;
-      gameEffects.spawnMuzzleFlash(this, offset);
+      gameEffects.spawnMuzzleFlash(
+        this,
+        offset,
+        1,
+        -1,
+        cfg.muzzleDuration,
+        cfg.muzzleAlpha,
+        cfg.muzzleSprite,
+        cfg.muzzleColor,
+      );
     }
   }
 
@@ -310,32 +421,45 @@ export class Player extends BaseEntity {
     if (yInput > 0) cone = lerp(cfg.coneBase, cfg.coneMax, yInput);
     else if (yInput < 0) cone = lerp(cfg.coneBase, cfg.coneMin, -yInput);
 
-    const nozzleOffset = this.muzzleLocalOffset(cfg.nozzle);
-    const spawnPos = this.pos.add(nozzleOffset);
+    const muzzles = cfg.muzzleOffsets[level - 1];
     const speed = cfg.bullet.speed;
     const count = cfg.count[level - 1];
     const damage = cfg.damage[level - 1];
 
-    for (let i = 0; i < count; i++) {
-      // Evenly distribute across [-cone/2, +cone/2]
-      const t = count === 1 ? 0.5 : i / (count - 1);
-      const angle = -cone / 2 + t * cone;
-      // Rotate the base upward velocity by `angle` around Z
-      const vel = vec2(Math.sin(angle) * speed, Math.cos(angle) * speed);
-      const b = new Bullet(
-        spawnPos.subtract(vel),
-        vel,
-        "player",
-        cfg.bullet,
-        damage,
-      );
-      b.weaponKey = "shotgun";
-      b.pierce = cfg.pierce;
-      b.angle = angle; // sprite leans with its direction
-    }
+    for (const muzzle of muzzles) {
+      const offset = this.muzzleLocalOffset(muzzle);
+      const spawnPos = this.pos.add(offset);
 
-    const flashScale = 1 + (count - 1) * 0.1;
-    gameEffects.spawnMuzzleFlash(this, nozzleOffset, flashScale);
+      for (let i = 0; i < count; i++) {
+        // Evenly distribute across [-cone/2, +cone/2]
+        const t = count === 1 ? 0.5 : i / (count - 1);
+        const angle = -cone / 2 + t * cone;
+        // Rotate the base upward velocity by `angle` around Z
+        const vel = vec2(Math.sin(angle) * speed, Math.cos(angle) * speed);
+        const b = new Bullet(
+          spawnPos.subtract(vel),
+          vel,
+          "player",
+          cfg.bullet,
+          damage,
+        );
+        b.weaponKey = "shotgun";
+        b.pierce = cfg.pierce;
+        b.angle = angle; // sprite leans with its direction
+      }
+
+      const flashScale = 1 + (count - 1) * 0.1;
+      gameEffects.spawnMuzzleFlash(
+        this,
+        offset,
+        flashScale,
+        1,
+        cfg.muzzleDuration,
+        cfg.muzzleAlpha,
+        cfg.muzzleSprite,
+        cfg.muzzleColor,
+      );
+    }
   }
 
   updateLatchBeams(firing) {

@@ -149,7 +149,11 @@ const shotgunBullet = {
   hitboxScale: 0.8,
   mirrorY: true,
   trailLength: 3,
+  renderOrder: 1,
 };
+
+const vulcanYOffset = 0.4;
+const vulcanXOffset = 0.5;
 
 export const weapons = {
   vulcan: {
@@ -160,13 +164,23 @@ export const weapons = {
       VULCAN_BASE_DAMAGE + VULCAN_DAMAGE_STEP * 2,
     ],
     cannonOffsets: [
-      [vec2(128, 64)], // Level 1
-      [vec2(80, 64), vec2(176, 64)], // Level 2
-      [vec2(80, 64), vec2(128, 64), vec2(176, 64)], // Level 3
+      [vec2(0, 1)], // Level 1
+      [vec2(-vulcanXOffset, vulcanYOffset), vec2(vulcanXOffset, vulcanYOffset)], // Level 2
+      [
+        vec2(-vulcanXOffset, vulcanYOffset),
+        vec2(0, 1),
+        vec2(vulcanXOffset, vulcanYOffset),
+      ], // Level 3
     ],
     spawnJitterX: 0.05, // ± world units of random x jitter at spawn
     bullet: vulcanBullet,
     playerSprite: "shipA3.png",
+    muzzleSprite: "muzzle_05.png",
+    muzzleDuration: 0.15,
+    muzzleAlpha: 1.0,
+    muzzleColor: rgb(0.4, 1, 1),
+    exhaustColor: rgb(0.4, 1, 1),
+    exhaustOffsets: [vec2(-0.2, -1.2), vec2(0.2, -1.2)],
     closeRangeThreshold: 6,
     closeRangeCooldown: [6, 6, 6],
   },
@@ -179,20 +193,40 @@ export const weapons = {
     coneBase: (40 * PI) / 180,
     coneMin: (16 * PI) / 180,
     coneMax: (80 * PI) / 180,
-    nozzle: vec2(128, 64),
+    muzzleOffsets: [
+      [vec2(0, 0)], // Level 1
+      [vec2(0, 0)], // Level 2
+      [vec2(0, 0)], // Level 3
+    ],
     bullet: shotgunBullet,
     playerSprite: "shipB2.png",
+    muzzleSprite: "muzzle_05.png",
+    muzzleDuration: 0.25,
+    muzzleAlpha: 1.0,
+    muzzleColor: rgb(1, 1, 1),
+    exhaustColor: rgb(1, 0.5, 0.2),
+    exhaustOffsets: [vec2(0, -1.3)],
   },
   latch: {
     label: "LATCH",
     count: [3, 5, 7], // max simultaneous beams
     cooldown: [40, 32, 24], // frames between damage ticks per beam
     damage: [1, 1, 1], // fixed damage at all levels
-    range: [8, 12, 16], // max lock distance in world units
-    nozzle: vec2(128, 64),
+    range: [12, 16, 20], // max lock distance in world units
+    muzzleOffsets: [
+      [vec2(0, 0)], // Level 1
+      [vec2(0, 0)], // Level 2
+      [vec2(0, 0)], // Level 3
+    ],
     lineWidth: 0.2,
     color: rgb(0.4, 1, 0.4, 0.9),
-    renderOrder: -1,
+    muzzleSprite: "star_09.png",
+    muzzleDuration: 0.2,
+    muzzleAlpha: 0.8,
+    muzzleColor: rgb(0.4, 1, 0.4, 0.9),
+    muzzleSize: 0.8,
+    muzzleRate: 30,
+    renderOrder: 1,
     sparks: {
       sprites: ["spark_01.png", "spark_02.png", "spark_03.png", "spark_04.png"],
       emitSize: 0.15,
@@ -240,6 +274,15 @@ export const weapons = {
       localSpace: true, // localSpace
     },
     playerSprite: "shipC3.png",
+    exhaustColor: rgb(0.4, 1, 0.4),
+    exhaustOffsets: [
+      vec2(-0.6, -1.0),
+      vec2(-0.4, -1.1),
+      vec2(-0.2, -1.2),
+      vec2(0.2, -1.2),
+      vec2(0.4, -1.1),
+      vec2(0.6, -1.0),
+    ],
   },
 };
 
