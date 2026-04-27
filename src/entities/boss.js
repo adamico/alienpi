@@ -72,6 +72,9 @@ export class Boss extends BaseEntity {
     this.orbiterCount = 1;
     this.regenTimer = new Timer();
     this.regenCycle = 0;
+
+    this.telegraphTimer = new Timer();
+    this.telegraphAction = null;
   }
 
   initFireEmitters() {
@@ -136,10 +139,21 @@ export class Boss extends BaseEntity {
   update() {
     this.updateMovement();
     if (this.state === "active") {
+      this.updateTelegraph();
       this.updateAttacks();
     }
     this.updateVisuals();
     super.update();
+  }
+
+  updateTelegraph() {
+    if (this.telegraphTimer.isSet() && this.telegraphTimer.elapsed()) {
+      if (this.telegraphAction) {
+        this.telegraphAction();
+        this.telegraphAction = null;
+      }
+      this.telegraphTimer.unset();
+    }
   }
 
   updateMovement() {
@@ -224,25 +238,37 @@ export class Boss extends BaseEntity {
   }
 
   updateNovaPulse(rateScale) {
+    if (this.telegraphTimer.isSet()) return;
+
     this.pulseTimer += rateScale;
     if (this.pulseTimer >= bossCfg.novaRate) {
       this.pulseTimer = 0;
-      this.novaPulse();
+      this.telegraphTimer.set(1.0); // 1 second telegraph
+      this.telegraphAction = () => this.novaPulse();
+      this.applyEffect(
+        new gameEffects.ShockwaveEffect(new Color(1, 0.4, 0, 0.8), 1.0, 2.5),
+      );
     }
   }
 
   updateVulnerableAttacks(rateScale) {
+    if (this.telegraphTimer.isSet()) return;
+
     this.vulnerableAttackTimer += rateScale;
     // Base the alternation rate roughly on the configured beam rate or similar timing (600 = 10s, which is slow for alternation. Let's use 300)
     if (this.vulnerableAttackTimer >= 300) {
       this.vulnerableAttackTimer = 0;
       this.nextAttackIsBeam = !this.nextAttackIsBeam;
 
+      this.telegraphTimer.set(1.5); // Slightly longer telegraph for vulnerable attacks
       if (this.nextAttackIsBeam) {
-        this.fireBeams();
+        this.telegraphAction = () => this.fireBeams();
       } else {
-        this.fireMissiles();
+        this.telegraphAction = () => this.fireMissiles();
       }
+      this.applyEffect(
+        new gameEffects.PulseEffect(new Color(1, 0, 0, 0.8), 16, 1.5),
+      );
     }
   }
 
@@ -303,7 +329,7 @@ export class Boss extends BaseEntity {
     for (let i = 0; i < pulseCount; i++) {
       const angle = (i / pulseCount) * PI * 2 + offset;
       const bulletVel = vec2(Math.cos(angle), Math.sin(angle)).scale(0.2);
-      new Bullet(this.pos.copy(), bulletVel, "boss").color = rgb(1, 0.2, 0.2);
+      new Bullet(this.pos.copy(), bulletVel, "boss").color = rgb(1, 0.4, 0);
     }
   }
 
@@ -335,7 +361,7 @@ export class Boss extends BaseEntity {
       const result = other.hitTarget(this);
       if (result === "ignore") return false;
       this.hp -= other.damage;
-      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 0, 0), 0.1));
+      this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.1));
       this.applyEffect(new gameEffects.ShakeEffect(0.05, 0.1));
       if (this.hp <= 0) {
         soundExplosion1.play();

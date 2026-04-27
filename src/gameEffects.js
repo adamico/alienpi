@@ -3,7 +3,6 @@ import {
   drawCircle,
   drawTile,
   EngineObject,
-  glContext,
   ParticleEmitter,
   PI,
   rand,
@@ -432,8 +431,8 @@ export class TrailEffect extends EntityEffect {
  * Pulsing flash effect that oscillates the entity's brightness.
  */
 export class PulseEffect extends EntityEffect {
-  constructor(color = new Color(1, 1, 1, 0.5), speed = 4.0) {
-    super(null); // Persistent effect
+  constructor(color = new Color(1, 1, 1, 0.5), speed = 4.0, duration = null) {
+    super(duration); // Support optional duration
     this.color = color;
     this.speed = speed;
   }
@@ -529,4 +528,42 @@ export function spawnMuzzleFlash(entity, offset, sizeScale = 1) {
   // Push the flash further forward as it grows to keep it clear of the body
   const forwardOffset = 0.6 + sizeScale * 0.4;
   entity.addChild(flashEmitter, offset.add(vec2(0, forwardOffset)));
+}
+
+/**
+ * Expanding concentric shockwave rings.
+ */
+export class ShockwaveEffect extends EntityEffect {
+  constructor(
+    color = new Color(1, 1, 1, 1),
+    duration = 1.0,
+    range = 2.0,
+    ringCount = 3,
+  ) {
+    super(duration);
+    this.color = color;
+    this.range = range;
+    this.ringCount = ringCount;
+    this.renderUnder = true; // Draw behind the entity so it doesn't obscure it
+  }
+
+  render(entity, renderPos) {
+    const p = this.timer.getPercent();
+    for (let i = 0; i < this.ringCount; i++) {
+      // Offset each ring's phase so they appear to flow outward
+      const ringP = (p + i / this.ringCount) % 1;
+
+      // Radius starts small and expands to range
+      const radius = entity.visualSize.x * (0.5 + ringP * this.range);
+
+      // Alpha fades as the ring expands (quadratic falloff for softness)
+      const alpha = (1 - ringP) ** 2 * this.color.a;
+
+      const color = this.color.copy();
+      color.a = alpha;
+
+      // Draw as an outline for a "ring" look
+      drawCircle(renderPos, radius, color, 0.15);
+    }
+  }
 }
