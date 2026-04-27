@@ -5,7 +5,6 @@ import {
   enemyBullet as enemyBulletCfg,
   bossBullet as bossBulletCfg,
   system,
-  settings,
 } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
@@ -110,27 +109,26 @@ export class Bullet extends BaseEntity {
     if (this.type === "player") {
       // Cooldown reset mechanic for Vulcan bullets
       if (this.weaponKey === "vulcan" && this.player) {
-        this.player.activeVulcanBullets--;
+        // Only decrement the active count for the FIRST bullet of the volley to hit/despawn.
+        // This ensures a constant rhythm even if some bullets in a volley miss.
+        if (this.volleyState && !this.volleyState.decremented) {
+          this.volleyState.decremented = true;
+          this.player.activeVulcanBullets--;
 
-        // If it was a close hit, add a firing delay to maintain a steady rate
-        const cfg = weapons.vulcan;
-        const dist = this.pos.distance(this.player.pos);
-        if (dist < cfg.closeRangeThreshold) {
-          const level = this.player.weaponLevels.vulcan;
-          const lifeFrames = (time - this.spawnTime) * 60;
-          const targetInterval = cfg.closeRangeCooldown[level - 1];
-          const extraDelay = Math.max(0, targetInterval - lifeFrames);
+          // If it was a close hit, add a firing delay to maintain a steady rate
+          const cfg = weapons.vulcan;
+          const dist = this.pos.distance(this.player.pos);
+          if (dist < cfg.closeRangeThreshold) {
+            const level = this.player.weaponLevels.vulcan;
+            const lifeFrames = (time - this.spawnTime) * 60;
+            const targetInterval = cfg.closeRangeCooldown[level - 1];
+            const extraDelay = Math.max(0, targetInterval - lifeFrames);
 
-          this.player.shootTimer = Math.max(this.player.shootTimer, extraDelay);
+            this.player.shootTimer = Math.max(this.player.shootTimer, extraDelay);
+          }
+
+          this.player.updateShooting(); // Check for immediate fire
         }
-
-        if (settings.enableVulcanLog) {
-          console.log(
-            `[Vulcan] Spawn: ${this.spawnTime.toFixed(3)} | Hit: ${time.toFixed(3)} | Life: ${(time - this.spawnTime).toFixed(3)} | Dist: ${dist.toFixed(2)}`,
-          );
-        }
-
-        this.player.updateShooting(); // Check for immediate fire
         this.player = null; // Prevent double decrement
       }
 

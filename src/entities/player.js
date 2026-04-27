@@ -272,6 +272,9 @@ export class Player extends BaseEntity {
     soundShoot.play();
     const offsets = cfg.cannonOffsets[level - 1];
 
+    const volleyState = { decremented: false };
+    this.activeVulcanBullets++;
+
     for (const muzzle of offsets) {
       const offset = this.muzzleLocalOffset(muzzle);
       const jitter = vec2(rand(-cfg.spawnJitterX, cfg.spawnJitterX), 0);
@@ -285,7 +288,7 @@ export class Player extends BaseEntity {
       );
       b.weaponKey = "vulcan";
       b.player = this;
-      this.activeVulcanBullets++;
+      b.volleyState = volleyState;
       gameEffects.spawnMuzzleFlash(this, offset);
     }
   }

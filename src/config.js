@@ -82,7 +82,7 @@ export const player = {
   accel: 0.3,
   damping: 0.5,
   focusSpeedScale: 0.5,
-  hp: 999,
+  hp: 5,
   hitboxScale: 0.25,
   mirrorX: false,
   mirrorY: true,
@@ -105,7 +105,7 @@ export const player = {
 
 const VULCAN_BASE_SPEED = 0.4;
 const VULCAN_BASE_DAMAGE = 0.6;
-const VULCAN_DAMAGE_STEP = 0.15;
+const VULCAN_DAMAGE_STEP = 0;
 
 const vulcanBullet = {
   sheet: SPRITE_SHEET2_NAME,
@@ -146,7 +146,7 @@ export const weapons = {
     bullet: vulcanBullet,
     playerSprite: "playerShip2_blue.png",
     closeRangeThreshold: 6,
-    closeRangeCooldown: [8, 6, 5],
+    closeRangeCooldown: [6, 6, 6],
   },
   shotgun: {
     label: "SHOTGUN",
@@ -390,7 +390,6 @@ export const settings = {
   musicVolume: 0.8,
   sfxVolume: 0.8,
   enableDPSLog: false,
-  enableVulcanLog: true,
   customDebug: false,
 };
 
