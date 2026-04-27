@@ -274,7 +274,11 @@ export class Boss extends BaseEntity {
       } else {
         this.telegraphAction = () => this.fireMissiles();
         this.applyEffect(
-          new gameEffects.GatheringChargeEffect(new Color(1, 0.2, 0, 0.8), 1.5),
+          new gameEffects.TargetingFrameEffect(
+            new Color(1, 0, 0, 0.8),
+            1.5,
+            6.0,
+          ),
         );
       }
     }

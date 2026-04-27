@@ -70,7 +70,12 @@ export const system = {
     "trace_05.png",
     "trace_06.png",
     "trace_07.png",
-  ].map((p) => `public/assets/particles/${p}`),
+    "crosshair017.png",
+    "crosshair133.png",
+  ].map((p) => {
+    if (p.startsWith("crosshair")) return `public/assets/crosshairs/${p}`;
+    return `public/assets/particles/${p}`;
+  }),
   shootKey: "Space",
   focusKey: "ShiftLeft",
   switchKey: "KeyQ",

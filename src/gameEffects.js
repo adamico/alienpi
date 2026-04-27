@@ -666,3 +666,51 @@ export class GatheringChargeEffect extends EntityEffect {
     }
   }
 }
+
+/**
+ * High-tech geometric targeting frame that rotates and shrinks.
+ * Uses crosshair sprites for a sharp HUD look.
+ */
+export class TargetingFrameEffect extends EntityEffect {
+  constructor(color = new Color(1, 1, 1, 0.5), duration = 1.5, radius = 8.0) {
+    super(duration);
+    this.color = color;
+    this.radius = radius;
+    this.renderUnder = true; // Stay behind the boss
+
+    // Cache the crosshair sprites from the particle sheet
+    this.spriteOuter = sprites.get(
+      "crosshair133.png",
+      system.particleSheetName,
+    );
+    this.spriteInner = sprites.get(
+      "crosshair017.png",
+      system.particleSheetName,
+    );
+  }
+
+  render(entity, renderPos) {
+    const p = this.timer.getPercent();
+
+    // Pulse alpha for a 'scanning' feel
+    const alpha = this.color.a * (0.6 + 0.4 * Math.sin(time * 20));
+    const color = this.color.copy();
+    color.a = alpha;
+
+    // Shrink from initial radius toward the entity (with faster interpolation)
+    const shrink = Math.pow(1 - p, 1.5);
+    const r = this.radius * shrink + entity.visualSize.x * 0.7;
+
+    // Render outer frame (slow rotation)
+    if (this.spriteOuter) {
+      drawTile(renderPos, vec2(r * 2), this.spriteOuter, color, time * 0.5);
+    }
+
+    // Render inner frame (faster counter-rotation)
+    if (this.spriteInner) {
+      drawTile(renderPos, vec2(r * 1.2), this.spriteInner, color, -time * 2);
+    }
+  }
+}
+
+
