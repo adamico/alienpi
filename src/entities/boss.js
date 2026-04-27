@@ -245,9 +245,7 @@ export class Boss extends BaseEntity {
       this.pulseTimer = 0;
       this.telegraphTimer.set(1.0); // 1 second telegraph
       this.telegraphAction = () => this.novaPulse();
-      this.applyEffect(
-        new gameEffects.ShockwaveEffect(new Color(1, 0.4, 0, 0.8), 1.0, 2.5),
-      );
+      this.addChild(new gameEffects.Shockwave(new Color(1, 0.4, 0, 0.8), 1.0, 2.5));
     }
   }
 
@@ -341,7 +339,10 @@ export class Boss extends BaseEntity {
     for (let i = 0; i < pulseCount; i++) {
       const angle = (i / pulseCount) * PI * 2 + offset;
       const bulletVel = vec2(Math.cos(angle), Math.sin(angle)).scale(0.2);
-      new Bullet(this.pos.copy(), bulletVel, "boss").color = rgb(1, 0.4, 0);
+      const b = new Bullet(this.pos.copy(), bulletVel, "boss");
+      b.color = rgb(1, 0.4, 0);
+      b.applyEffect(new gameEffects.RotationEffect(0.1));
+      b.applyEffect(new gameEffects.TrailEffect(5));
     }
   }
 

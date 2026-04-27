@@ -456,6 +456,20 @@ export class PulseEffect extends EntityEffect {
 }
 
 /**
+ * Constantly rotates an entity at a fixed speed.
+ */
+export class RotationEffect extends EntityEffect {
+  constructor(speed = 0.1, duration = null) {
+    super(duration);
+    this.speed = speed;
+  }
+
+  update(entity) {
+    entity.angle += this.speed;
+  }
+}
+
+/**
  * Creates a punchy particle burst for piercing hits.
  * @param {import('./engine.js').Vector2} pos
  * @param {number} angle
@@ -533,38 +547,58 @@ export function spawnMuzzleFlash(entity, offset, sizeScale = 1) {
 
 /**
  * Expanding concentric shockwave rings.
+ * Standalone EngineObject to allow for global renderOrder control (e.g. rendering behind orbiters).
  */
-export class ShockwaveEffect extends EntityEffect {
+export class Shockwave extends EngineObject {
   constructor(
     color = new Color(1, 1, 1, 1),
     duration = 1.0,
     range = 2.0,
     ringCount = 3,
   ) {
-    super(duration);
+    super(vec2(0), vec2(0));
     this.color = color;
+    this.duration = duration;
     this.range = range;
     this.ringCount = ringCount;
-    this.renderUnder = true; // Draw behind the entity so it doesn't obscure it
+    this.timer = new Timer(duration);
+    this.renderOrder = -5; // Render behind orbiters (-1) and boss (0)
   }
 
-  render(entity, renderPos) {
+  update() {
+    if (this.destroyed) return;
+    if (this.timer.elapsed()) {
+      this.destroy();
+      return;
+    }
+    super.update();
+  }
+
+  render() {
+    if (this.destroyed || !this.parent || this.timer.elapsed()) return;
+
     const p = this.timer.getPercent();
+    const baseRadius = this.parent.visualSize ? this.parent.visualSize.x : 1;
+
+    // Overall alpha fade as the effect reaches its end
+    const overallFade = Math.min(1, (1 - p) * 5); // Rapid fade out at the very end
+
     for (let i = 0; i < this.ringCount; i++) {
       // Offset each ring's phase so they appear to flow outward
       const ringP = (p + i / this.ringCount) % 1;
 
       // Radius starts small and expands to range
-      const radius = entity.visualSize.x * (0.5 + ringP * this.range);
+      const radius = baseRadius * (0.5 + ringP * this.range);
 
       // Alpha fades as the ring expands (quadratic falloff for softness)
-      const alpha = (1 - ringP) ** 2 * this.color.a;
+      // and also follows the overall effect fade.
+      const alpha = (1 - ringP) ** 2 * this.color.a * overallFade;
 
       const color = this.color.copy();
       color.a = alpha;
 
       // Draw as an outline for a "ring" look
-      drawCircle(renderPos, radius, color, 0.15);
+      drawCircle(this.pos, radius, color, 0.15);
     }
   }
 }
