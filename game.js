@@ -142,10 +142,7 @@ function setupBoundaries() {
   );
   // Top
   boundaries.push(
-    new Boundary(
-      vec2(lx / 2, ly + margin + wallThick / 2),
-      vec2(lx * 2, wallThick),
-    ),
+    new Boundary(vec2(lx / 2, ly + wallThick / 2), vec2(lx * 2, wallThick)),
   );
   // BOTTOM
   boundaries.push(

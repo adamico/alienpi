@@ -189,7 +189,7 @@ export const weapons = {
     cooldown: [40, 32, 24],
     count: [3, 5, 7],
     pierce: 3,
-    damage: [0.4, 0.55, 0.7],
+    damage: [0.8, 1.25, 1.5],
     coneBase: (40 * PI) / 180,
     coneMin: (16 * PI) / 180,
     coneMax: (80 * PI) / 180,
@@ -211,7 +211,7 @@ export const weapons = {
     label: "BEAM",
     count: [3, 5, 7], // max simultaneous beams
     cooldown: [40, 32, 24], // frames between damage ticks per beam
-    damage: [1, 1, 1], // fixed damage at all levels
+    damage: [1, 1.25, 1.5], // fixed damage at all levels
     range: [16, 16, 16], // max lock distance in world units
     muzzleOffsets: [
       [vec2(0, 0)], // Level 1
