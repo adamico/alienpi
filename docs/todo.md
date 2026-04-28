@@ -42,8 +42,8 @@
 - S2: add "<weapon> unlocked" sound effect. Priority: high
 - S3: add "<weapon> upgrade" sound effect. Priority: high
 - S4: add "<weapon> max" sound effect. Priority: high
-- S5: add title music. Priority: high
-- S6: add game over music. Priority: high
+- ~~S5: add title music. Priority: high~~ DONE
+- ~~S6: add game over music. Priority: high~~ DONE
 - S7: improve boss beam sound effect. Priority: high.
 - S8: add boss death sound effect. Priority: medium
 - S9: add weapon change sound effect. Priority: medium
