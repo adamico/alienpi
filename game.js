@@ -22,6 +22,7 @@ import {
   setPaused,
   setDebugWatermark,
   setTouchGamepadEnable,
+  setTouchGamepadSize,
 } from "./src/engine.js";
 import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 
@@ -73,6 +74,7 @@ async function gameInit() {
   await initializeGameAssets();
   setDebugWatermark(false);
   setTouchGamepadEnable(true);
+  setTouchGamepadSize(200);
   setPaused(true);
   initUI();
   setMenuHandlers({

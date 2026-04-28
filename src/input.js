@@ -10,6 +10,7 @@ import {
   mouseWasPressed,
   mouseWasReleased,
   mousePos,
+  uiSystem,
 } from "./engine.js";
 import { system } from "./config.js";
 
@@ -62,8 +63,8 @@ class InputManager {
   updateGamepad() {
     const gStick = gamepadStick(0);
     if (gStick.length() > 0.1) {
-      // Deadzone
-      this.moveDir = this.moveDir.add(gStick);
+      // Deadzone - Normalize to ensure full speed
+      this.moveDir = this.moveDir.add(gStick.normalize());
     }
 
     // Fire: A (0) or RT (7)
@@ -78,20 +79,24 @@ class InputManager {
 
   updateTouch() {
     // LittleJS routes touch to mouse button 0
+    // Ignore touches on UI elements
+    if (uiSystem.hoverObject) {
+      this.touchActive = false;
+      this.touchStartPos = null;
+      return;
+    }
+
     if (mouseWasPressed(0) || mouseWasReleased(0)) {
       this.touchStartPos = mousePos.copy();
       this.touchActive = mouseWasPressed(0) || mouseIsDown(0);
     }
 
     if (mouseIsDown(0)) {
-      this.isFiring = true; // Auto-fire while touching/clicking
-
       if (this.touchStartPos) {
         const delta = mousePos.subtract(this.touchStartPos);
         if (delta.length() > 0.01) {
-          // Relative movement: scale the finger delta to movement dir
-          let touchDir = delta.scale(this.touchSensitivity);
-          if (touchDir.length() > 1) touchDir = touchDir.normalize();
+          // Relative movement: always apply full speed if there's movement
+          let touchDir = delta.normalize();
           this.moveDir = this.moveDir.add(touchDir);
         }
 

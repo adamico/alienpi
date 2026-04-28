@@ -48,7 +48,6 @@ export class Loot extends BaseEntity {
   }
 
   collect() {
-    console.log(`[LOOT] Collected: ${this.label}`);
     soundLootCollect.play();
     // Placeholder callback for future effects
     this.onCollect();
