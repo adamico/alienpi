@@ -13,7 +13,7 @@
 - M4: add main menu image. Priority: medium
 - ~~M5: add keyboard navigation to the menus. Priority: high~~ DONE
 - ~~M6: add keyboard navigation to the pause menu. Priority: high~~ DONE
-- M7: improve pause menu display — extract shared settings panel component reused by both pause and settings screens (resolves M12 too; currently `setupPauseScreen`/`setupSettingsScreen` in ui.js duplicate sliders, rows, handlers). Priority: low
+- ~~M7: improve pause menu display — extract shared settings panel component reused by both pause and settings screens. Priority: low~~ DONE (sliders, rows, and item list now built by shared `buildSharedSettings*` helpers; pause uses the same dark-overlay layout as settings)
 - M8: improve main menu display. Priority: low
 - ~~M9: add social links to main menu. Priority: high.~~ DONE (placeholder URLs)
 - ~~M10: add link to feedback/discord in main menu. Priority: high~~ DONE (placeholder URL)

@@ -11,7 +11,6 @@ import {
   mainCanvasSize,
   cameraScale,
   Color,
-  BLACK,
   UISlider,
   mouseWasPressed,
   mouseWasReleased,
@@ -80,8 +79,6 @@ let bossBarRevealStartT = null;
 
 const FOCUS_COLOR = rgb(1, 0.9, 0.3);
 const IDLE_COLOR = WHITE;
-const FOCUS_DARK = rgb(0.05, 0.05, 0.4);
-const IDLE_DARK = rgb(0.2, 0.2, 0.2);
 
 export const titleMenu = new Menu();
 export const pauseMenu = new Menu();
@@ -244,52 +241,144 @@ function setupTitleScreen() {
   ];
 }
 
+// Shared layout constants for the audio/video settings block reused by both
+// the pause and settings screens. Row Y positions are relative to the
+// container; sliders sit just above the corresponding "VOLUME" row.
+const SETTINGS_ROW_YS = [-180, -150, -80, -50, 30, 80, 130, 180];
+const SETTINGS_MUSIC_SLIDER_Y = -120;
+const SETTINGS_SFX_SLIDER_Y = -20;
+
+function buildSharedSettingsSliders(parent) {
+  const music = new UISlider(
+    vec2(0, SETTINGS_MUSIC_SLIDER_Y),
+    vec2(380, 18),
+    settings.musicVolume,
+  );
+  music.color = rgb(0.4, 0.7, 1);
+  parent.addChild(music);
+  const sfx = new UISlider(
+    vec2(0, SETTINGS_SFX_SLIDER_Y),
+    vec2(380, 18),
+    settings.sfxVolume,
+  );
+  sfx.color = rgb(0.2, 1, 0.2);
+  parent.addChild(sfx);
+  return { music, sfx };
+}
+
+function buildSharedSettingsRows(parent) {
+  return SETTINGS_ROW_YS.map((y) => makeRow(parent, y));
+}
+
+// Returns the 7 shared audio/video items used by both menus. The local sliders
+// are passed in so keyboard adjusts can update the matching screen's visual.
+function buildSharedSettingsItems({ musicSlider, sfxSlider }) {
+  return [
+    {
+      kind: "toggle",
+      label: () =>
+        `MUSIC: ${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
+      toggle: () => {
+        settings.musicEnabled = !settings.musicEnabled;
+        syncVolumeSliders();
+        saveSettings();
+      },
+    },
+    {
+      kind: "slider",
+      label: () => `MUSIC VOLUME: ${Math.round(settings.musicVolume * 100)}%`,
+      adjust: (dir) => {
+        adjustSetting(settings, "musicVolume", dir);
+        musicSlider.value = settings.musicVolume;
+        saveSettings();
+      },
+    },
+    {
+      kind: "toggle",
+      label: () =>
+        `SFX: ${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
+      toggle: () => {
+        settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
+        syncVolumeSliders();
+        saveSettings();
+      },
+    },
+    {
+      kind: "slider",
+      label: () => `SFX VOLUME: ${Math.round(settings.sfxVolume * 100)}%`,
+      adjust: (dir) => {
+        adjustSetting(settings, "sfxVolume", dir);
+        sfxSlider.value = settings.sfxVolume;
+        soundShoot.play();
+        saveSettings();
+      },
+    },
+    {
+      kind: "toggle",
+      label: () =>
+        `FLASH EFFECTS: ${settings.flashEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
+      toggle: () => {
+        settings.flashEnabled = !settings.flashEnabled;
+        saveSettings();
+      },
+    },
+    {
+      kind: "toggle",
+      label: () =>
+        `SCREEN SHAKE: ${settings.shakeEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
+      toggle: () => {
+        settings.shakeEnabled = !settings.shakeEnabled;
+        saveSettings();
+      },
+    },
+    {
+      kind: "toggle",
+      label: () =>
+        `FULLSCREEN: ${isFullscreen() ? strings.ui.onLabel : strings.ui.offLabel}`,
+      toggle: () => toggleFullscreen(),
+    },
+  ];
+}
+
+// Mouse-drag → settings sync (and 0-pin while disabled) for either screen.
+function updateSharedSliderInput(musicSlider, sfxSlider) {
+  if (!settings.musicEnabled) {
+    musicSlider.value = 0;
+  } else if (musicSlider.value !== settings.musicVolume) {
+    settings.musicVolume = musicSlider.value;
+  }
+  if (!settings.soundEffectsEnabled) {
+    sfxSlider.value = 0;
+  } else if (sfxSlider.value !== settings.sfxVolume) {
+    settings.sfxVolume = sfxSlider.value;
+    soundShoot.play();
+  }
+}
+
 function setupPauseScreen() {
   pauseGroup = new UIObject(vec2(0, 0), mainCanvasSize);
   pauseGroup.color = new Color(0, 0, 0, 0.5);
   pauseGroup.lineWidth = 0;
   uiRoot.addChild(pauseGroup);
 
-  const pausePanel = new UIObject(vec2(0, 0), vec2(640, 520));
-  pausePanel.color = new Color(1, 1, 1, 0.85);
-  pausePanel.cornerRadius = 10;
-  pauseGroup.addChild(pausePanel);
-
+  // Pause uses the same layout as settings — a full-canvas dark overlay so
+  // the shared row Y-positions land in the same place on both screens.
   pauseTitleText = new UIText(
-    vec2(0, -200),
-    vec2(500, 100),
+    vec2(0, -260),
+    vec2(800, 100),
     strings.ui.pauseTitle,
   );
   pauseTitleText.textHeight = 70;
   pauseTitleText.font = FONT_MENU;
-  pauseTitleText.textColor = BLACK.copy();
-  pausePanel.addChild(pauseTitleText);
+  pauseTitleText.fontShadow = true;
+  pauseTitleText.textColor = rgb(0.4, 0.7, 1);
+  pauseGroup.addChild(pauseTitleText);
 
-  // Hidden mouse-input sliders (kept for mouse drag UX).
-  pauseMusicSlider = new UISlider(
-    vec2(0, -60),
-    vec2(380, 18),
-    settings.musicVolume,
-  );
-  pauseMusicSlider.color = rgb(0.4, 0.7, 1);
-  pausePanel.addChild(pauseMusicSlider);
+  const sliders = buildSharedSettingsSliders(pauseGroup);
+  pauseMusicSlider = sliders.music;
+  pauseSfxSlider = sliders.sfx;
 
-  pauseSfxSlider = new UISlider(vec2(0, 40), vec2(380, 18), settings.sfxVolume);
-  pauseSfxSlider.color = rgb(0.2, 1, 0.2);
-  pausePanel.addChild(pauseSfxSlider);
-
-  pauseMenuRows = [
-    makeRow(pausePanel, -130),
-    makeRow(pausePanel, -90),
-    makeRow(pausePanel, -30),
-    makeRow(pausePanel, 10),
-    makeRow(pausePanel, 70),
-    makeRow(pausePanel, 110),
-    makeRow(pausePanel, 150),
-    makeRow(pausePanel, 200),
-  ];
-  // Pause menu uses dark text on light panel.
-  for (const r of pauseMenuRows) r.text.textColor = IDLE_DARK.copy();
+  pauseMenuRows = buildSharedSettingsRows(pauseGroup);
 }
 
 function setupGameOverScreen() {
@@ -357,32 +446,11 @@ function setupSettingsScreen() {
   settingsTitle.textColor = rgb(1, 0.8, 0.2);
   settingsGroup.addChild(settingsTitle);
 
-  settingsMusicSlider = new UISlider(
-    vec2(0, -120),
-    vec2(380, 18),
-    settings.musicVolume,
-  );
-  settingsMusicSlider.color = rgb(0.4, 0.7, 1);
-  settingsGroup.addChild(settingsMusicSlider);
+  const sliders = buildSharedSettingsSliders(settingsGroup);
+  settingsMusicSlider = sliders.music;
+  settingsSfxSlider = sliders.sfx;
 
-  settingsSfxSlider = new UISlider(
-    vec2(0, -20),
-    vec2(380, 18),
-    settings.sfxVolume,
-  );
-  settingsSfxSlider.color = rgb(0.2, 1, 0.2);
-  settingsGroup.addChild(settingsSfxSlider);
-
-  settingsMenuRows = [
-    makeRow(settingsGroup, -180),
-    makeRow(settingsGroup, -150),
-    makeRow(settingsGroup, -80),
-    makeRow(settingsGroup, -50),
-    makeRow(settingsGroup, 30),
-    makeRow(settingsGroup, 80),
-    makeRow(settingsGroup, 130),
-    makeRow(settingsGroup, 180),
-  ];
+  settingsMenuRows = buildSharedSettingsRows(settingsGroup);
 }
 
 // TODO: reenable when social media links are setup
@@ -438,76 +506,12 @@ function rebuildMenus() {
     // },
   ]);
 
-  // Pause menu (resume + audio toggles + sliders)
+  const pauseSharedItems = buildSharedSettingsItems({
+    musicSlider: pauseMusicSlider,
+    sfxSlider: pauseSfxSlider,
+  });
   pauseMenu.setItems([
-    {
-      kind: "action",
-      label: () => "RESUME",
-      activate: () => pauseHandlers.resume(),
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `MUSIC: ${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.musicEnabled = !settings.musicEnabled;
-        syncVolumeSliders();
-        saveSettings();
-      },
-    },
-    {
-      kind: "slider",
-      label: () => `MUSIC VOLUME: ${Math.round(settings.musicVolume * 100)}%`,
-      adjust: (dir) => {
-        adjustSetting(settings, "musicVolume", dir);
-        pauseMusicSlider.value = settings.musicVolume;
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `SFX: ${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
-        syncVolumeSliders();
-        saveSettings();
-      },
-    },
-    {
-      kind: "slider",
-      label: () => `SFX VOLUME: ${Math.round(settings.sfxVolume * 100)}%`,
-      adjust: (dir) => {
-        adjustSetting(settings, "sfxVolume", dir);
-        pauseSfxSlider.value = settings.sfxVolume;
-        soundShoot.play();
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `FLASH EFFECTS: ${settings.flashEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.flashEnabled = !settings.flashEnabled;
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `SCREEN SHAKE: ${settings.shakeEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.shakeEnabled = !settings.shakeEnabled;
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `FULLSCREEN: ${isFullscreen() ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => toggleFullscreen(),
-    },
+    ...pauseSharedItems,
     {
       kind: "action",
       label: () => "BACK TO GAME (ESC)",
@@ -515,71 +519,12 @@ function rebuildMenus() {
     },
   ]);
 
-  // Settings menu (audio, flash, shake, back)
+  const settingsSharedItems = buildSharedSettingsItems({
+    musicSlider: settingsMusicSlider,
+    sfxSlider: settingsSfxSlider,
+  });
   settingsMenu.setItems([
-    {
-      kind: "toggle",
-      label: () =>
-        `MUSIC: ${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.musicEnabled = !settings.musicEnabled;
-        syncVolumeSliders();
-        saveSettings();
-      },
-    },
-    {
-      kind: "slider",
-      label: () => `MUSIC VOLUME: ${Math.round(settings.musicVolume * 100)}%`,
-      adjust: (dir) => {
-        adjustSetting(settings, "musicVolume", dir);
-        settingsMusicSlider.value = settings.musicVolume;
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `SFX: ${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
-        syncVolumeSliders();
-        saveSettings();
-      },
-    },
-    {
-      kind: "slider",
-      label: () => `SFX VOLUME: ${Math.round(settings.sfxVolume * 100)}%`,
-      adjust: (dir) => {
-        adjustSetting(settings, "sfxVolume", dir);
-        settingsSfxSlider.value = settings.sfxVolume;
-        soundShoot.play();
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `FLASH EFFECTS: ${settings.flashEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.flashEnabled = !settings.flashEnabled;
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `SCREEN SHAKE: ${settings.shakeEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.shakeEnabled = !settings.shakeEnabled;
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `FULLSCREEN: ${isFullscreen() ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => toggleFullscreen(),
-    },
+    ...settingsSharedItems,
     {
       kind: "action",
       label: () => "BACK",
@@ -765,20 +710,7 @@ export function updateUI() {
   }
 
   if (settingsGroup.visible) {
-    // Mouse-driven sliders sync into settings (keyboard path also writes them).
-    // While the corresponding toggle is off, the slider is pinned to 0 and any
-    // drag is ignored.
-    if (!settings.musicEnabled) {
-      settingsMusicSlider.value = 0;
-    } else if (settingsMusicSlider.value !== settings.musicVolume) {
-      settings.musicVolume = settingsMusicSlider.value;
-    }
-    if (!settings.soundEffectsEnabled) {
-      settingsSfxSlider.value = 0;
-    } else if (settingsSfxSlider.value !== settings.sfxVolume) {
-      settings.sfxVolume = settingsSfxSlider.value;
-      soundShoot.play();
-    }
+    updateSharedSliderInput(settingsMusicSlider, settingsSfxSlider);
     updateMenuInteraction(settingsMenu, settingsMenuRows);
     paintMenu(settingsMenu, settingsMenuRows, FOCUS_COLOR, IDLE_COLOR);
 
@@ -792,19 +724,9 @@ export function updateUI() {
   }
 
   if (pauseGroup.visible) {
-    if (!settings.musicEnabled) {
-      pauseMusicSlider.value = 0;
-    } else if (pauseMusicSlider.value !== settings.musicVolume) {
-      settings.musicVolume = pauseMusicSlider.value;
-    }
-    if (!settings.soundEffectsEnabled) {
-      pauseSfxSlider.value = 0;
-    } else if (pauseSfxSlider.value !== settings.sfxVolume) {
-      settings.sfxVolume = pauseSfxSlider.value;
-      soundShoot.play();
-    }
+    updateSharedSliderInput(pauseMusicSlider, pauseSfxSlider);
     updateMenuInteraction(pauseMenu, pauseMenuRows);
-    paintMenu(pauseMenu, pauseMenuRows, FOCUS_DARK, IDLE_DARK);
+    paintMenu(pauseMenu, pauseMenuRows, FOCUS_COLOR, IDLE_COLOR);
 
     if (mouseWasReleased(0)) {
       if (pauseMusicSlider.isHoverObject() || pauseSfxSlider.isHoverObject())
