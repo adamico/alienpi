@@ -226,6 +226,7 @@ export class Player extends BaseEntity {
         1, // renderOrder (above ship)
         true, // localSpace
       );
+      emitter.baseLocalPos = localOffset.copy();
       this.addChild(emitter, offset);
       this.muzzleEmitters.push(emitter);
     }
@@ -242,8 +243,10 @@ export class Player extends BaseEntity {
     for (let i = 0; i < nBeams; i++) {
       const beam = this.latchBeams[i];
       const muzzleIdx = i % nMuzzles;
-      const offset = this.muzzleLocalOffset(muzzles[muzzleIdx]);
+      const muzzleOffset = muzzles[muzzleIdx];
+      const offset = this.muzzleLocalOffset(muzzleOffset);
       // Update local position to the chosen muzzle
+      beam.baseLocalPos = muzzleOffset.copy();
       beam.localPos = offset;
     }
   }
@@ -293,6 +296,7 @@ export class Player extends BaseEntity {
         -2, // renderOrder
         true, // localSpace
       );
+      emitter.baseLocalPos = pixelOffset.copy();
       this.addChild(emitter, worldOffset, PI);
       this.exhaustEmitters.push(emitter);
     }
@@ -354,16 +358,54 @@ export class Player extends BaseEntity {
     if (this.velocity.length() > maxSpeed)
       this.velocity = this.velocity.normalize().scale(maxSpeed);
 
-    // V2: Banking Effect
+    // V2: Banking Effect (Split Scaling)
     if (this.baseVisualWidth) {
-      // Scale visual width based on horizontal speed percentage. Max squish is 30%.
-      const maxBankVelocity = maxSpeed * 0.8; 
-      const bankFactor = Math.min(1, Math.abs(this.velocity.x) / maxBankVelocity);
-      const targetWidth = this.baseVisualWidth * (1 - bankFactor * 0.3);
-      
+      this.visualSize.x = this.baseVisualWidth; // Reset global width
+
+      const maxBankVelocity = maxSpeed * 0.8;
+
+      // Calculate shading factor (-1 to 1) to darken the side leaning into the turn
+      const shadeFactor = Math.max(
+        -1,
+        Math.min(1, this.velocity.x / maxBankVelocity),
+      );
+      this.splitShading = shadeFactor;
+
+      if (!this.splitScale) this.splitScale = { left: 1, right: 1 };
+
+      let targetLeft = 1;
+      let targetRight = 1;
+
+      if (shadeFactor < 0) {
+        // Moving left: left half squishes (leans away), right half expands (tilts to camera)
+        targetLeft = 1 - Math.abs(shadeFactor) * 0.2;
+        targetRight = 1 + Math.abs(shadeFactor) * 0.25;
+      } else if (shadeFactor > 0) {
+        // Moving right: right half squishes (leans away), left half expands (tilts to camera)
+        targetLeft = 1 + Math.abs(shadeFactor) * 0.25;
+        targetRight = 1 - Math.abs(shadeFactor) * 0.2;
+      }
+
       // Lerp for smooth tipping back and forth
-      this.visualSize.x += (targetWidth - this.visualSize.x) * 0.15;
+      this.splitScale.left += (targetLeft - this.splitScale.left) * 0.15;
+      this.splitScale.right += (targetRight - this.splitScale.right) * 0.15;
+      
+      this.updateChildOffsets();
     }
+  }
+
+  updateChildOffsets() {
+    if (!this.splitScale) return;
+    
+    const applyScale = (obj) => {
+      if (obj && obj.baseLocalPos) {
+        obj.localPos = this.muzzleLocalOffset(obj.baseLocalPos);
+      }
+    };
+
+    if (this.exhaustEmitters) this.exhaustEmitters.forEach(applyScale);
+    if (this.muzzleEmitters) this.muzzleEmitters.forEach(applyScale);
+    if (this.latchBeams) this.latchBeams.forEach(applyScale);
   }
 
   updateShooting() {
@@ -404,7 +446,11 @@ export class Player extends BaseEntity {
    * computing the world spawn position of bullets.
    */
   muzzleLocalOffset(offset) {
-    return offset;
+    if (this.splitScale) {
+      if (offset.x < 0) return vec2(offset.x * this.splitScale.left, offset.y);
+      if (offset.x > 0) return vec2(offset.x * this.splitScale.right, offset.y);
+    }
+    return offset.copy();
   }
 
   fireVulcan() {

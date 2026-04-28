@@ -113,15 +113,52 @@ export class BaseEntity extends EngineObject {
         if (e.renderUnder) e.render(this, renderPos, drawSize);
       });
 
-      // Base pass: Draw normally
-      drawTile(
-        renderPos,
-        drawSize,
-        this.sprite,
-        this.color,
-        this.angle,
-        this.mirrorX,
-      );
+      // Base pass: Draw normally or split
+      if (this.color.a > 0) {
+        // V2: If banking, split the sprite in half and darken the leaning side.
+        // Requires angle to be exactly 0 to avoid the halves separating during rotation.
+        if (this.splitShading && Math.abs(this.splitShading) > 0.05 && !this.mirrorX && this.angle === 0) {
+          const shadeAmount = Math.abs(this.splitShading) * 0.5; // Max 50% darker
+          
+          const leftColor = this.color.copy();
+          const rightColor = this.color.copy();
+          
+          if (this.splitShading < 0) {
+            // Moving left: lean left -> left half darker
+            leftColor.r *= 1 - shadeAmount;
+            leftColor.g *= 1 - shadeAmount;
+            leftColor.b *= 1 - shadeAmount;
+          } else {
+            // Moving right: lean right -> right half darker
+            rightColor.r *= 1 - shadeAmount;
+            rightColor.g *= 1 - shadeAmount;
+            rightColor.b *= 1 - shadeAmount;
+          }
+          
+          const s = this.sprite;
+          const leftSprite = { pos: s.pos, size: vec2(s.size.x / 2, s.size.y), textureInfo: s.textureInfo, bleed: s.bleed };
+          const rightSprite = { pos: s.pos.add(vec2(s.size.x / 2, 0)), size: vec2(s.size.x / 2, s.size.y), textureInfo: s.textureInfo, bleed: s.bleed };
+          
+          const baseHalfWidth = drawSize.x / 2;
+          const leftWidth = this.splitScale ? baseHalfWidth * this.splitScale.left : baseHalfWidth;
+          const rightWidth = this.splitScale ? baseHalfWidth * this.splitScale.right : baseHalfWidth;
+          
+          const leftPos = renderPos.add(vec2(-leftWidth / 2, 0));
+          const rightPos = renderPos.add(vec2(rightWidth / 2, 0));
+          
+          drawTile(leftPos, vec2(leftWidth, drawSize.y), leftSprite, leftColor, this.angle, false);
+          drawTile(rightPos, vec2(rightWidth, drawSize.y), rightSprite, rightColor, this.angle, false);
+        } else {
+          drawTile(
+            renderPos,
+            drawSize,
+            this.sprite,
+            this.color,
+            this.angle,
+            this.mirrorX,
+          );
+        }
+      }
 
       // Effect passes: (Over)
       this.effects.forEach((e) => {
