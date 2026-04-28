@@ -165,7 +165,7 @@ export class BossOrbiter extends BaseEntity {
     super.update();
 
     // Collision check - required because LittleJS ignores children in its main loop
-    if (this.state !== "returning") {
+    if (this.state !== "returning" && this.state !== "appearing") {
       engineObjectsCallback(this.pos, this.size, (o) => {
         if (!o.destroyed && o !== this && this.isOverlappingObject(o)) {
           this.collideWithObject(o);
@@ -189,18 +189,18 @@ export class BossOrbiter extends BaseEntity {
     if (this.state === "appearing") {
       // V8: Variable-frequency blink (rapid -> slow)
       this.visualSize = this.baseVisualSize.copy();
-      
+
       // Use getPercent() (0 -> 1) to get the true remaining fraction (1 -> 0)
-      const t = 1 - this.appearTimer.getPercent(); 
-      
-      // Phase integral for a slowing blink. 
-      // Multiplier of 50 caps max frequency at ~15Hz (at t=1.0), 
+      const t = 1 - this.appearTimer.getPercent();
+
+      // Phase integral for a slowing blink.
+      // Multiplier of 50 caps max frequency at ~15Hz (at t=1.0),
       // which safely avoids aliasing with the 60FPS engine rate.
-      const phase = t * t * 50; 
-      
+      const phase = t * t * 50;
+
       // Force solid for the last 0.1s so it anchors before activating
       const isVisible = Math.sin(phase) > 0 || t < 0.1;
-      
+
       this.color.a = isVisible ? this.cfg.color.a : 0;
     } else if (this.state === "warning") {
       this.visualSize = this.baseVisualSize.copy();
@@ -295,6 +295,8 @@ export class BossOrbiter extends BaseEntity {
   }
 
   collideWithObject(other) {
+    if (this.state === "appearing") return false;
+
     if (other.isBullet && !other.isEnemy) {
       if (this.destroyed || this.hp <= 0) return false;
       const result = other.hitTarget(this);
