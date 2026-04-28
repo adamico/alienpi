@@ -51,18 +51,18 @@
 ## Visuals
 
 - V1: replace bullet sprites with animated versions. Priority: high
-- V2: add banking effect to the player sprite. Priority: medium
+- ~~V2: add banking effect to the player sprite. Priority: medium~~ DONE
 - V3: add small sprites for each weapon. Priority: low
 - V4: Improve the boss movement visuals with particles or exhaust effects. Priority: low
 - ~~V5: recolor boss sprite. green -> red. Priority: high~~ DONE
 - ~~V6: recolor boss orbiter sprite. green -> red. Priority: high.~~ DONE
 - ~~V7: readd orbiters life line. Priority: high.~~ DONE
-- V8: improve orbiter respawn telegraph. Priority: medium.
+- ~~V8: improve orbiter respawn telegraph. Priority: medium.~~ DONE
 - V9: replace or improve boss missile sprite. Priority: medium.
 - V10: add glow effects (player, orbiters, bullets, etc). Priority: medium.
 - V11: add weapon change animations. Priority: medium.
 - ~~V12: add font to the game. Priority: high.~~ DONE
-- V13: make loot entity sprites be rendered on top of the explosion particles. Priority: medium.
+- ~~V13: make loot entity sprites be rendered on top of the explosion particles. Priority: medium.~~ DONE
 
 ## Accessibility
 
