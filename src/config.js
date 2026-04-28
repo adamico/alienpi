@@ -369,7 +369,7 @@ export const enemy = {
 
 export const boss = {
   sprite: "boss2.png",
-  hp: 1,
+  hp: 500,
   speed: 0.05,
   size: vec2(8),
   color: rgb(1, 1, 1),
@@ -523,6 +523,7 @@ export const strings = {
     retryPrompt: "SPACE: RETRY",
     backToTitlePrompt: "ESC: TITLE",
     victoryPrompt: "SPACE: PLAY AGAIN",
+    finalScorePrefix: "FINAL SCORE: ",
     settingsTitle: "SETTINGS",
     settingsPrompt: "PRESS [S] FOR SETTINGS",
     backPrompt: "PRESS [ESC] TO GO BACK",

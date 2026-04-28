@@ -47,7 +47,7 @@ let settingsTitle,
   settingsMusicSlider,
   settingsSfxSlider,
   settingsMenuRows = [];
-let retryText, gameOverTitleText, backToTitleText;
+let retryText, gameOverTitleText, backToTitleText, finalScoreText;
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 const WEAPON_LOOT_MAPPING = {
@@ -258,7 +258,7 @@ function setupGameOverScreen() {
   uiRoot.addChild(gameOverGroup);
 
   gameOverTitleText = new UIText(
-    vec2(0, -60),
+    vec2(0, -90),
     vec2(800, 100),
     strings.ui.gameOverTitle,
   );
@@ -284,6 +284,17 @@ function setupGameOverScreen() {
   backToTitleText.textColor = WHITE.copy();
   backToTitleText.fontShadow = true;
 
+  finalScoreText = new UIText(
+    vec2(0, 0),
+    vec2(800, 100),
+    strings.ui.finalScorePrefix + formatScore(),
+  );
+  finalScoreText.textHeight = 60;
+  finalScoreText.font = FONT_MENU;
+  finalScoreText.textColor = rgb(1, 1, 1);
+  finalScoreText.fontShadow = true;
+
+  gameOverGroup.addChild(finalScoreText);
   gameOverGroup.addChild(retryText);
   gameOverGroup.addChild(backToTitleText);
 }
@@ -633,6 +644,7 @@ export function updateUI() {
       retryText.text = strings.ui.retryPrompt;
     }
     retryText.visible = (timeReal * 2) % 2 < 1.2;
+    finalScoreText.text = strings.ui.finalScorePrefix + formatScore();
   }
 
   const uiCenterX = mainCanvasSize.x / 2;
