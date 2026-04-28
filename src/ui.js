@@ -47,7 +47,7 @@ let settingsTitle,
   settingsMusicSlider,
   settingsSfxSlider,
   settingsMenuRows = [];
-let retryText, gameOverTitleText;
+let retryText, gameOverTitleText, backToTitleText;
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 const WEAPON_LOOT_MAPPING = {
@@ -273,7 +273,19 @@ function setupGameOverScreen() {
   retryText.font = FONT_MENU;
   retryText.textColor = WHITE.copy();
   retryText.fontShadow = true;
+
+  backToTitleText = new UIText(
+    vec2(0, 90),
+    vec2(800, 50),
+    strings.ui.backToTitlePrompt,
+  );
+  backToTitleText.textHeight = 24;
+  backToTitleText.font = FONT_MENU;
+  backToTitleText.textColor = WHITE.copy();
+  backToTitleText.fontShadow = true;
+
   gameOverGroup.addChild(retryText);
+  gameOverGroup.addChild(backToTitleText);
 }
 
 function setupSettingsScreen() {

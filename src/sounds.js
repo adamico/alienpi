@@ -9,7 +9,14 @@ const lastPlayTime = new Map();
 
 // Global sound effect and volume control
 const originalPlay = Sound.prototype.play;
-Sound.prototype.play = function(pos, volume = 1, pitch = 1, randomPitch = 0, loop = false, paused) {
+Sound.prototype.play = function (
+  pos,
+  volume = 1,
+  pitch = 1,
+  randomPitch = 0,
+  loop = false,
+  paused,
+) {
   const isMusic = musicSounds.has(this);
   if (system.isResetting && !isMusic) return;
 
@@ -26,20 +33,28 @@ Sound.prototype.play = function(pos, volume = 1, pitch = 1, randomPitch = 0, loo
   } else {
     // SFX uses sfxVolume and soundEffectsEnabled toggle
     if (!settings.soundEffectsEnabled) return;
-    return originalPlay.call(this, pos, volume * settings.sfxVolume, pitch, randomPitch, loop, paused);
+    return originalPlay.call(
+      this,
+      pos,
+      volume * settings.sfxVolume,
+      pitch,
+      randomPitch,
+      loop,
+      paused,
+    );
   }
 };
 
 // Also patch playMusic to automatically register music sounds
 const originalPlayMusic = Sound.prototype.playMusic;
-Sound.prototype.playMusic = function(volume, loop) {
+Sound.prototype.playMusic = function (volume, loop) {
   musicSounds.add(this);
   return originalPlayMusic.call(this, volume, loop);
 };
 
 // Also patch setVolume for active sound instances (like music)
 const originalSetVolume = SoundInstance.prototype.setVolume;
-SoundInstance.prototype.setVolume = function(volume) {
+SoundInstance.prototype.setVolume = function (volume) {
   const isMusic = musicSounds.has(this.sound);
   if (isMusic) {
     const vol = settings.musicEnabled ? volume * settings.musicVolume : 0;
@@ -259,12 +274,24 @@ export const soundBossBeam = new Sound([
 ]); // Shoot 475
 
 export const soundBossMusic = new Sound(
-  "public/assets/sounds/Lasermelon%20Boss.mp3",
+  "public/assets/sounds/gameplay-music.mp3",
 );
-export const soundMusicIntro = new Sound("public/assets/sounds/Intro.wav");
-export const soundMusicVerse = new Sound("public/assets/sounds/VerseA.wav");
+export const soundTitleMusic = new Sound(
+  "public/assets/sounds/title-music.mp3",
+);
+export const soundVictoryMusic = new Sound(
+  "public/assets/sounds/victory-music.mp3",
+);
+export const soundGameOverMusic = new Sound(
+  "public/assets/sounds/gameover-music.mp3",
+);
+export const soundCreditsMusic = new Sound(
+  "public/assets/sounds/credits-music.mp3",
+);
 
 // Register music sounds
 musicSounds.add(soundBossMusic);
-musicSounds.add(soundMusicIntro);
-musicSounds.add(soundMusicVerse);
+musicSounds.add(soundTitleMusic);
+musicSounds.add(soundVictoryMusic);
+musicSounds.add(soundGameOverMusic);
+musicSounds.add(soundCreditsMusic);

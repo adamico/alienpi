@@ -34,8 +34,9 @@ import { initializeGameAssets, initializePlayer } from "./src/commonSetup.js";
 import { Boss } from "./src/entities/boss.js";
 import {
   soundBossMusic,
-  soundMusicIntro,
-  soundMusicVerse,
+  soundTitleMusic,
+  soundVictoryMusic,
+  soundGameOverMusic,
 } from "./src/sounds.js";
 import { Boundary } from "./src/entities/boundary.js";
 import {
@@ -47,14 +48,11 @@ import {
   setMenuHandlers,
 } from "./src/ui.js";
 
-let bossSpawned = false;
-let bossMusicPlaying = false;
 let currentBoss = null;
 let player = null;
 const boundaries = [];
 
-let gameMusicIntroStarted = false;
-let gameMusicVerseStarted = false;
+let activeMusicSound = null;
 let activeMusicInstance = null;
 export let gameState = GAME_STATES.TITLE;
 let previousState = GAME_STATES.TITLE;
@@ -102,10 +100,6 @@ export function resetGame() {
 
   // Straight to boss level
   currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
-  bossSpawned = true;
-  bossMusicPlaying = false;
-  gameMusicIntroStarted = false;
-  gameMusicVerseStarted = false;
 
   setupBoundaries();
   gameTime = 0;
@@ -222,8 +216,7 @@ function gameUpdatePost() {
     }
   }
 
-  updateGameMusic();
-  updateBossMusic();
+  updateMusic();
   updateUI();
 }
 
@@ -233,64 +226,37 @@ function updateDPSLog() {
   tickDPSLog();
 }
 
-function updateBossMusic() {
-  if (!bossSpawned) return;
-
-  if (gameState === GAME_STATES.TITLE || gameState === GAME_STATES.GAMEOVER) {
-    if (activeMusicInstance) {
-      activeMusicInstance.setVolume(0);
-    }
-    return;
-  }
-
-  if (activeMusicInstance) {
-    activeMusicInstance.setVolume(settings.musicEnabled ? 1.2 : 0);
-  }
-
-  if (soundBossMusic.isLoaded() && !bossMusicPlaying) {
-    // Stop level music
-    if (activeMusicInstance) {
-      activeMusicInstance.stop();
-    }
-
-    activeMusicInstance = soundBossMusic.playMusic(
-      settings.musicEnabled ? 1.2 : 0,
-    );
-    bossMusicPlaying = true;
+function desiredMusic() {
+  switch (gameState) {
+    case GAME_STATES.TITLE:
+      return soundTitleMusic;
+    case GAME_STATES.PLAYING:
+    case GAME_STATES.PAUSE:
+      return soundBossMusic;
+    case GAME_STATES.GAMEOVER:
+      return gameWon ? soundVictoryMusic : soundGameOverMusic;
+    case GAME_STATES.SETTINGS:
+      // Keep whatever was playing when the user opened settings.
+      return activeMusicSound;
+    default:
+      return null;
   }
 }
 
-function updateGameMusic() {
-  if (gameState === GAME_STATES.TITLE || gameState === GAME_STATES.GAMEOVER) {
+function updateMusic() {
+  const desired = desiredMusic();
+  if (desired !== activeMusicSound) {
     if (activeMusicInstance) {
-      activeMusicInstance.setVolume(0);
+      activeMusicInstance.stop();
+      activeMusicInstance = null;
     }
-    return;
-  }
-
-  if (activeMusicInstance) {
-    activeMusicInstance.setVolume(settings.musicEnabled ? 0.8 : 0);
-  }
-
-  if (bossSpawned) return;
-
-  if (!gameMusicIntroStarted) {
-    if (soundMusicIntro.isLoaded()) {
-      activeMusicInstance = soundMusicIntro.playMusic(
-        settings.musicEnabled ? 0.8 : 0,
-        false,
-      ); // Play once
-      gameMusicIntroStarted = true;
+    activeMusicSound = desired;
+    if (desired && desired.isLoaded()) {
+      activeMusicInstance = desired.playMusic(1.0, true);
     }
-  } else if (!gameMusicVerseStarted) {
-    // Wait for intro to finish
-    if (!activeMusicInstance || !activeMusicInstance.isPlaying()) {
-      activeMusicInstance = soundMusicVerse.playMusic(
-        settings.musicEnabled ? 0.8 : 0,
-        true,
-      ); // Start loop
-      gameMusicVerseStarted = true;
-    }
+  } else if (!activeMusicInstance && desired && desired.isLoaded()) {
+    // Track was selected before its file finished loading; start now.
+    activeMusicInstance = desired.playMusic(1.0, true);
   }
 }
 
