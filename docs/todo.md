@@ -17,6 +17,7 @@
 - M8: improve main menu display. Priority: low
 - M9: add social links to main menu. Priority: high.
 - M10: add link to feedback/discord in main menu. Priority: high
+- M11: wire social links. Priority: medium
 
 ## HUD
 
@@ -59,3 +60,4 @@
 - V10: add glow effects (player, orbiters, bullets, etc). Priority: medium.
 - V11: add weapon change animations. Priority: medium.
 - V12: add font to the game. Priority: high.
+- V13: make loot entity sprites be rendered on top of the explosion particles. Priority: medium.
