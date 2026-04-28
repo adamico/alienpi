@@ -567,7 +567,7 @@ function updateMenuInteraction(menu, rows) {
       if (menu.focusedIndex !== i) {
         menu.focusedIndex = i;
       }
-      
+
       // Check for both press and release to catch touch events reliably
       if (mouseWasPressed(0) || mouseWasReleased(0)) {
         const item = menu.items[i];
@@ -811,7 +811,7 @@ export function updateUI() {
   weaponIcons.forEach((item) => {
     item.container.localPos = vec2(
       uiAnchor.x,
-      uiAnchor.y + 400 * hudScale + item.index * 54 * hudScale,
+      uiAnchor.y + 150 * hudScale + item.index * 54 * hudScale,
     );
     item.container.size = vec2(220, 44).scale(hudScale);
     item.icon.size = vec2(36, 36).scale(hudScale);
