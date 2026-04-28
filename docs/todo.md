@@ -75,7 +75,7 @@
 
 ## Testing
 
-- T1: improve the test lab reusing elements from the actual game. Priority: high
+- ~~T1: improve the test lab reusing elements from the actual game. Priority: high~~ DONE (extracted `drawPlayField`, `drawMarquee`, `setupBoundaries` to `src/scene.js`; test.js now uses the shared scene helpers, runs the same input pipeline as the game, and keeps the player inside boundaries)
 - T2: add a button to clear the spawned entities. Priority: medium
 - T3: when the player collects a spawned loot, update the weapon level in the ui. Priority: medium
 

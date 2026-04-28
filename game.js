@@ -2,11 +2,9 @@
 
 import {
   vec2,
-  rgb,
-  drawRect,
-  engineInit,
   drawTextScreen,
   WHITE,
+  engineInit,
   glSetAntialias,
   setCanvasPixelated,
   setTilesPixelated,
@@ -14,7 +12,6 @@ import {
   engineObjects,
   timeReal,
   timeDelta,
-  sin,
   engineObjectsDestroy,
   keyWasPressed,
   mouseWasPressed,
@@ -28,13 +25,7 @@ import {
 } from "./src/engine.js";
 import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 
-import {
-  system,
-  settings,
-  loadSettings,
-  GAME_STATES,
-  starfield as starCfg,
-} from "./src/config.js";
+import { system, settings, loadSettings, GAME_STATES } from "./src/config.js";
 import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
 import { resetScore } from "./src/score.js";
 import { initializeGameAssets, initializePlayer } from "./src/commonSetup.js";
@@ -47,7 +38,7 @@ import {
   updateSoundVolumes,
 } from "./src/sounds.js";
 import { input } from "./src/input.js";
-import { Boundary } from "./src/entities/boundary.js";
+import { drawPlayField, drawMarquee, setupBoundaries } from "./src/scene.js";
 import {
   initUI,
   updateUI,
@@ -59,7 +50,6 @@ import {
 
 export let currentBoss = null;
 let player = null;
-const boundaries = [];
 
 let activeMusicSound = null;
 let activeMusicInstance = null;
@@ -118,36 +108,6 @@ export function resetGame() {
   gameWon = false;
   resetScore();
   gameState = GAME_STATES.PLAYING;
-}
-
-function setupBoundaries() {
-  const wallThick = 2;
-  const { x: lx, y: ly } = system.levelSize;
-  const margin = 1; // Align with visual playfield
-
-  // -- SOLID WALLS (for Player) --
-  // Left
-  boundaries.push(
-    new Boundary(
-      vec2(-margin - wallThick / 2, ly / 2),
-      vec2(wallThick, ly * 3),
-    ),
-  );
-  // Right
-  boundaries.push(
-    new Boundary(
-      vec2(lx + margin + wallThick / 2, ly / 2),
-      vec2(wallThick, ly * 3),
-    ),
-  );
-  // Top
-  boundaries.push(
-    new Boundary(vec2(lx / 2, ly + wallThick / 2), vec2(lx * 2, wallThick)),
-  );
-  // BOTTOM
-  boundaries.push(
-    new Boundary(vec2(lx / 2, -wallThick / 2), vec2(lx * 2, wallThick)),
-  );
 }
 
 function gameUpdate() {
@@ -317,74 +277,9 @@ function gameRender() {
   drawPlayField();
 }
 
-function drawPlayField() {
-  const marqueeColor = rgb(0.05, 0.05, 0.1);
-  const playFieldColor = rgb(0.01, 0.01, 0.02);
-
-  // Background
-  const margin = 1;
-  drawRect(system.cameraPos, vec2(100), marqueeColor);
-  drawRect(
-    system.cameraPos,
-    vec2(system.levelSize.x + margin * 2, system.levelSize.y * 2),
-    playFieldColor,
-  );
-
-  // precreate variables to avoid overhead
-  const pos = vec2(),
-    size = vec2(),
-    color = rgb();
-  for (let i = starCfg.count; i--; ) {
-    // use math to generate random star positions
-    const offset =
-      timeReal * (starCfg.speedBase + (i ** 2.1 % starCfg.speedRange)) +
-      i ** 2.3;
-    pos.y = starCfg.verticalOffset - (offset % starCfg.verticalRange);
-    pos.x = i / system.levelSize.x - starCfg.horizontalOffset;
-    size.x = size.y = (i % starCfg.sizeRange) + starCfg.sizeBase;
-    color.set(0.5, 0.5, 0.5, sin(i) ** starCfg.alphaPower);
-    drawRect(pos, size, color);
-  }
-}
-
 function gameRenderPost() {
   drawMarquee();
   drawUI();
-}
-
-function drawMarquee() {
-  const marqueeColor = rgb(0.05, 0.05, 0.1);
-  const { x: lx, y: ly } = system.levelSize;
-  const margin = 1;
-
-  const maskSize = 100;
-  const maskReach = lx * 5;
-
-  // Mask off areas outside the visible playfield
-  // Left Mask
-  drawRect(
-    vec2(-maskSize / 2 - margin, ly),
-    vec2(maskSize, ly * 3),
-    marqueeColor,
-  );
-  // Right Mask
-  drawRect(
-    vec2(lx + maskSize / 2 + margin, ly),
-    vec2(maskSize, ly * 3),
-    marqueeColor,
-  );
-  // Top Mask
-  drawRect(
-    vec2(lx / 2, ly + margin + maskSize / 2),
-    vec2(maskReach, maskSize),
-    marqueeColor,
-  );
-  // Bottom Mask
-  drawRect(
-    vec2(lx / 2, -margin - maskSize / 2),
-    vec2(maskReach, maskSize),
-    marqueeColor,
-  );
 }
 
 function drawUI() {

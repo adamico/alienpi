@@ -80,7 +80,7 @@ class InputManager {
   updateTouch() {
     // LittleJS routes touch to mouse button 0
     // Ignore touches on UI elements
-    if (uiSystem.hoverObject) {
+    if (uiSystem?.hoverObject) {
       this.touchActive = false;
       this.touchStartPos = null;
       return;

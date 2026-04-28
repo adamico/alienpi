@@ -33,7 +33,11 @@ import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { LatchBeam } from "./latchBeam.js";
 import { input } from "../input.js";
-import { FlashEffect, spawnMuzzleFlash, applyScreenShake } from "../gameEffects.js";
+import {
+  FlashEffect,
+  spawnMuzzleFlash,
+  applyScreenShake,
+} from "../gameEffects.js";
 
 export let player = null;
 
@@ -465,7 +469,7 @@ export class Player extends BaseEntity {
     const level = this.weaponLevels.vulcan;
     const cfg = weaponsCfg.vulcan;
     const bulletSpeed = cfg.bullet.speed[level - 1];
-    soundShoot.play();
+    soundShoot.play(this.pos);
     const offsets = cfg.cannonOffsets[level - 1];
 
     const volleyState = { decremented: false };
@@ -499,7 +503,10 @@ export class Player extends BaseEntity {
   }
 
   fireShotgun() {
-    soundShotgun.play();
+    // 4th arg is per-play random pitch delta — the `randomness` field inside
+    // the ZZFX array is baked into the sample at construction so it doesn't
+    // vary between shots on its own.
+    soundShotgun.play(this.pos);
     const cfg = weaponsCfg.shotgun;
     const level = this.weaponLevels.shotgun;
     const yInput = input.moveDir.y;

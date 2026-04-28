@@ -1,9 +1,6 @@
 "use strict";
 
 import {
-  vec2,
-  rgb,
-  drawRect,
   engineInit,
   glSetAntialias,
   setCanvasPixelated,
@@ -11,14 +8,11 @@ import {
   mousePos,
   mouseWasPressed,
   gamepadWasPressed,
-  time,
-  sin,
   Color,
 } from "./src/engine.js";
 
 import {
   system,
-  starfield as starCfg,
   enemy as enemyCfg,
   boss as bossCfg,
   orbiter as orbCfg,
@@ -27,6 +21,8 @@ import {
 } from "./src/config.js";
 
 import { initializeGameAssets, initializePlayer } from "./src/commonSetup.js";
+import { drawPlayField, drawMarquee, setupBoundaries } from "./src/scene.js";
+import { input } from "./src/input.js";
 
 import { player } from "./src/entities/player.js";
 import { BaseEntity } from "./src/entities/baseEntity.js";
@@ -42,6 +38,7 @@ let behaviorEnabled = true;
 async function gameInit() {
   await initializeGameAssets();
   initializePlayer(999);
+  setupBoundaries();
   setupUIListeners();
 
   // Hide loading indicator
@@ -148,6 +145,11 @@ function setupUIListeners() {
 // common setup functions removed as they are now in commonSetup.js
 
 function gameUpdate() {
+  // Drive the same input pipeline as the real game so player movement,
+  // firing, focus, and weapon switching all work identically here.
+  input.reset();
+  input.update();
+
   if (mouseWasPressed(0)) {
     // Only spawn if mouse is within the playfield borders
     const { x: lx, y: ly } = system.levelSize;
@@ -161,7 +163,7 @@ function gameUpdate() {
     }
   }
   updateSoundVolumes();
-  
+
   // Gamepad Debug: Log button numbers to console
   for (let i = 0; i < 16; ++i) {
     if (gamepadWasPressed(i)) {
@@ -228,68 +230,12 @@ function handleSpawn() {
 }
 
 function gameRender() {
-  drawBackground();
-}
-
-function drawBackground() {
-  const marqueeColor = rgb(0.05, 0.05, 0.1);
-  const playFieldColor = rgb(0.01, 0.01, 0.02);
-  const margin = 1;
-
-  // Background
-  drawRect(system.cameraPos, vec2(100), marqueeColor);
-  drawRect(
-    system.cameraPos,
-    vec2(system.levelSize.x + margin * 2, system.levelSize.y * 2),
-    playFieldColor,
-  );
-
-  // Stars (Static for test scene to reduce visual noise)
-  const pos = vec2(),
-    size = vec2(),
-    color = rgb();
-  for (let i = starCfg.count; i--; ) {
-    const offset =
-      time * (starCfg.speedBase + (i ** 2.1 % starCfg.speedRange)) + i ** 2.3;
-    pos.y = starCfg.verticalOffset - (offset % starCfg.verticalRange);
-    pos.x = i / system.levelSize.x - starCfg.horizontalOffset;
-    size.x = size.y = (i % starCfg.sizeRange) + starCfg.sizeBase;
-    color.set(0.5, 0.5, 0.5, sin(i) ** starCfg.alphaPower);
-    drawRect(pos, size, color);
-  }
+  drawPlayField();
 }
 
 function gameRenderPost() {
-  drawMarquee();
-}
-
-function drawMarquee() {
-  const marqueeColor = rgb(0.05, 0.05, 0.1);
-  const { x: lx, y: ly } = system.levelSize;
-  const margin = 1;
-  const maskSize = 100;
-  const maskReach = lx * 5;
-
-  // Right Mask
-  drawRect(
-    vec2(lx + maskSize / 2 + margin, ly),
-    vec2(maskSize, ly * 3),
-    marqueeColor,
-  );
-  // Top Mask
-  drawRect(
-    vec2(lx / 2, ly + margin + maskSize / 2),
-    vec2(maskReach, maskSize),
-    marqueeColor,
-  );
-  // Bottom Mask
-  drawRect(
-    vec2(lx / 2, -margin - maskSize / 2),
-    vec2(maskReach, maskSize),
-    marqueeColor,
-  );
-
-  // No Left Mask in Test Scene as the HTML UI covers that area
+  // HTML overlay covers the left side, so skip that mask in the test lab.
+  drawMarquee({ skipLeft: true });
 }
 
 glSetAntialias(true);

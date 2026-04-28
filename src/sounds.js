@@ -16,7 +16,9 @@ Sound.prototype.play = function (
   pos,
   volume = 1,
   pitch = 1,
-  randomPitch = 0,
+  // LittleJS's default is 1 (full per-play pitch jitter from the sound's
+  // stored randomness). Don't override to 0 — that silently kills variation.
+  randomnessScale = 1,
   loop = false,
   paused,
 ) {
@@ -36,7 +38,7 @@ Sound.prototype.play = function (
       pos,
       volume,
       pitch,
-      randomPitch,
+      randomnessScale,
       loop,
       paused,
     );
@@ -53,7 +55,7 @@ Sound.prototype.play = function (
       pos,
       volume,
       pitch,
-      randomPitch,
+      randomnessScale,
       loop,
       paused,
     );
@@ -150,10 +152,11 @@ export class SoundGenerator extends Sound {
 }
 
 /* eslint-disable no-sparse-arrays */
-// Vulcan — tight burst
+// Vulcan — tight burst. Index 1 = per-play pitch randomness (LittleJS strips
+// it from the array at construction and applies it as a per-play jitter).
 export const soundShoot = new Sound([
   0.2,
-  ,
+  0.08,
   165,
   0.02,
   0.13,
@@ -178,7 +181,7 @@ export const soundShoot = new Sound([
 // rather than re-attacking each cycle.
 export const soundLatch = new Sound([
   0.18,
-  0.0,
+  0.04,
   140,
   0.03,
   0.3,
@@ -227,8 +230,8 @@ export const soundLatchCharge = new Sound([
 // Shotgun — punchy noise burst with a deeper body and longer tail. Earlier
 // version sat too quiet next to the impacts it caused.
 export const soundShotgun = new Sound([
-  2.2,
-  0.04,
+  0.6,
+  0.08,
   220,
   0.005,
   0.06,
@@ -251,7 +254,7 @@ export const soundShotgun = new Sound([
 
 // Explosion — boomier low-end and longer tail; previous mix was thin.
 export const soundExplosion1 = new Sound([
-  1.7,
+  0.8,
   0.05,
   45,
   0.05,
