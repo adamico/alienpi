@@ -180,8 +180,12 @@ function setupTitleScreen() {
 
   // Menu rows live in a vertical stack at the bottom.
   titleMenuRows = [
-    makeRow(titleGroup, 160),
-    makeRow(titleGroup, 210),
+    makeRow(titleGroup, 130),
+    makeRow(titleGroup, 175),
+    makeRow(titleGroup, 230),
+    makeRow(titleGroup, 270),
+    makeRow(titleGroup, 310),
+    makeRow(titleGroup, 350),
   ];
 }
 
@@ -276,7 +280,12 @@ function setupSettingsScreen() {
   ];
 }
 
+function openLink(url) {
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
 function rebuildMenus() {
+  const links = strings.ui.links;
   // Title menu
   titleMenu.setItems([
     {
@@ -288,6 +297,26 @@ function rebuildMenus() {
       kind: "action",
       label: () => "SETTINGS",
       activate: () => titleHandlers.openSettings(),
+    },
+    {
+      kind: "action",
+      label: () => links.discord.label,
+      activate: () => openLink(links.discord.url),
+    },
+    {
+      kind: "action",
+      label: () => links.github.label,
+      activate: () => openLink(links.github.url),
+    },
+    {
+      kind: "action",
+      label: () => links.itch.label,
+      activate: () => openLink(links.itch.url),
+    },
+    {
+      kind: "action",
+      label: () => links.bluesky.label,
+      activate: () => openLink(links.bluesky.url),
     },
   ]);
 

@@ -293,28 +293,15 @@ export class BossOrbiter extends BaseEntity {
   }
 
   render() {
-    const shield = this.parent?.shield;
-    const isAttached = this.state !== "diving" && this.state !== "returning";
-
-    if (shield && !shield.destroyed && isAttached) {
-      // Draw tether line from orbiter to shield border
-      const toBoss = this.parent.pos.subtract(this.pos);
-      const dist = toBoss.length();
-      const shieldRadius = (shield.size.x / 2) * shieldCfg.hitboxScale;
-
-      if (dist > shieldRadius) {
-        this.tetherColor.set(
-          this.color.r,
-          this.color.g,
-          this.color.b,
-          this.color.a * 0.5,
-        );
-        // The line starts at the orbiter and ends at the shield's edge
-        const endPos = this.pos.add(
-          toBoss.normalize().scale(dist - shieldRadius),
-        );
-        drawLine(this.pos, endPos, 0.05, this.tetherColor);
-      }
+    if (this.parent && !this.parent.destroyed) {
+      // Tether from orbiter to boss center; renderOrder=-1 keeps it behind the boss sprite.
+      this.tetherColor.set(
+        this.color.r,
+        this.color.g,
+        this.color.b,
+        this.color.a * 0.5,
+      );
+      drawLine(this.pos, this.parent.pos, 0.05, this.tetherColor);
     }
     super.render();
   }

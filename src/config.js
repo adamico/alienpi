@@ -533,6 +533,12 @@ export const strings = {
     offLabel: "OFF",
     sfxHotkey: " [S]",
     musicHotkey: " [M]",
+    links: {
+      discord: { label: "DISCORD", url: "https://discord.gg/PLACEHOLDER" },
+      github: { label: "GITHUB", url: "https://github.com/PLACEHOLDER/PLACEHOLDER" },
+      itch: { label: "ITCH.IO", url: "https://PLACEHOLDER.itch.io/" },
+      bluesky: { label: "BLUESKY", url: "https://bsky.app/profile/PLACEHOLDER" },
+    },
   },
 };
 
