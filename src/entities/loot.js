@@ -2,7 +2,8 @@ import { vec2, WHITE, rgb } from "../engine.js";
 import { loot as lootCfg, player as playerCfg } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
-import { OutlineEffect, PulseEffect } from "../gameEffects.js";
+import { soundLootCollect } from "../sounds.js";
+import { PulseEffect } from "../gameEffects.js";
 
 export class Loot extends BaseEntity {
   constructor(pos, typeKey) {
@@ -47,6 +48,7 @@ export class Loot extends BaseEntity {
 
   collect() {
     console.log(`[LOOT] Collected: ${this.label}`);
+    soundLootCollect.play();
     // Placeholder callback for future effects
     this.onCollect();
     this.destroy();

@@ -34,19 +34,19 @@
 - G3: add difficulty levels. Priority: low
 - G4: add attract mode. Priority: low
 - G5: add introductory lore dialog. Priority: medium.
-- G6: add victory dialog. Priority: medium.
+- ~~G6: add victory dialog. Priority: medium.~~ DONE (victory/game-over screen handled in `updateUI` via `gameWon` flag — distinct title, color, and prompt)
 
 ## Sounds
 
-- S1: add loot collection sound effect. Priority: high
-- S2: add "<weapon> unlocked" sound effect. Priority: high
-- S3: add "<weapon> upgrade" sound effect. Priority: high
-- S4: add "<weapon> max" sound effect. Priority: high
+- ~~S1: add loot collection sound effect. Priority: high~~ DONE
+- ~~S2: add "<weapon> unlocked" sound effect. Priority: high~~ DONE
+- ~~S3: add "<weapon> upgrade" sound effect. Priority: high~~ DONE
+- ~~S4: add "<weapon> max" sound effect. Priority: high~~ DONE
 - ~~S5: add title music. Priority: high~~ DONE
-- ~~S6: add game over music. Priority: high~~ DONE
+- ~~S6: add game over music. Priority: high~~ DONE (`soundGameOverMusic` + `soundVictoryMusic` both wired to game state)
 - S7: improve boss beam sound effect. Priority: high.
-- S8: add boss death sound effect. Priority: medium
-- S9: add weapon change sound effect. Priority: medium
+- ~~S8: add boss death sound effect. Priority: medium~~ N/A (victory screen covers this)
+- ~~S9: add weapon change sound effect. Priority: medium~~ DONE
 
 ## Visuals
 

@@ -22,6 +22,12 @@ import {
   soundShotgun,
   soundLatch,
   soundPlayerHit,
+  soundWeaponSwitch,
+  soundWeaponUnlock,
+  soundWeaponUpgrade,
+  soundWeaponMax,
+  weaponNameSounds,
+  playSequenced,
 } from "../sounds.js";
 import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
@@ -99,8 +105,21 @@ export class Player extends BaseEntity {
     const targetKey = key || this.currentWeaponKey;
     if (!targetKey || this.weaponLevels[targetKey] === undefined) return;
 
+    const wasLocked = this.weaponLevels[targetKey] === 0;
     if (this.weaponLevels[targetKey] < this.maxLevel) {
       this.weaponLevels[targetKey]++;
+
+      // Play the appropriate feedback sound.
+      // All cases say the weapon name first, then the action sting after
+      // the name finishes (duration-accurate gap via playSequenced).
+      const nameSound = weaponNameSounds[targetKey];
+      if (wasLocked) {
+        playSequenced(nameSound, soundWeaponUnlock);
+      } else if (this.weaponLevels[targetKey] === this.maxLevel) {
+        playSequenced(nameSound, soundWeaponMax);
+      } else {
+        playSequenced(nameSound, soundWeaponUpgrade);
+      }
 
       // If we just enabled a weapon that was level 0, or upgraded the current one, refresh visuals
       if (targetKey === this.currentWeaponKey) {
@@ -133,6 +152,7 @@ export class Player extends BaseEntity {
         }
       }
 
+      soundWeaponSwitch.play();
       this.shootTimer = 0;
       this.updateWeaponSprite();
 

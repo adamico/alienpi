@@ -83,17 +83,33 @@ function setupUIListeners() {
   });
 
   // --- Weapon Level Listeners ---
+  const WEAPON_KEYS = {
+    vulcanLevel: "vulcan",
+    shotgunLevel: "shotgun",
+    latchLevel: "latch",
+  };
+
   document.querySelectorAll(".weapon-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const targetId = btn.dataset.target;
       const delta = parseInt(btn.dataset.delta);
+      const weaponKey = WEAPON_KEYS[targetId];
       const input = document.getElementById(targetId);
       const newValue = Math.min(
         maxWepLevel,
         Math.max(0, parseInt(input.value) + delta),
       );
       input.value = newValue;
-      applyWeaponLevels();
+
+      if (delta > 0 && player) {
+        // Use upgradeWeapon so unlock/upgrade/max sounds fire correctly
+        while (player.weaponLevels[weaponKey] < newValue) {
+          player.upgradeWeapon(weaponKey);
+        }
+        player.updateWeaponSprite();
+      } else {
+        applyWeaponLevels();
+      }
     });
   });
 
