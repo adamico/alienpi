@@ -173,14 +173,16 @@ export const soundShoot = new Sound([
   0.06,
 ]);
 
-// Latch beam — sustained electric hum with organic tremolo
+// Latch beam — sustained electric hum with organic tremolo. Longer release
+// than damage tick rate so consecutive plays overlap into a continuous hum
+// rather than re-attacking each cycle.
 export const soundLatch = new Sound([
-  0.15,
+  0.18,
   0.0,
-  120,
-  0.02,
-  0.25,
-  0.02,
+  140,
+  0.03,
+  0.3,
+  0.45,
   2,
   1.5,
   ,
@@ -191,44 +193,70 @@ export const soundLatch = new Sound([
   0.3,
   80,
   0.08,
-  0.1,
+  0.2,
   0.8,
   ,
-  0.2,
+  0.15,
   ,
 ]);
 
-// Shotgun — dry white-noise burst
-export const soundShotgun = new Sound([
-  1.3,
-  0.01,
-  351,
-  ,
-  0.09,
-  0.08,
-  1,
-  4,
-  ,
-  -31,
-  ,
-  ,
-  ,
-  1.7,
-  5,
-  0.2,
-  0.14,
-  0.61,
+// Latch beam charge-up — brief rising blip played once when the player starts
+// firing the beam, mirrors the boss beam treatment but lighter and brighter.
+export const soundLatchCharge = new Sound([
+  0.5,
+  0,
+  240,
+  0.04,
+  0.18,
   0.05,
-]); // Shoot 420 - Copy 3
+  1,
+  1.4,
+  8,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  0.2,
+  0.7,
+  0.04,
+]);
+
+// Shotgun — punchy noise burst with a deeper body and longer tail. Earlier
+// version sat too quiet next to the impacts it caused.
+export const soundShotgun = new Sound([
+  2.2,
+  0.04,
+  220,
+  0.005,
+  0.06,
+  0.18,
+  4,
+  1.6,
+  ,
+  -55,
+  ,
+  ,
+  ,
+  2.5,
+  4,
+  0.25,
+  0.25,
+  0.7,
+  0.1,
+]);
 /* eslint-enable no-sparse-arrays */
 
+// Explosion — boomier low-end and longer tail; previous mix was thin.
 export const soundExplosion1 = new Sound([
-  0.8,
+  1.7,
+  0.05,
+  45,
+  0.05,
   ,
-  55,
-  0.07,
-  ,
-  0.53,
+  0.7,
   4,
   2.9,
   ,
@@ -236,23 +264,23 @@ export const soundExplosion1 = new Sound([
   -50,
   ,
   0.01,
-  0.5,
+  0.6,
   ,
-  0.5,
-  0.24,
-  0.42,
-  0.14,
+  0.6,
+  0.35,
+  0.45,
+  0.18,
   ,
   4,
-]); // Explosion 444 - Mutation 4
+]);
 
 export const soundExplosion2 = new Sound([
-  0.8,
-  ,
-  31,
+  1.6,
+  0.05,
+  28,
   0.03,
-  0.04,
-  0,
+  0.05,
+  0.25,
   5,
   1.545843234053468,
   ,
@@ -260,12 +288,12 @@ export const soundExplosion2 = new Sound([
   ,
   ,
   ,
-  1.9,
+  2.2,
   ,
-  0.3,
-  ,
-  0.35,
-  0.05,
+  0.4,
+  0.15,
+  0.45,
+  0.08,
 ]); // Explosion 457
 
 export const soundPlayerHit = new Sound([
@@ -290,27 +318,55 @@ export const soundPlayerHit = new Sound([
   0.02,
 ]); // Hit 483
 
+// Boss beam — sustained low drone with tremolo + slight delay tail. The long
+// release lets retriggers overlap smoothly into a continuous hum instead of
+// the previous machine-gun-like pulsing.
 export const soundBossBeam = new Sound([
-  1.9,
-  ,
-  208,
-  0.01,
-  0.17,
-  0.09,
-  1,
-  2.2,
-  ,
+  1.6,
+  0.05,
+  110,
+  0.04,
+  0.35,
+  0.5,
   2,
+  1.4,
   ,
   ,
   ,
   ,
-  2.4,
   ,
-  0.17,
-  0.74,
+  ,
+  6,
+  ,
+  0.25,
+  0.7,
   0.08,
-]); // Shoot 475
+]);
+
+// Boss beam charge-up — rising whine played once during the starting telegraph.
+/* eslint-disable no-sparse-arrays */
+export const soundBossBeamCharge = new Sound([
+  0.9,
+  0.02,
+  90,
+  0.05,
+  0.4,
+  0.05,
+  1,
+  1.5,
+  6,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  0.3,
+  0.6,
+  0.05,
+]);
+/* eslint-enable no-sparse-arrays */
 
 // Loot collect — bright, rising chime
 export const soundLootCollect = new Sound([

@@ -23,6 +23,15 @@ mkdir -p dist
 # --minify: shrink the code for production
 # --format=esm: keep it as an ES module to match index.html
 # --outfile: where to put the result
+#
+# For release builds we point engine.js at LittleJS's release ES module
+# (littlejs.esm.min.js) which strips debug/ASSERT code and is pre-minified.
+# The original engine.js is restored on exit (success or failure) by the trap.
+echo "🔧 Switching engine.js to LittleJS release build..."
+cp src/engine.js src/engine.js.bak
+trap 'mv src/engine.js.bak src/engine.js 2>/dev/null || true' EXIT
+sed 's|littlejs\.esm\.js|littlejs.esm.min.js|' src/engine.js.bak > src/engine.js
+
 echo "📦 Bundling JavaScript..."
 npx esbuild game.js --bundle --minify --format=esm --outfile=dist/game.js
 

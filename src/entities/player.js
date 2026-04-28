@@ -19,6 +19,7 @@ import {
   soundShoot,
   soundShotgun,
   soundLatch,
+  soundLatchCharge,
   soundPlayerHit,
   soundWeaponSwitch,
   soundWeaponUnlock,
@@ -553,14 +554,20 @@ export class Player extends BaseEntity {
     if (!firing) {
       this.clearLatchBeams();
       this.latchSoundTimer = 0;
+      this.latchWasFiring = false;
       return;
     }
 
     const count = cfg.count[level - 1];
-    const cooldown = cfg.cooldown[level - 1];
+    if (!this.latchWasFiring) {
+      soundLatchCharge.play();
+      this.latchWasFiring = true;
+    }
     if (this.latchSoundTimer <= 0) {
       soundLatch.play();
-      this.latchSoundTimer = cooldown;
+      // Decoupled from cfg.cooldown (damage tick rate). Sized so the long
+      // release tail overlaps into a continuous hum instead of pulsing.
+      this.latchSoundTimer = 36;
     } else {
       this.latchSoundTimer--;
     }

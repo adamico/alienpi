@@ -47,7 +47,7 @@
 - ~~S4: add "<weapon> max" sound effect. Priority: high~~ DONE
 - ~~S5: add title music. Priority: high~~ DONE
 - ~~S6: add game over music. Priority: high~~ DONE (`soundGameOverMusic` + `soundVictoryMusic` both wired to game state)
-- S7: improve boss beam sound effect. Priority: high.
+- ~~S7: improve boss beam sound effect. Priority: high~~ DONE (sustained low drone with longer release + one-shot charge-up sting on telegraph; retrigger interval slowed so the tail overlaps instead of pulsing)
 - ~~S8: add boss death sound effect. Priority: medium~~ N/A (victory screen covers this)
 - ~~S9: add weapon change sound effect. Priority: medium~~ DONE
 
@@ -85,7 +85,7 @@
 - ~~P1.5: publish game on itch.io. Priority: high~~ DONE
 - ~~P2: test html loading, especially images/sounds/fonts. Priority: high~~ DONE
 - ~~P3: add build script. Priority: medium~~ DONE
-- P3.5: change the build script to make littlejs in release mode. Priority: high
+- ~~P3.5: change the build script to make littlejs in release mode. Priority: high~~ DONE (build.sh swaps engine.js to import littlejs.esm.min.js — debug/ASSERT stripped — and restores via trap on exit)
 - P4: add analytics. Priority: low
 - P5: add feedback form. Priority: medium
 - P6: add post-launch updates. Priority: low

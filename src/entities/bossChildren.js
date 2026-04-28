@@ -28,7 +28,7 @@ import {
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { player } from "./player.js";
-import { soundBossBeam } from "../sounds.js";
+import { soundBossBeam, soundBossBeamCharge } from "../sounds.js";
 
 import { Loot } from "./loot.js";
 import { player as playerCfg } from "../config.js";
@@ -524,6 +524,7 @@ export class BossBeam extends EngineObject {
     this.lifeTimer = new Timer(); // will be set when active
     this.endTimer = new Timer(); // will be set when ending
     this.soundTimer = 0; // retriggers soundBossBeam while active
+    soundBossBeamCharge.play(vec2(), 0.25);
   }
 
   update() {
@@ -596,7 +597,9 @@ export class BossBeam extends EngineObject {
     }
     if (this.soundTimer <= 0) {
       soundBossBeam.play(vec2(), 0.2);
-      this.soundTimer = 16; // ≈ sound envelope length in frames
+      // Retrigger spaced so the long release tail overlaps into a continuous
+      // hum rather than re-attacking each cycle.
+      this.soundTimer = 36;
     } else {
       this.soundTimer--;
     }
