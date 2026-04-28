@@ -3,7 +3,7 @@
 ## Boss
 
 - B1: One more boss attack to make the shotgun weapon useful. something like the diving drones, with low hp but in huge numbers. Priority: high
-- B2: Add boss health bar when he appears. Priority: medium
+- ~~B2: Add boss health bar when he appears. Priority: medium~~ DONE
 
 ## Menus
 
@@ -72,6 +72,8 @@
 ## Testing
 
 - T1: improve the test lab reusing elements from the actual game. Priority: high
+- T2: add a button to clear the spawned entities. Priority: medium
+- T3: when the player collects a spawned loot, update the level
 
 ## Publishing
 
