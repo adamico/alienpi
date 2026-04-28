@@ -68,7 +68,7 @@
 
 - A1: add touch controls. Priority: high
 - A2: add gamepad controls. Priority: medium
-- A3: add a fullscreen button. Priority: high
+- ~~A3: add a fullscreen button. Priority: high~~ DONE
 
 ## Testing
 

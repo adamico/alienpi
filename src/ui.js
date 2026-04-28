@@ -14,6 +14,8 @@ import {
   BLACK,
   UISlider,
   mouseWasReleased,
+  toggleFullscreen,
+  isFullscreen,
 } from "./engine.js";
 
 import { player } from "./entities/player.js";
@@ -375,7 +377,8 @@ function setupSettingsScreen() {
     makeRow(settingsGroup, -50),
     makeRow(settingsGroup, 30),
     makeRow(settingsGroup, 80),
-    makeRow(settingsGroup, 160),
+    makeRow(settingsGroup, 130),
+    makeRow(settingsGroup, 180),
   ];
 }
 
@@ -465,6 +468,12 @@ function rebuildMenus() {
       },
     },
     {
+      kind: "toggle",
+      label: () =>
+        `FULLSCREEN: ${isFullscreen() ? strings.ui.onLabel : strings.ui.offLabel}`,
+      toggle: () => toggleFullscreen(),
+    },
+    {
       kind: "action",
       label: () => "BACK TO GAME (ESC)",
       activate: () => pauseHandlers.resume(),
@@ -529,8 +538,14 @@ function rebuildMenus() {
       },
     },
     {
+      kind: "toggle",
+      label: () =>
+        `FULLSCREEN: ${isFullscreen() ? strings.ui.onLabel : strings.ui.offLabel}`,
+      toggle: () => toggleFullscreen(),
+    },
+    {
       kind: "action",
-      label: () => "BACK (ESC)",
+      label: () => "BACK",
       activate: () => settingsHandlers.back(),
     },
   ]);
