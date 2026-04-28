@@ -19,6 +19,7 @@ import {
   keyWasPressed,
   setPaused,
   setDebugWatermark,
+  setTouchGamepadEnable,
 } from "./src/engine.js";
 import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 
@@ -40,6 +41,7 @@ import {
   soundGameOverMusic,
   updateSoundVolumes,
 } from "./src/sounds.js";
+import { input } from "./src/input.js";
 import { Boundary } from "./src/entities/boundary.js";
 import {
   initUI,
@@ -68,6 +70,7 @@ async function gameInit() {
   setFontDefault(FONT_HUD);
   await initializeGameAssets();
   setDebugWatermark(false);
+  setTouchGamepadEnable(true);
   setPaused(true);
   initUI();
   setMenuHandlers({
@@ -145,6 +148,8 @@ function setupBoundaries() {
 }
 
 function gameUpdate() {
+  input.reset();
+  input.update();
   if (gameState !== GAME_STATES.PLAYING) return;
 
   if (system.enableDPSLog) updateDPSLog();

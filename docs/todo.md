@@ -66,8 +66,8 @@
 
 ## Accessibility
 
-- A1: add touch controls. Priority: high
-- A2: add gamepad controls. Priority: medium
+- ~~A1: add touch controls. Priority: high~~ DONE
+- ~~A2: add gamepad controls. Priority: medium~~ DONE
 - ~~A3: add a fullscreen button. Priority: high~~ DONE
 
 ## Testing

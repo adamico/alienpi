@@ -1,8 +1,5 @@
 import {
   vec2,
-  keyDirection,
-  keyIsDown,
-  keyWasPressed,
   Color,
   WHITE,
   ParticleEmitter,
@@ -34,7 +31,8 @@ import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { LatchBeam } from "./latchBeam.js";
-import * as gameEffects from "../gameEffects.js";
+import { input } from "../input.js";
+import { FlashEffect, spawnMuzzleFlash, applyScreenShake } from "../gameEffects.js";
 
 export let player = null;
 
@@ -144,7 +142,7 @@ export class Player extends BaseEntity {
   }
 
   updateWeaponSwitch() {
-    if (keyWasPressed(system.switchKey)) {
+    if (input.switchWeapon) {
       // Find the next weapon with level > 0
       let nextIndex = this.weaponIndex;
       for (let i = 0; i < WEAPON_ORDER.length; i++) {
@@ -164,7 +162,7 @@ export class Player extends BaseEntity {
 
       // Weapon switch animation
       this.extraScale = 1.3;
-      this.applyEffect(new gameEffects.FlashEffect(WHITE, 0.15));
+      this.applyEffect(new FlashEffect(WHITE, 0.15));
     }
   }
 
@@ -315,11 +313,12 @@ export class Player extends BaseEntity {
 
   updateExhaust() {
     if (!this.exhaustEmitters) return;
-    const input = keyDirection();
+    const moveDir = input.moveDir;
     const { emitRateBase, emitRateRange, sizeStart, sizeStartBoost } =
       playerCfg.exhaust;
-    this._exhaustEmitRate = emitRateBase + input.y * emitRateRange;
-    this._exhaustSizeStart = sizeStart + Math.max(0, input.y) * sizeStartBoost;
+    this._exhaustEmitRate = emitRateBase + moveDir.y * emitRateRange;
+    this._exhaustSizeStart =
+      sizeStart + Math.max(0, moveDir.y) * sizeStartBoost;
 
     for (const emitter of this.exhaustEmitters) {
       emitter.emitRate = this._exhaustEmitRate;
@@ -355,14 +354,12 @@ export class Player extends BaseEntity {
   }
 
   updateMoving() {
-    const input = keyDirection();
-    if (input.length() > 0) {
-      this.velocity = this.velocity.add(
-        input.normalize().scale(playerCfg.accel),
-      );
+    const moveDir = input.moveDir;
+    if (moveDir.length() > 0) {
+      this.velocity = this.velocity.add(moveDir.scale(playerCfg.accel));
     }
 
-    const maxSpeed = keyIsDown(system.focusKey)
+    const maxSpeed = input.isFocusing
       ? engine.objectMaxSpeed * playerCfg.focusSpeedScale
       : engine.objectMaxSpeed;
     if (this.velocity.length() > maxSpeed)
@@ -399,14 +396,14 @@ export class Player extends BaseEntity {
       // Lerp for smooth tipping back and forth
       this.splitScale.left += (targetLeft - this.splitScale.left) * 0.15;
       this.splitScale.right += (targetRight - this.splitScale.right) * 0.15;
-      
+
       this.updateChildOffsets();
     }
   }
 
   updateChildOffsets() {
     if (!this.splitScale) return;
-    
+
     const applyScale = (obj) => {
       if (obj && obj.baseLocalPos) {
         obj.localPos = this.muzzleLocalOffset(obj.baseLocalPos);
@@ -424,7 +421,7 @@ export class Player extends BaseEntity {
 
     const key = this.currentWeaponKey;
     const cfg = weaponsCfg[key];
-    const firing = keyIsDown(system.shootKey);
+    const firing = input.isFiring;
 
     // Update persistent muzzle muzzles (for Latch)
     if (this.muzzleEmitters.length > 0) {
@@ -487,7 +484,7 @@ export class Player extends BaseEntity {
       b.weaponKey = "vulcan";
       b.player = this;
       b.volleyState = volleyState;
-      gameEffects.spawnMuzzleFlash(
+      spawnMuzzleFlash(
         this,
         offset,
         1,
@@ -504,7 +501,7 @@ export class Player extends BaseEntity {
     soundShotgun.play();
     const cfg = weaponsCfg.shotgun;
     const level = this.weaponLevels.shotgun;
-    const yInput = keyDirection().y;
+    const yInput = input.moveDir.y;
     let cone = cfg.coneBase;
     if (yInput > 0) cone = lerp(cfg.coneBase, cfg.coneMax, yInput);
     else if (yInput < 0) cone = lerp(cfg.coneBase, cfg.coneMin, -yInput);
@@ -537,7 +534,7 @@ export class Player extends BaseEntity {
       }
 
       const flashScale = 1 + (count - 1) * 0.1;
-      gameEffects.spawnMuzzleFlash(
+      spawnMuzzleFlash(
         this,
         offset,
         flashScale,
@@ -686,8 +683,8 @@ export class Player extends BaseEntity {
 
     soundPlayerHit.play();
     this.hp -= amount;
-    this.applyEffect(new gameEffects.FlashEffect(new Color(1, 0, 0), 0.1));
-    gameEffects.applyScreenShake(0.3, 0.1);
+    this.applyEffect(new FlashEffect(new Color(1, 0, 0), 0.1));
+    applyScreenShake(0.3, 0.1);
     this.startInvulnerability({ duration: 2 });
 
     if (this.hp <= 0) {
