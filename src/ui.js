@@ -9,6 +9,7 @@ import {
   UITile,
   timeReal,
   mainCanvasSize,
+  cameraScale,
   Color,
   BLACK,
   UISlider,
@@ -22,12 +23,13 @@ import {
   player as playerCfg,
   loot as lootCfg,
   weapons as weaponsCfg,
+  system,
   settings,
   saveSettings,
   GAME_STATES,
   strings,
 } from "./config.js";
-import { gameState, gameTime, gameWon } from "../game.js";
+import { gameState, gameTime, gameWon, currentBoss } from "../game.js";
 import { Menu, adjustSetting } from "./menuNav.js";
 import { FONT_MENU } from "./fonts.js";
 import { formatScore } from "./score.js";
@@ -38,6 +40,7 @@ let healthIcons = [];
 let weaponIcons = [];
 let hudGroup, titleGroup, pauseGroup, gameOverGroup, settingsGroup;
 let titleText, subtitleText, controlGroup, controlsTitle, controlsBody;
+let bossHealthGroup, bossHealthBg, bossHealthFg;
 let titleMenuRows = [];
 let pauseTitleText,
   pauseMusicSlider,
@@ -62,6 +65,15 @@ function measureTextWidth(text, pxHeight, font) {
   measureCtx.font = `${pxHeight}px ${font}`;
   return measureCtx.measureText(text).width;
 }
+
+const BOSS_BAR = {
+  padding: 40,         // top margin and left/right margin from canvas edge
+  height: 32,          // outer bar height
+  border: 2,           // bg border line width
+  fgInset: 4,          // gap between bg edge and fg edge (framed look)
+  revealDuration: 0.6, // seconds for scale + flash reveal
+};
+let bossBarRevealStartT = null;
 
 const FOCUS_COLOR = rgb(1, 0.9, 0.3);
 const IDLE_COLOR = WHITE;
@@ -144,6 +156,21 @@ export function initUI() {
 
   setupHealthUI();
   setupWeaponUI();
+
+  // Boss Health Bar — actual size set per-frame in updateBossHealthBar.
+  bossHealthGroup = new UIObject(vec2(0, 0), vec2(BOSS_BAR.height, BOSS_BAR.height));
+  bossHealthGroup.color = new Color(0, 0, 0, 0);
+  bossHealthGroup.lineWidth = 0;
+  hudGroup.addChild(bossHealthGroup);
+
+  bossHealthBg = new UIObject(vec2(0, 0), vec2(BOSS_BAR.height, BOSS_BAR.height));
+  bossHealthBg.lineWidth = BOSS_BAR.border;
+  bossHealthGroup.addChild(bossHealthBg);
+
+  bossHealthFg = new UIObject(vec2(0, 0), vec2(BOSS_BAR.height, BOSS_BAR.height));
+  bossHealthFg.lineWidth = 0;
+  bossHealthBg.addChild(bossHealthFg);
+
   setupTitleScreen();
   setupPauseScreen();
   setupGameOverScreen();
@@ -275,13 +302,13 @@ function setupGameOverScreen() {
   retryText.fontShadow = true;
 
   backToTitleText = new UIText(
-    vec2(0, 90),
-    vec2(800, 50),
+    vec2(0, 100),
+    vec2(800, 40),
     strings.ui.backToTitlePrompt,
   );
-  backToTitleText.textHeight = 24;
+  backToTitleText.textHeight = 18;
   backToTitleText.font = FONT_MENU;
-  backToTitleText.textColor = WHITE.copy();
+  backToTitleText.textColor = new Color(0.7, 0.7, 0.7, 1);
   backToTitleText.fontShadow = true;
 
   finalScoreText = new UIText(
@@ -497,6 +524,52 @@ function rebuildMenus() {
   ]);
 }
 
+function updateBossHealthBar(uiCenterY, hudScale) {
+  const visible =
+    currentBoss && !currentBoss.destroyed && currentBoss.state !== "entering";
+  if (!visible) {
+    bossHealthGroup.visible = false;
+    bossBarRevealStartT = null;
+    return;
+  }
+  if (bossBarRevealStartT === null) bossBarRevealStartT = timeReal;
+  bossHealthGroup.visible = true;
+
+  const elapsed = timeReal - bossBarRevealStartT;
+  const t = Math.min(1, elapsed / BOSS_BAR.revealDuration);
+  const ease = t * t * (3 - 2 * t); // smoothstep
+  const flash = 1 - ease;            // 1 = fully white, 0 = final color
+
+  // Position: top of canvas + padding, centered horizontally.
+  const yOffset = BOSS_BAR.padding + BOSS_BAR.height / 2;
+  bossHealthGroup.localPos = vec2(0, -uiCenterY + yOffset * hudScale);
+
+  // Background: bar fits inside the playfield with `padding` from each
+  // playfield edge (i.e. side padding includes the marquee band), scaled by
+  // the reveal animation.
+  const playfieldWidth = system.levelSize.x * cameraScale;
+  const marqueeWidth = (mainCanvasSize.x - playfieldWidth) / 2;
+  const fullBgWidth =
+    mainCanvasSize.x - (marqueeWidth + BOSS_BAR.padding * hudScale) * 2;
+  const bgWidth = fullBgWidth * ease;
+  bossHealthBg.size = vec2(bgWidth, BOSS_BAR.height * hudScale);
+
+  // Foreground: insets within bg, width tracks current HP.
+  const hpPercent = Math.max(0, currentBoss.hp / currentBoss.maxHp);
+  const fgMaxWidth = (fullBgWidth - BOSS_BAR.fgInset * 2 * hudScale) * ease;
+  const fgWidth = fgMaxWidth * hpPercent;
+  bossHealthFg.size = vec2(
+    fgWidth,
+    (BOSS_BAR.height - BOSS_BAR.fgInset * 2) * hudScale,
+  );
+  bossHealthFg.localPos = vec2(-(fgMaxWidth - fgWidth) / 2, 0);
+
+  // Color flash: white → final colors as the reveal completes.
+  bossHealthBg.color = new Color(0.2 + 0.8 * flash, flash, flash, 0.7);
+  bossHealthBg.lineColor = new Color(1, flash, flash);
+  bossHealthFg.color = new Color(1, 0.2 + 0.8 * flash, 0.2 + 0.8 * flash);
+}
+
 function paintMenu(menu, rows, focusColor, idleColor) {
   for (let i = 0; i < rows.length; i++) {
     const item = menu.items[i];
@@ -649,7 +722,9 @@ export function updateUI() {
 
   const uiCenterX = mainCanvasSize.x / 2;
   const uiCenterY = mainCanvasSize.y / 2;
-  const margin = vec2(130 * hudScale, 60 * hudScale);
+  // y-margin clears the boss bar (top padding + bar height + gap) so score/time
+  // sit beneath it instead of overlapping.
+  const margin = vec2(130 * hudScale, 100 * hudScale);
   const uiAnchor = vec2(-uiCenterX + margin.x, -uiCenterY + margin.y);
 
   scoreText.localPos = vec2(uiAnchor.x, uiAnchor.y);
@@ -718,6 +793,8 @@ export function updateUI() {
       }
     }
   });
+
+  updateBossHealthBar(uiCenterY, hudScale);
 
   const minutes = Math.floor(gameTime / 60);
   const seconds = Math.floor(gameTime % 60);

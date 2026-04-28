@@ -48,7 +48,7 @@ import {
   setMenuHandlers,
 } from "./src/ui.js";
 
-let currentBoss = null;
+export let currentBoss = null;
 let player = null;
 const boundaries = [];
 
