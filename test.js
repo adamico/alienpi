@@ -10,6 +10,7 @@ import {
   setTilesPixelated,
   mousePos,
   mouseWasPressed,
+  gamepadWasPressed,
   time,
   sin,
   Color,
@@ -160,6 +161,13 @@ function gameUpdate() {
     }
   }
   updateSoundVolumes();
+  
+  // Gamepad Debug: Log button numbers to console
+  for (let i = 0; i < 16; ++i) {
+    if (gamepadWasPressed(i)) {
+      console.log(`[TEST LAB] Gamepad Button: ${i}`);
+    }
+  }
 }
 
 function handleSpawn() {

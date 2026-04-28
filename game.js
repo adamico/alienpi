@@ -23,6 +23,8 @@ import {
   setDebugWatermark,
   setTouchGamepadEnable,
   setTouchGamepadSize,
+  gamepadWasReleased,
+  gamepadStick,
 } from "./src/engine.js";
 import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 
@@ -184,49 +186,85 @@ const MENU_KEYS = [
   "Space",
 ];
 
+let lastGamepadStick = vec2(0);
+const inputActions = {
+  confirm: () =>
+    keyWasPressed("Enter") ||
+    keyWasPressed("Space") ||
+    mouseWasPressed(0) ||
+    mouseWasReleased(0) ||
+    gamepadWasReleased(0),
+  cancel: () =>
+    keyWasPressed("Escape") || gamepadWasReleased(8) || gamepadWasReleased(1),
+  pause: () =>
+    keyWasPressed("Escape") || keyWasPressed("KeyP") || gamepadWasReleased(11),
+};
+
 function dispatchMenu(menu) {
+  // Keyboard navigation
   for (const code of MENU_KEYS) {
     if (keyWasPressed(code)) {
       menu.handleKey(code);
       return;
     }
   }
-  // KeyS is overloaded with movement; only deliver to menu if no other key fired.
   if (keyWasPressed("KeyS")) menu.handleKey("KeyS");
+
+  // Gamepad navigation
+  const gStick = gamepadStick(0);
+  const stickThreshold = 0.5;
+  const stickUp =
+    gStick.y > stickThreshold && lastGamepadStick.y <= stickThreshold;
+  const stickDown =
+    gStick.y < -stickThreshold && lastGamepadStick.y >= -stickThreshold;
+  const stickLeft =
+    gStick.x < -stickThreshold && lastGamepadStick.x >= -stickThreshold;
+  const stickRight =
+    gStick.x > stickThreshold && lastGamepadStick.x <= stickThreshold;
+  lastGamepadStick = gStick;
+
+  if (gamepadWasReleased(12) || stickUp) {
+    menu.handleKey("ArrowUp");
+  } else if (gamepadWasReleased(13) || stickDown) {
+    menu.handleKey("ArrowDown");
+  } else if (gamepadWasReleased(14) || stickLeft) {
+    menu.handleKey("ArrowLeft");
+  } else if (gamepadWasReleased(15) || stickRight) {
+    menu.handleKey("ArrowRight");
+  } else if (inputActions.confirm()) {
+    menu.handleKey("Enter");
+  } else if (inputActions.cancel()) {
+    menu.handleKey("Escape");
+  }
 }
 
 function gameUpdatePost() {
   if (gameState === GAME_STATES.TITLE) {
     dispatchMenu(titleMenu);
   } else if (gameState === GAME_STATES.PLAYING) {
-    if (keyWasPressed("Escape") || keyWasPressed("KeyP")) {
+    if (inputActions.pause()) {
       gameState = GAME_STATES.PAUSE;
       setPaused(true);
     }
   } else if (gameState === GAME_STATES.PAUSE) {
-    if (keyWasPressed("Escape") || keyWasPressed("KeyP")) {
+    if (inputActions.pause()) {
       gameState = GAME_STATES.PLAYING;
       setPaused(false);
     } else {
       dispatchMenu(pauseMenu);
     }
   } else if (gameState === GAME_STATES.SETTINGS) {
-    if (keyWasPressed("Escape")) {
+    if (inputActions.cancel()) {
       gameState = previousState;
     } else {
       dispatchMenu(settingsMenu);
     }
   } else if (gameState === GAME_STATES.GAMEOVER) {
     if (timeReal - gameOverTime > 1.0) {
-      if (
-        keyWasPressed("Enter") ||
-        keyWasPressed("Space") ||
-        mouseWasPressed(0) ||
-        mouseWasReleased(0)
-      ) {
+      if (inputActions.confirm()) {
         resetGame();
         setPaused(false);
-      } else if (keyWasPressed("Escape")) {
+      } else if (inputActions.cancel()) {
         gameState = GAME_STATES.TITLE;
         setPaused(true);
       }
