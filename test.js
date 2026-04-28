@@ -71,7 +71,7 @@ function setupUIListeners() {
       defaultHp = enemyCfg.swarm[type].hp;
     } else if (type === "boss" || type === "boss_no_orbiters") {
       defaultHp = bossCfg.hp;
-    } else if (type === "orbiter") {
+    } else if (type === "orbiter" || type === "orbiter_looter") {
       defaultHp = orbCfg.hp;
     } else if (type === "missile") {
       defaultHp = missileCfg.hp;
@@ -182,6 +182,8 @@ function handleSpawn() {
     }
   } else if (entityType === "orbiter") {
     entity = new BossOrbiter(0, hpValue, false, spawnPos.copy());
+  } else if (entityType === "orbiter_looter") {
+    entity = new BossOrbiter(0, hpValue, true, spawnPos.copy());
   } else if (entityType === "missile") {
     entity = new BossMissile(spawnPos.copy());
     entity.hp = hpValue;
