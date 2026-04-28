@@ -10,6 +10,7 @@ import {
   glSetAntialias,
   setCanvasPixelated,
   setTilesPixelated,
+  setFontDefault,
   engineObjects,
   timeReal,
   timeDelta,
@@ -18,10 +19,12 @@ import {
   keyWasPressed,
   setPaused,
 } from "./src/engine.js";
+import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 
 import {
   system,
   settings,
+  loadSettings,
   GAME_STATES,
   starfield as starCfg,
 } from "./src/config.js";
@@ -34,7 +37,14 @@ import {
   soundMusicVerse,
 } from "./src/sounds.js";
 import { Boundary } from "./src/entities/boundary.js";
-import { initUI, updateUI } from "./src/ui.js";
+import {
+  initUI,
+  updateUI,
+  titleMenu,
+  pauseMenu,
+  settingsMenu,
+  setMenuHandlers,
+} from "./src/ui.js";
 
 let bossSpawned = false;
 let bossMusicPlaying = false;
@@ -51,9 +61,35 @@ let gameOverTime = 0;
 export let gameTime = 0;
 
 async function gameInit() {
+  loadSettings();
+  await preloadFonts();
+  setFontDefault(FONT_HUD);
   await initializeGameAssets();
   setPaused(true);
   initUI();
+  setMenuHandlers({
+    title: {
+      start: () => {
+        resetGame();
+        setPaused(false);
+      },
+      openSettings: () => {
+        previousState = gameState;
+        gameState = GAME_STATES.SETTINGS;
+      },
+    },
+    pause: {
+      resume: () => {
+        gameState = GAME_STATES.PLAYING;
+        setPaused(false);
+      },
+    },
+    settings: {
+      back: () => {
+        gameState = previousState;
+      },
+    },
+  });
 }
 
 export function resetGame() {
@@ -121,34 +157,49 @@ function gameUpdate() {
   }
 }
 
+const MENU_KEYS = [
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "KeyW",
+  "KeyA",
+  "KeyD",
+  "Enter",
+  "Space",
+];
+
+function dispatchMenu(menu) {
+  for (const code of MENU_KEYS) {
+    if (keyWasPressed(code)) {
+      menu.handleKey(code);
+      return;
+    }
+  }
+  // KeyS is overloaded with movement; only deliver to menu if no other key fired.
+  if (keyWasPressed("KeyS")) menu.handleKey("KeyS");
+}
+
 function gameUpdatePost() {
   if (gameState === GAME_STATES.TITLE) {
-    if (keyWasPressed("Enter") || keyWasPressed("Space")) {
-      resetGame();
-      setPaused(false);
-    }
-    if (keyWasPressed("KeyS")) {
-      previousState = gameState;
-      gameState = GAME_STATES.SETTINGS;
-    }
+    dispatchMenu(titleMenu);
   } else if (gameState === GAME_STATES.PLAYING) {
     if (keyWasPressed("Escape") || keyWasPressed("KeyP")) {
       gameState = GAME_STATES.PAUSE;
       setPaused(true);
     }
   } else if (gameState === GAME_STATES.PAUSE) {
-    if (
-      keyWasPressed("Escape") ||
-      keyWasPressed("KeyP") ||
-      keyWasPressed("Enter") ||
-      keyWasPressed("Space")
-    ) {
+    if (keyWasPressed("Escape") || keyWasPressed("KeyP")) {
       gameState = GAME_STATES.PLAYING;
       setPaused(false);
+    } else {
+      dispatchMenu(pauseMenu);
     }
   } else if (gameState === GAME_STATES.SETTINGS) {
     if (keyWasPressed("Escape")) {
       gameState = previousState;
+    } else {
+      dispatchMenu(settingsMenu);
     }
   } else if (gameState === GAME_STATES.GAMEOVER) {
     if (timeReal - gameOverTime > 1.0) {
@@ -159,17 +210,6 @@ function gameUpdatePost() {
     }
   }
 
-  // Audio toggles (only in non-playing states to avoid accidental presses)
-  if (gameState !== GAME_STATES.PLAYING) {
-    if (keyWasPressed("KeyM")) {
-      settings.musicEnabled = !settings.musicEnabled;
-    }
-    if (keyWasPressed("KeyS")) {
-      settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
-    }
-  }
-
-  // Music and UI update even when paused or in title
   updateGameMusic();
   updateBossMusic();
   updateUI();

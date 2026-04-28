@@ -461,10 +461,45 @@ export const settings = {
   soundEffectsEnabled: true,
   musicVolume: 0.8,
   sfxVolume: 0.8,
+  flashEnabled: true,
+  shakeEnabled: true,
   enableDPSLog: false,
   customDebug: false,
   debugKey: "F1",
 };
+
+const SETTINGS_STORAGE_KEY = "alienpi.settings.v1";
+const PERSISTED_KEYS = [
+  "musicEnabled",
+  "soundEffectsEnabled",
+  "musicVolume",
+  "sfxVolume",
+  "flashEnabled",
+  "shakeEnabled",
+];
+
+export function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    for (const key of PERSISTED_KEYS) {
+      if (key in parsed) settings[key] = parsed[key];
+    }
+  } catch {
+    // Corrupt or unavailable storage: fall back to defaults silently.
+  }
+}
+
+export function saveSettings() {
+  try {
+    const snapshot = {};
+    for (const key of PERSISTED_KEYS) snapshot[key] = settings[key];
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Storage write failed (private mode, quota): ignore.
+  }
+}
 
 export const ui = {
   debugPos: vec2(1700, 64),
