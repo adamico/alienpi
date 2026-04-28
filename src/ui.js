@@ -13,6 +13,7 @@ import {
   Color,
   BLACK,
   UISlider,
+  mouseWasPressed,
   mouseWasReleased,
   toggleFullscreen,
   isFullscreen,
@@ -551,6 +552,37 @@ function rebuildMenus() {
   ]);
 }
 
+/**
+ * Processes mouse/touch interaction for a Menu and its corresponding UI rows.
+ * @param {Menu} menu
+ * @param {Array} rows - Objects with {row: UIObject}
+ */
+function updateMenuInteraction(menu, rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row.row.visible) continue;
+
+    // Use overlapping check which is more reliable for touch than top-most hover
+    if (row.row.isMouseOverlapping()) {
+      if (menu.focusedIndex !== i) {
+        menu.focusedIndex = i;
+      }
+      
+      // Check for both press and release to catch touch events reliably
+      if (mouseWasPressed(0) || mouseWasReleased(0)) {
+        const item = menu.items[i];
+        if (item) {
+          if (item.kind === "action") item.activate?.();
+          else if (item.kind === "toggle") item.toggle?.();
+          // Slider kind: focus is enough, they use UISlider for actual dragging
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 function updateBossHealthBar(uiCenterY, hudScale) {
   const visible =
     currentBoss && !currentBoss.destroyed && currentBoss.state !== "entering";
@@ -692,6 +724,7 @@ export function updateUI() {
   settingsGroup.visible = gameState === GAME_STATES.SETTINGS;
 
   if (titleGroup.visible) {
+    updateMenuInteraction(titleMenu, titleMenuRows);
     paintMenu(titleMenu, titleMenuRows, FOCUS_COLOR, IDLE_COLOR);
   }
 
@@ -704,6 +737,7 @@ export function updateUI() {
       settings.sfxVolume = settingsSfxSlider.value;
       soundShoot.play();
     }
+    updateMenuInteraction(settingsMenu, settingsMenuRows);
     paintMenu(settingsMenu, settingsMenuRows, FOCUS_COLOR, IDLE_COLOR);
 
     if (mouseWasReleased(0)) {
@@ -723,6 +757,7 @@ export function updateUI() {
       settings.sfxVolume = pauseSfxSlider.value;
       soundShoot.play();
     }
+    updateMenuInteraction(pauseMenu, pauseMenuRows);
     paintMenu(pauseMenu, pauseMenuRows, FOCUS_DARK, IDLE_DARK);
 
     if (mouseWasReleased(0)) {

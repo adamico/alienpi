@@ -17,6 +17,8 @@ import {
   sin,
   engineObjectsDestroy,
   keyWasPressed,
+  mouseWasPressed,
+  mouseWasReleased,
   setPaused,
   setDebugWatermark,
   setTouchGamepadEnable,
@@ -214,7 +216,12 @@ function gameUpdatePost() {
     }
   } else if (gameState === GAME_STATES.GAMEOVER) {
     if (timeReal - gameOverTime > 1.0) {
-      if (keyWasPressed("Enter") || keyWasPressed("Space")) {
+      if (
+        keyWasPressed("Enter") ||
+        keyWasPressed("Space") ||
+        mouseWasPressed(0) ||
+        mouseWasReleased(0)
+      ) {
         resetGame();
         setPaused(false);
       } else if (keyWasPressed("Escape")) {
