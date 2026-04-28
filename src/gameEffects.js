@@ -431,6 +431,8 @@ export class OutlineEffect extends EntityEffect {
   }
 
   render(entity, renderPos, drawSize) {
+    if (entity.color && entity.color.a <= 0) return; // V8 Fix: Hide outline if entity is invisible
+
     // Draw the sprite 8 times at small offsets to create an outline
     const t = this.thickness;
     const offsets = [
@@ -444,12 +446,15 @@ export class OutlineEffect extends EntityEffect {
       vec2(t, t),
     ];
 
+    const effectColor = this.color.copy();
+    if (entity.color) effectColor.a *= entity.color.a; // Scale by entity alpha
+
     offsets.forEach((offset) => {
       drawTile(
-        renderPos.add(offset),
+        renderPos.add(offset.rotate(entity.angle)),
         drawSize,
         entity.sprite,
-        this.color,
+        effectColor,
         entity.angle,
         entity.mirrorX,
       );
@@ -516,10 +521,13 @@ export class PulseEffect extends EntityEffect {
   }
 
   render(entity, renderPos, drawSize) {
+    if (entity.color && entity.color.a <= 0) return; // V8 Fix: Hide pulse if entity is invisible
+
     // Sin wave from 0 to peak alpha
     const p = (Math.sin(time * this.speed) + 1) / 2;
     const color = this.color.copy();
     color.a *= p;
+    if (entity.color) color.a *= entity.color.a; // Scale by entity alpha
 
     drawEntityFlash(
       renderPos,

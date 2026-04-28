@@ -25,6 +25,7 @@ export class Loot extends BaseEntity {
     this.velocity = vec2(0, -lootCfg.speed);
     this.mirrorY = lootCfg.mirrorY;
     this.explodeOnDestroy = false;
+    this.renderOrder = 20; // V13: Render on top of explosion particles
 
     // Add pulsing flash effect
     this.applyEffect(new PulseEffect(rgb(1, 1, 1, 0.4), 6));

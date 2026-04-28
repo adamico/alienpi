@@ -58,6 +58,7 @@ export class BossOrbiter extends BaseEntity {
     this.isSolid = false;
     this.setCollision(false, false); // No collision while appearing
     this.renderOrder = -1; // Render below the boss
+    this.baseVisualSize = this.visualSize.copy(); // V8: For warp-in scaling
     this.state = "appearing";
     this.appearTimer = new Timer(cfg.appearTime);
     this.diveTimer = new Timer(
@@ -186,15 +187,29 @@ export class BossOrbiter extends BaseEntity {
     }
 
     if (this.state === "appearing") {
-      // Blink 10Hz
-      const isVisible = ((time * 10) | 0) % 2;
+      // V8: Variable-frequency blink (rapid -> slow)
+      this.visualSize = this.baseVisualSize.copy();
+      
+      // Use getPercent() (0 -> 1) to get the true remaining fraction (1 -> 0)
+      const t = 1 - this.appearTimer.getPercent(); 
+      
+      // Phase integral for a slowing blink. 
+      // Multiplier of 50 caps max frequency at ~15Hz (at t=1.0), 
+      // which safely avoids aliasing with the 60FPS engine rate.
+      const phase = t * t * 50; 
+      
+      // Force solid for the last 0.1s so it anchors before activating
+      const isVisible = Math.sin(phase) > 0 || t < 0.1;
+      
       this.color.a = isVisible ? this.cfg.color.a : 0;
     } else if (this.state === "warning") {
+      this.visualSize = this.baseVisualSize.copy();
       // Reuse missile blinking logic: 10Hz red blink
       const isRedPhase = ((time * 20) | 0) % 2;
       if (isRedPhase) this.color.set(1, 0, 0);
       else this.color.set(this.cfg.color.r, this.cfg.color.g, this.cfg.color.b);
     } else {
+      this.visualSize = this.baseVisualSize.copy();
       this.color.set(
         this.cfg.color.r,
         this.cfg.color.g,

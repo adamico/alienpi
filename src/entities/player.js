@@ -85,7 +85,7 @@ export class Player extends BaseEntity {
     this.updateExhaustEmitters();
 
     this.muzzleEmitters = [];
-    this.updateMuzzleEmitters();
+    this.updateWeaponSprite();
   }
 
   get currentWeaponKey() {
@@ -171,6 +171,7 @@ export class Player extends BaseEntity {
           ? sprites.getSize(spriteName, sheet, playerCfg.size)
           : this.sprite.size.scale(engine.worldScale);
         this.size = this.visualSize.scale(this.hitboxScale);
+        this.baseVisualWidth = this.visualSize.x;
       }
     }
     this.updateExhaustEmitters();
@@ -352,6 +353,17 @@ export class Player extends BaseEntity {
       : engine.objectMaxSpeed;
     if (this.velocity.length() > maxSpeed)
       this.velocity = this.velocity.normalize().scale(maxSpeed);
+
+    // V2: Banking Effect
+    if (this.baseVisualWidth) {
+      // Scale visual width based on horizontal speed percentage. Max squish is 30%.
+      const maxBankVelocity = maxSpeed * 0.8; 
+      const bankFactor = Math.min(1, Math.abs(this.velocity.x) / maxBankVelocity);
+      const targetWidth = this.baseVisualWidth * (1 - bankFactor * 0.3);
+      
+      // Lerp for smooth tipping back and forth
+      this.visualSize.x += (targetWidth - this.visualSize.x) * 0.15;
+    }
   }
 
   updateShooting() {
