@@ -284,7 +284,9 @@ function setupPauseScreen() {
     makeRow(pausePanel, -30),
     makeRow(pausePanel, 10),
     makeRow(pausePanel, 70),
-    makeRow(pausePanel, 130),
+    makeRow(pausePanel, 110),
+    makeRow(pausePanel, 150),
+    makeRow(pausePanel, 200),
   ];
   // Pause menu uses dark text on light panel.
   for (const r of pauseMenuRows) r.text.textColor = IDLE_DARK.copy();
@@ -388,6 +390,18 @@ function setupSettingsScreen() {
 //   window.open(url, "_blank", "noopener,noreferrer");
 // }
 
+// Reflects the on/off state into all volume sliders: forced to 0 when disabled,
+// restored to the saved volume when re-enabled. Called from toggle handlers and
+// per-frame so mouse drags while disabled can't leak into settings.
+function syncVolumeSliders() {
+  const music = settings.musicEnabled ? settings.musicVolume : 0;
+  const sfx = settings.soundEffectsEnabled ? settings.sfxVolume : 0;
+  if (pauseMusicSlider) pauseMusicSlider.value = music;
+  if (pauseSfxSlider) pauseSfxSlider.value = sfx;
+  if (settingsMusicSlider) settingsMusicSlider.value = music;
+  if (settingsSfxSlider) settingsSfxSlider.value = sfx;
+}
+
 function rebuildMenus() {
   // const links = strings.ui.links;
   // Title menu
@@ -437,6 +451,7 @@ function rebuildMenus() {
         `MUSIC: ${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
       toggle: () => {
         settings.musicEnabled = !settings.musicEnabled;
+        syncVolumeSliders();
         saveSettings();
       },
     },
@@ -455,6 +470,7 @@ function rebuildMenus() {
         `SFX: ${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
       toggle: () => {
         settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
+        syncVolumeSliders();
         saveSettings();
       },
     },
@@ -465,6 +481,24 @@ function rebuildMenus() {
         adjustSetting(settings, "sfxVolume", dir);
         pauseSfxSlider.value = settings.sfxVolume;
         soundShoot.play();
+        saveSettings();
+      },
+    },
+    {
+      kind: "toggle",
+      label: () =>
+        `FLASH EFFECTS: ${settings.flashEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
+      toggle: () => {
+        settings.flashEnabled = !settings.flashEnabled;
+        saveSettings();
+      },
+    },
+    {
+      kind: "toggle",
+      label: () =>
+        `SCREEN SHAKE: ${settings.shakeEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
+      toggle: () => {
+        settings.shakeEnabled = !settings.shakeEnabled;
         saveSettings();
       },
     },
@@ -489,6 +523,7 @@ function rebuildMenus() {
         `MUSIC: ${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
       toggle: () => {
         settings.musicEnabled = !settings.musicEnabled;
+        syncVolumeSliders();
         saveSettings();
       },
     },
@@ -507,6 +542,7 @@ function rebuildMenus() {
         `SFX: ${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
       toggle: () => {
         settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
+        syncVolumeSliders();
         saveSettings();
       },
     },
@@ -730,10 +766,16 @@ export function updateUI() {
 
   if (settingsGroup.visible) {
     // Mouse-driven sliders sync into settings (keyboard path also writes them).
-    if (settingsMusicSlider.value !== settings.musicVolume) {
+    // While the corresponding toggle is off, the slider is pinned to 0 and any
+    // drag is ignored.
+    if (!settings.musicEnabled) {
+      settingsMusicSlider.value = 0;
+    } else if (settingsMusicSlider.value !== settings.musicVolume) {
       settings.musicVolume = settingsMusicSlider.value;
     }
-    if (settingsSfxSlider.value !== settings.sfxVolume) {
+    if (!settings.soundEffectsEnabled) {
+      settingsSfxSlider.value = 0;
+    } else if (settingsSfxSlider.value !== settings.sfxVolume) {
       settings.sfxVolume = settingsSfxSlider.value;
       soundShoot.play();
     }
@@ -750,10 +792,14 @@ export function updateUI() {
   }
 
   if (pauseGroup.visible) {
-    if (pauseMusicSlider.value !== settings.musicVolume) {
+    if (!settings.musicEnabled) {
+      pauseMusicSlider.value = 0;
+    } else if (pauseMusicSlider.value !== settings.musicVolume) {
       settings.musicVolume = pauseMusicSlider.value;
     }
-    if (pauseSfxSlider.value !== settings.sfxVolume) {
+    if (!settings.soundEffectsEnabled) {
+      pauseSfxSlider.value = 0;
+    } else if (pauseSfxSlider.value !== settings.sfxVolume) {
       settings.sfxVolume = pauseSfxSlider.value;
       soundShoot.play();
     }
@@ -804,7 +850,8 @@ export function updateUI() {
     );
     icon.size = vec2(37, 26).scale(0.8 * hudScale);
     if (player) {
-      icon.visible = i < player.hp;
+      const alive = i < player.hp;
+      icon.color = alive ? WHITE.copy() : new Color(0.7, 0.7, 0.6, 0.55);
     }
   });
 
