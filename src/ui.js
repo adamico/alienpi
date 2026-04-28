@@ -67,10 +67,10 @@ function measureTextWidth(text, pxHeight, font) {
 }
 
 const BOSS_BAR = {
-  padding: 40,         // top margin and left/right margin from canvas edge
-  height: 32,          // outer bar height
-  border: 2,           // bg border line width
-  fgInset: 4,          // gap between bg edge and fg edge (framed look)
+  padding: 40, // top margin and left/right margin from canvas edge
+  height: 32, // outer bar height
+  border: 2, // bg border line width
+  fgInset: 4, // gap between bg edge and fg edge (framed look)
   revealDuration: 0.6, // seconds for scale + flash reveal
 };
 let bossBarRevealStartT = null;
@@ -158,16 +158,25 @@ export function initUI() {
   setupWeaponUI();
 
   // Boss Health Bar — actual size set per-frame in updateBossHealthBar.
-  bossHealthGroup = new UIObject(vec2(0, 0), vec2(BOSS_BAR.height, BOSS_BAR.height));
+  bossHealthGroup = new UIObject(
+    vec2(0, 0),
+    vec2(BOSS_BAR.height, BOSS_BAR.height),
+  );
   bossHealthGroup.color = new Color(0, 0, 0, 0);
   bossHealthGroup.lineWidth = 0;
   hudGroup.addChild(bossHealthGroup);
 
-  bossHealthBg = new UIObject(vec2(0, 0), vec2(BOSS_BAR.height, BOSS_BAR.height));
+  bossHealthBg = new UIObject(
+    vec2(0, 0),
+    vec2(BOSS_BAR.height, BOSS_BAR.height),
+  );
   bossHealthBg.lineWidth = BOSS_BAR.border;
   bossHealthGroup.addChild(bossHealthBg);
 
-  bossHealthFg = new UIObject(vec2(0, 0), vec2(BOSS_BAR.height, BOSS_BAR.height));
+  bossHealthFg = new UIObject(
+    vec2(0, 0),
+    vec2(BOSS_BAR.height, BOSS_BAR.height),
+  );
   bossHealthFg.lineWidth = 0;
   bossHealthBg.addChild(bossHealthFg);
 
@@ -370,12 +379,13 @@ function setupSettingsScreen() {
   ];
 }
 
-function openLink(url) {
-  window.open(url, "_blank", "noopener,noreferrer");
-}
+// TODO: reenable when social media links are setup
+// function openLink(url) {
+//   window.open(url, "_blank", "noopener,noreferrer");
+// }
 
 function rebuildMenus() {
-  const links = strings.ui.links;
+  // const links = strings.ui.links;
   // Title menu
   titleMenu.setItems([
     {
@@ -388,26 +398,26 @@ function rebuildMenus() {
       label: () => "SETTINGS",
       activate: () => titleHandlers.openSettings(),
     },
-    {
-      kind: "action",
-      label: () => links.discord.label,
-      activate: () => openLink(links.discord.url),
-    },
-    {
-      kind: "action",
-      label: () => links.github.label,
-      activate: () => openLink(links.github.url),
-    },
-    {
-      kind: "action",
-      label: () => links.itch.label,
-      activate: () => openLink(links.itch.url),
-    },
-    {
-      kind: "action",
-      label: () => links.bluesky.label,
-      activate: () => openLink(links.bluesky.url),
-    },
+    // {
+    //   kind: "action",
+    //   label: () => links.discord.label,
+    //   activate: () => openLink(links.discord.url),
+    // },
+    // {
+    //   kind: "action",
+    //   label: () => links.github.label,
+    //   activate: () => openLink(links.github.url),
+    // },
+    // {
+    //   kind: "action",
+    //   label: () => links.itch.label,
+    //   activate: () => openLink(links.itch.url),
+    // },
+    // {
+    //   kind: "action",
+    //   label: () => links.bluesky.label,
+    //   activate: () => openLink(links.bluesky.url),
+    // },
   ]);
 
   // Pause menu (resume + audio toggles + sliders)
@@ -450,6 +460,7 @@ function rebuildMenus() {
       adjust: (dir) => {
         adjustSetting(settings, "sfxVolume", dir);
         pauseSfxSlider.value = settings.sfxVolume;
+        soundShoot.play();
         saveSettings();
       },
     },
@@ -495,6 +506,7 @@ function rebuildMenus() {
       adjust: (dir) => {
         adjustSetting(settings, "sfxVolume", dir);
         settingsSfxSlider.value = settings.sfxVolume;
+        soundShoot.play();
         saveSettings();
       },
     },
@@ -538,7 +550,7 @@ function updateBossHealthBar(uiCenterY, hudScale) {
   const elapsed = timeReal - bossBarRevealStartT;
   const t = Math.min(1, elapsed / BOSS_BAR.revealDuration);
   const ease = t * t * (3 - 2 * t); // smoothstep
-  const flash = 1 - ease;            // 1 = fully white, 0 = final color
+  const flash = 1 - ease; // 1 = fully white, 0 = final color
 
   // Position: top of canvas + padding, centered horizontally.
   const yOffset = BOSS_BAR.padding + BOSS_BAR.height / 2;
@@ -675,11 +687,11 @@ export function updateUI() {
     }
     if (settingsSfxSlider.value !== settings.sfxVolume) {
       settings.sfxVolume = settingsSfxSlider.value;
+      soundShoot.play();
     }
     paintMenu(settingsMenu, settingsMenuRows, FOCUS_COLOR, IDLE_COLOR);
 
     if (mouseWasReleased(0)) {
-      if (settingsSfxSlider.isHoverObject()) soundShoot.play();
       if (
         settingsMusicSlider.isHoverObject() ||
         settingsSfxSlider.isHoverObject()
@@ -694,11 +706,11 @@ export function updateUI() {
     }
     if (pauseSfxSlider.value !== settings.sfxVolume) {
       settings.sfxVolume = pauseSfxSlider.value;
+      soundShoot.play();
     }
     paintMenu(pauseMenu, pauseMenuRows, FOCUS_DARK, IDLE_DARK);
 
     if (mouseWasReleased(0)) {
-      if (pauseSfxSlider.isHoverObject()) soundShoot.play();
       if (pauseMusicSlider.isHoverObject() || pauseSfxSlider.isHoverObject())
         saveSettings();
     }

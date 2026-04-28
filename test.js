@@ -34,6 +34,7 @@ import { Boss } from "./src/entities/boss.js";
 import { BossOrbiter, BossMissile } from "./src/entities/bossChildren.js";
 import { Loot } from "./src/entities/loot.js";
 import * as gameEffects from "./src/gameEffects.js";
+import { updateSoundVolumes } from "./src/sounds.js";
 
 let behaviorEnabled = true;
 
@@ -158,6 +159,7 @@ function gameUpdate() {
       handleSpawn();
     }
   }
+  updateSoundVolumes();
 }
 
 function handleSpawn() {

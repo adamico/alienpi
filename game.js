@@ -18,6 +18,7 @@ import {
   engineObjectsDestroy,
   keyWasPressed,
   setPaused,
+  setDebugWatermark,
 } from "./src/engine.js";
 import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 
@@ -37,6 +38,7 @@ import {
   soundTitleMusic,
   soundVictoryMusic,
   soundGameOverMusic,
+  updateSoundVolumes,
 } from "./src/sounds.js";
 import { Boundary } from "./src/entities/boundary.js";
 import {
@@ -65,6 +67,7 @@ async function gameInit() {
   await preloadFonts();
   setFontDefault(FONT_HUD);
   await initializeGameAssets();
+  setDebugWatermark(false);
   setPaused(true);
   initUI();
   setMenuHandlers({
@@ -217,6 +220,7 @@ function gameUpdatePost() {
   }
 
   updateMusic();
+  updateSoundVolumes();
   updateUI();
 }
 

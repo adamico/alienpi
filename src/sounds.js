@@ -7,6 +7,9 @@ const musicSounds = new Set();
 // Kind throttling for SFX: track last time each sound was played
 const lastPlayTime = new Map();
 
+// Track all active sound instances for realtime volume updates
+const activeInstances = new Set();
+
 // Global sound effect and volume control
 const originalPlay = Sound.prototype.play;
 Sound.prototype.play = function (
@@ -28,20 +31,37 @@ Sound.prototype.play = function (
 
   if (isMusic) {
     // Music uses musicVolume and musicEnabled toggle
-    const vol = settings.musicEnabled ? volume * settings.musicVolume : 0;
-    return originalPlay.call(this, pos, vol, pitch, randomPitch, loop, paused);
-  } else {
-    // SFX uses sfxVolume and soundEffectsEnabled toggle
-    if (!settings.soundEffectsEnabled) return;
-    return originalPlay.call(
+    const instance = originalPlay.call(
       this,
       pos,
-      volume * settings.sfxVolume,
+      volume,
       pitch,
       randomPitch,
       loop,
       paused,
     );
+    if (instance) {
+      musicSounds.add(this); // Ensure it's marked as music
+      activeInstances.add(instance);
+      instance.setVolume(instance.volume); // Apply initial volume scaling
+    }
+    return instance;
+  } else {
+    // SFX uses sfxVolume and soundEffectsEnabled toggle
+    const instance = originalPlay.call(
+      this,
+      pos,
+      volume,
+      pitch,
+      randomPitch,
+      loop,
+      paused,
+    );
+    if (instance) {
+      activeInstances.add(instance);
+      instance.setVolume(instance.volume); // Apply initial volume scaling
+    }
+    return instance;
   }
 };
 
@@ -53,16 +73,37 @@ Sound.prototype.playMusic = function (volume, loop) {
 };
 
 // Also patch setVolume for active sound instances (like music)
-const originalSetVolume = SoundInstance.prototype.setVolume;
 SoundInstance.prototype.setVolume = function (volume) {
+  this.volume = volume; // Keep the requested volume unscaled
+  if (!this.gainNode) return;
+
   const isMusic = musicSounds.has(this.sound);
+  let vol = volume;
+
   if (isMusic) {
-    const vol = settings.musicEnabled ? volume * settings.musicVolume : 0;
-    return originalSetVolume.call(this, vol);
+    vol *= settings.musicEnabled ? settings.musicVolume : 0;
   } else {
-    return originalSetVolume.call(this, volume * settings.sfxVolume);
+    vol *= settings.soundEffectsEnabled ? settings.sfxVolume : 0;
   }
+
+  // Directly set the gain node value to avoid recursion if we called originalSetVolume
+  this.gainNode.gain.value = vol;
 };
+
+/**
+ * Updates all active sound instances to reflect current volume settings.
+ * Should be called every frame from the main game loop.
+ */
+export function updateSoundVolumes() {
+  for (const instance of activeInstances) {
+    if (!instance.isPlaying()) {
+      activeInstances.delete(instance);
+      continue;
+    }
+    // Re-apply current volume settings to the instance
+    instance.setVolume(instance.volume);
+  }
+}
 
 export class SoundGenerator extends Sound {
   constructor(params = {}) {

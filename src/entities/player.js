@@ -4,6 +4,7 @@ import {
   keyIsDown,
   keyWasPressed,
   Color,
+  WHITE,
   ParticleEmitter,
   PI,
   rgb,
@@ -58,6 +59,7 @@ export class Player extends BaseEntity {
     this.setCollision(true, true);
     this.isPlayer = true;
     this.mass = 1;
+    this.extraScale = 1;
     this.damping = playerCfg.damping;
 
     const { startLevels, maxLevel } = playerCfg.weaponSystem;
@@ -129,6 +131,7 @@ export class Player extends BaseEntity {
   }
 
   update() {
+    this.extraScale += (1 - this.extraScale) * 0.15;
     this.updateWeaponSwitch();
     this.updateMoving();
 
@@ -158,6 +161,10 @@ export class Player extends BaseEntity {
 
       // Cycling away from latch breaks any active tethers.
       if (this.currentWeaponKey !== "latch") this.clearLatchBeams();
+
+      // Weapon switch animation
+      this.extraScale = 1.3;
+      this.applyEffect(new gameEffects.FlashEffect(WHITE, 0.15));
     }
   }
 
@@ -341,7 +348,10 @@ export class Player extends BaseEntity {
       }
     }
 
+    const originalSize = this.visualSize.copy();
+    this.visualSize = this.visualSize.scale(this.extraScale);
     super.render();
+    this.visualSize = originalSize;
   }
 
   updateMoving() {

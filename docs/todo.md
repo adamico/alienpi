@@ -68,6 +68,7 @@
 
 - A1: add touch controls. Priority: high
 - A2: add gamepad controls. Priority: medium
+- A3: add a fullscreen button. Priority: high
 
 ## Testing
 
@@ -77,9 +78,10 @@
 
 ## Publishing
 
-- P1: add itch.io page. Priority: high
+- ~~P1: finish the itch.io page. Priority: high~~ DONE
+- P1.5: publish game on itch.io. Priority: high
 - P2: test html loading, especially images/sounds/fonts. Priority: high
-- P3: add build script. Priority: medium
+- ~~P3: add build script. Priority: medium~~ DONE
 - P4: add analytics. Priority: low
 - P5: add feedback form. Priority: medium
 - P6: add post-launch updates. Priority: low
