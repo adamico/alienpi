@@ -60,6 +60,7 @@ export let gameState = GAME_STATES.TITLE;
 let previousState = GAME_STATES.TITLE;
 let gameOverTime = 0;
 export let gameTime = 0;
+export let gameWon = false;
 
 async function gameInit() {
   loadSettings();
@@ -108,6 +109,7 @@ export function resetGame() {
 
   setupBoundaries();
   gameTime = 0;
+  gameWon = false;
   resetScore();
   gameState = GAME_STATES.PLAYING;
 }
@@ -153,6 +155,11 @@ function gameUpdate() {
   gameTime += timeDelta;
 
   if (player && player.hp <= 0) {
+    gameState = GAME_STATES.GAMEOVER;
+    setPaused(true);
+    gameOverTime = timeReal;
+  } else if (currentBoss && currentBoss.destroyed) {
+    gameWon = true;
     gameState = GAME_STATES.GAMEOVER;
     setPaused(true);
     gameOverTime = timeReal;
@@ -208,6 +215,9 @@ function gameUpdatePost() {
       if (keyWasPressed("Enter") || keyWasPressed("Space")) {
         resetGame();
         setPaused(false);
+      } else if (keyWasPressed("Escape")) {
+        gameState = GAME_STATES.TITLE;
+        setPaused(true);
       }
     }
   }

@@ -27,7 +27,7 @@ import {
   GAME_STATES,
   strings,
 } from "./config.js";
-import { gameState, gameTime } from "../game.js";
+import { gameState, gameTime, gameWon } from "../game.js";
 import { Menu, adjustSetting } from "./menuNav.js";
 import { FONT_MENU } from "./fonts.js";
 import { formatScore } from "./score.js";
@@ -47,7 +47,7 @@ let settingsTitle,
   settingsMusicSlider,
   settingsSfxSlider,
   settingsMenuRows = [];
-let retryText;
+let retryText, gameOverTitleText;
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 const WEAPON_LOOT_MAPPING = {
@@ -257,16 +257,16 @@ function setupGameOverScreen() {
   gameOverGroup.lineWidth = 0;
   uiRoot.addChild(gameOverGroup);
 
-  const gameOverText = new UIText(
+  gameOverTitleText = new UIText(
     vec2(0, -60),
     vec2(800, 100),
     strings.ui.gameOverTitle,
   );
-  gameOverText.textHeight = 80;
-  gameOverText.font = FONT_MENU;
-  gameOverText.textColor = rgb(1, 0.2, 0.2);
-  gameOverText.fontShadow = true;
-  gameOverGroup.addChild(gameOverText);
+  gameOverTitleText.textHeight = 80;
+  gameOverTitleText.font = FONT_MENU;
+  gameOverTitleText.textColor = rgb(1, 0.2, 0.2);
+  gameOverTitleText.fontShadow = true;
+  gameOverGroup.addChild(gameOverTitleText);
 
   retryText = new UIText(vec2(0, 60), vec2(800, 50), strings.ui.retryPrompt);
   retryText.textHeight = 24;
@@ -609,6 +609,17 @@ export function updateUI() {
   }
 
   if (gameOverGroup.visible) {
+    if (gameWon) {
+      gameOverTitleText.text = strings.ui.victoryTitle;
+      gameOverTitleText.textColor = rgb(0.4, 1, 0.4);
+      gameOverGroup.color = new Color(0, 0.15, 0, 0.6);
+      retryText.text = strings.ui.victoryPrompt;
+    } else {
+      gameOverTitleText.text = strings.ui.gameOverTitle;
+      gameOverTitleText.textColor = rgb(1, 0.2, 0.2);
+      gameOverGroup.color = new Color(0.2, 0, 0, 0.6);
+      retryText.text = strings.ui.retryPrompt;
+    }
     retryText.visible = (timeReal * 2) % 2 < 1.2;
   }
 

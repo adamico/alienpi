@@ -64,6 +64,11 @@
 - ~~V12: add font to the game. Priority: high.~~ DONE
 - V13: make loot entity sprites be rendered on top of the explosion particles. Priority: medium.
 
+## Accessibility
+
+- A1: add touch controls. Priority: high
+- A2: add gamepad controls. Priority: medium
+
 ## Testing
 
 - T1: improve the test lab reusing elements from the actual game. Priority: high
