@@ -21,6 +21,7 @@ import { soundShoot } from "./sounds.js";
 import {
   player as playerCfg,
   loot as lootCfg,
+  weapons as weaponsCfg,
   settings,
   saveSettings,
   GAME_STATES,
@@ -29,6 +30,7 @@ import {
 import { gameState, gameTime } from "../game.js";
 import { Menu, adjustSetting } from "./menuNav.js";
 import { FONT_MENU } from "./fonts.js";
+import { formatScore } from "./score.js";
 
 let uiRoot;
 let scoreText, timeText;
@@ -37,8 +39,14 @@ let weaponIcons = [];
 let hudGroup, titleGroup, pauseGroup, gameOverGroup, settingsGroup;
 let titleText, subtitleText, controlGroup, controlsTitle, controlsBody;
 let titleMenuRows = [];
-let pauseTitleText, pauseMusicSlider, pauseSfxSlider, pauseMenuRows = [];
-let settingsTitle, settingsMusicSlider, settingsSfxSlider, settingsMenuRows = [];
+let pauseTitleText,
+  pauseMusicSlider,
+  pauseSfxSlider,
+  pauseMenuRows = [];
+let settingsTitle,
+  settingsMusicSlider,
+  settingsSfxSlider,
+  settingsMenuRows = [];
 let retryText;
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
@@ -167,13 +175,21 @@ function setupTitleScreen() {
   controlGroup.lineWidth = 0;
   titleGroup.addChild(controlGroup);
 
-  controlsTitle = new UIText(vec2(0, -60), vec2(400, 30), strings.ui.controlsTitle);
+  controlsTitle = new UIText(
+    vec2(0, -60),
+    vec2(400, 30),
+    strings.ui.controlsTitle,
+  );
   controlsTitle.textHeight = 24;
   controlsTitle.font = FONT_MENU;
   controlsTitle.textColor = rgb(0.2, 1, 0.2);
   controlGroup.addChild(controlsTitle);
 
-  controlsBody = new UIText(vec2(0, 20), vec2(600, 100), strings.ui.controlsBody);
+  controlsBody = new UIText(
+    vec2(0, 20),
+    vec2(600, 100),
+    strings.ui.controlsBody,
+  );
   controlsBody.textHeight = 20;
   controlsBody.textColor = WHITE.copy();
   controlGroup.addChild(controlsBody);
@@ -200,14 +216,22 @@ function setupPauseScreen() {
   pausePanel.cornerRadius = 10;
   pauseGroup.addChild(pausePanel);
 
-  pauseTitleText = new UIText(vec2(0, -200), vec2(500, 100), strings.ui.pauseTitle);
+  pauseTitleText = new UIText(
+    vec2(0, -200),
+    vec2(500, 100),
+    strings.ui.pauseTitle,
+  );
   pauseTitleText.textHeight = 70;
   pauseTitleText.font = FONT_MENU;
   pauseTitleText.textColor = BLACK.copy();
   pausePanel.addChild(pauseTitleText);
 
   // Hidden mouse-input sliders (kept for mouse drag UX).
-  pauseMusicSlider = new UISlider(vec2(0, -60), vec2(380, 18), settings.musicVolume);
+  pauseMusicSlider = new UISlider(
+    vec2(0, -60),
+    vec2(380, 18),
+    settings.musicVolume,
+  );
   pauseMusicSlider.color = rgb(0.4, 0.7, 1);
   pausePanel.addChild(pauseMusicSlider);
 
@@ -233,7 +257,11 @@ function setupGameOverScreen() {
   gameOverGroup.lineWidth = 0;
   uiRoot.addChild(gameOverGroup);
 
-  const gameOverText = new UIText(vec2(0, -60), vec2(800, 100), strings.ui.gameOverTitle);
+  const gameOverText = new UIText(
+    vec2(0, -60),
+    vec2(800, 100),
+    strings.ui.gameOverTitle,
+  );
   gameOverText.textHeight = 80;
   gameOverText.font = FONT_MENU;
   gameOverText.textColor = rgb(1, 0.2, 0.2);
@@ -254,18 +282,30 @@ function setupSettingsScreen() {
   settingsGroup.lineWidth = 0;
   uiRoot.addChild(settingsGroup);
 
-  settingsTitle = new UIText(vec2(0, -260), vec2(800, 100), strings.ui.settingsTitle);
+  settingsTitle = new UIText(
+    vec2(0, -260),
+    vec2(800, 100),
+    strings.ui.settingsTitle,
+  );
   settingsTitle.textHeight = 70;
   settingsTitle.font = FONT_MENU;
   settingsTitle.fontShadow = true;
   settingsTitle.textColor = rgb(1, 0.8, 0.2);
   settingsGroup.addChild(settingsTitle);
 
-  settingsMusicSlider = new UISlider(vec2(0, -120), vec2(380, 18), settings.musicVolume);
+  settingsMusicSlider = new UISlider(
+    vec2(0, -120),
+    vec2(380, 18),
+    settings.musicVolume,
+  );
   settingsMusicSlider.color = rgb(0.4, 0.7, 1);
   settingsGroup.addChild(settingsMusicSlider);
 
-  settingsSfxSlider = new UISlider(vec2(0, -20), vec2(380, 18), settings.sfxVolume);
+  settingsSfxSlider = new UISlider(
+    vec2(0, -20),
+    vec2(380, 18),
+    settings.sfxVolume,
+  );
   settingsSfxSlider.color = rgb(0.2, 1, 0.2);
   settingsGroup.addChild(settingsSfxSlider);
 
@@ -322,7 +362,11 @@ function rebuildMenus() {
 
   // Pause menu (resume + audio toggles + sliders)
   pauseMenu.setItems([
-    { kind: "action", label: () => "RESUME", activate: () => pauseHandlers.resume() },
+    {
+      kind: "action",
+      label: () => "RESUME",
+      activate: () => pauseHandlers.resume(),
+    },
     {
       kind: "toggle",
       label: () =>
@@ -359,7 +403,11 @@ function rebuildMenus() {
         saveSettings();
       },
     },
-    { kind: "action", label: () => "BACK TO GAME (ESC)", activate: () => pauseHandlers.resume() },
+    {
+      kind: "action",
+      label: () => "BACK TO GAME (ESC)",
+      activate: () => pauseHandlers.resume(),
+    },
   ]);
 
   // Settings menu (audio, flash, shake, back)
@@ -418,7 +466,11 @@ function rebuildMenus() {
         saveSettings();
       },
     },
-    { kind: "action", label: () => "BACK (ESC)", activate: () => settingsHandlers.back() },
+    {
+      kind: "action",
+      label: () => "BACK (ESC)",
+      activate: () => settingsHandlers.back(),
+    },
   ]);
 }
 
@@ -440,7 +492,11 @@ function paintMenu(menu, rows, focusColor, idleColor) {
     row.cursor.text = focused ? ">" : "";
     row.cursor.textColor = focusColor.copy();
     if (focused) {
-      const labelWidth = measureTextWidth(label, row.text.textHeight, row.text.font);
+      const labelWidth = measureTextWidth(
+        label,
+        row.text.textHeight,
+        row.text.font,
+      );
       const gap = row.text.textHeight * 0.4;
       row.cursor.localPos = vec2(-labelWidth / 2 - gap, 0);
     }
@@ -457,30 +513,37 @@ function setupHealthUI() {
   }
 }
 
+const PIP_FILLED = "■"; // ■
+const PIP_EMPTY = "□"; // □
+
 function setupWeaponUI() {
   WEAPON_ORDER.forEach((key, i) => {
     const lootKey = WEAPON_LOOT_MAPPING[key];
     const lootSpriteName = lootCfg.types[lootKey].sprite;
     const lootSprite = sprites.get(lootSpriteName, lootCfg.sheet);
 
-    const container = new UIObject(vec2(0, 0), vec2(200, 40));
+    const container = new UIObject(vec2(0, 0), vec2(220, 44));
     container.color = new Color(0, 0, 0, 0);
     container.lineWidth = 0;
+    container.cornerRadius = 6;
     hudGroup.addChild(container);
 
-    const icon = new UITile(vec2(-70, 0), vec2(40, 40), lootSprite);
+    const icon = new UITile(vec2(-85, 0), vec2(36, 36), lootSprite);
     container.addChild(icon);
 
-    const levelText = new UIText(
-      vec2(20, 0),
-      vec2(120, 30),
-      strings.ui.levelPrefix + "0",
-      "left",
-    );
-    levelText.textHeight = 18;
-    container.addChild(levelText);
+    const nameText = new UIText(vec2(-50, 0), vec2(110, 28), "", "left");
+    nameText.textHeight = 16;
+    nameText.font = FONT_MENU;
+    nameText.fontShadow = true;
+    container.addChild(nameText);
 
-    weaponIcons.push({ key, container, icon, levelText, index: i });
+    const pipsText = new UIText(vec2(85, 0), vec2(70, 28), "", "right");
+    pipsText.textHeight = 16;
+    pipsText.font = FONT_MENU;
+    pipsText.fontShadow = true;
+    container.addChild(pipsText);
+
+    weaponIcons.push({ key, container, icon, nameText, pipsText, index: i });
   });
 }
 
@@ -540,10 +603,7 @@ export function updateUI() {
 
     if (mouseWasReleased(0)) {
       if (pauseSfxSlider.isHoverObject()) soundShoot.play();
-      if (
-        pauseMusicSlider.isHoverObject() ||
-        pauseSfxSlider.isHoverObject()
-      )
+      if (pauseMusicSlider.isHoverObject() || pauseSfxSlider.isHoverObject())
         saveSettings();
     }
   }
@@ -579,31 +639,47 @@ export function updateUI() {
   weaponIcons.forEach((item) => {
     item.container.localPos = vec2(
       uiAnchor.x,
-      uiAnchor.y + 400 * hudScale + item.index * 60 * hudScale,
+      uiAnchor.y + 400 * hudScale + item.index * 54 * hudScale,
     );
-    item.container.size = vec2(200, 50).scale(hudScale);
-    item.icon.size = vec2(40, 40).scale(hudScale);
-    item.icon.localPos = vec2(-70 * hudScale, 0);
-    item.levelText.localPos = vec2(-30 * hudScale, 0);
-    item.levelText.size = vec2(120, 30).scale(hudScale);
-    item.levelText.textHeight = 18 * hudScale;
+    item.container.size = vec2(220, 44).scale(hudScale);
+    item.icon.size = vec2(36, 36).scale(hudScale);
+    item.icon.localPos = vec2(-85 * hudScale, 0);
+    item.nameText.localPos = vec2(-50 * hudScale, 0);
+    item.nameText.size = vec2(110, 28).scale(hudScale);
+    item.nameText.textHeight = 16 * hudScale;
+    item.pipsText.localPos = vec2(100 * hudScale, 0);
+    item.pipsText.size = vec2(70, 28).scale(hudScale);
+    item.pipsText.textHeight = 16 * hudScale;
 
     if (player) {
       const level = player.weaponLevels[item.key];
+      const maxLevel = player.maxLevel;
       const active = player.currentWeaponKey === item.key;
-      item.levelText.text =
-        level > 0 ? strings.ui.levelPrefix + level : strings.ui.lockedLabel;
+      const cfg = weaponsCfg[item.key];
+      const name = cfg && cfg.label ? cfg.label : item.key.toUpperCase();
+      item.nameText.text = name;
+      item.pipsText.text =
+        PIP_FILLED.repeat(level) + PIP_EMPTY.repeat(maxLevel - level);
+
       if (level === 0) {
+        item.container.color = new Color(0, 0, 0, 0);
+        item.container.lineWidth = 0;
         item.icon.color = new Color(1, 1, 1, 0.2);
-        item.levelText.textColor = new Color(1, 1, 1, 0.5);
+        item.nameText.textColor = new Color(1, 1, 1, 0.5);
+        item.pipsText.textColor = new Color(1, 1, 1, 0.5);
       } else if (active) {
+        item.container.color = new Color(0.2, 1, 0.2, 0.12);
+        item.container.lineColor = rgb(0.3, 1, 0.3);
+        item.container.lineWidth = 2;
         item.icon.color = WHITE.copy();
-        item.levelText.textColor = rgb(0.2, 1, 0.2);
-        item.container.scale = 1.1;
+        item.nameText.textColor = rgb(0.4, 1, 0.4);
+        item.pipsText.textColor = rgb(0.4, 1, 0.4);
       } else {
+        item.container.color = new Color(0, 0, 0, 0);
+        item.container.lineWidth = 0;
         item.icon.color = new Color(1, 1, 1, 0.7);
-        item.levelText.textColor = WHITE.copy();
-        item.container.scale = 1.0;
+        item.nameText.textColor = WHITE.copy();
+        item.pipsText.textColor = WHITE.copy();
       }
     }
   });
@@ -611,4 +687,5 @@ export function updateUI() {
   const minutes = Math.floor(gameTime / 60);
   const seconds = Math.floor(gameTime % 60);
   timeText.text = `${strings.ui.timePrefix}${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  scoreText.text = strings.ui.scorePrefix + formatScore();
 }

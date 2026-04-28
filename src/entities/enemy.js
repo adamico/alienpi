@@ -5,6 +5,7 @@ import { player } from "./player.js";
 import { BaseEntity } from "./baseEntity.js";
 import { soundExplosion1 } from "../sounds.js";
 import * as gameEffects from "../gameEffects.js";
+import { addScore, SCORE } from "../score.js";
 
 export class Enemy extends BaseEntity {
   constructor(pos, typeKey, waveIndex = 0) {
@@ -189,6 +190,7 @@ export class Enemy extends BaseEntity {
       this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 0), 0.1));
 
       if (this.hp <= 0) {
+        addScore(SCORE.enemy);
         this.destroy();
       }
       return false;

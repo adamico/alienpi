@@ -32,6 +32,7 @@ import { soundBossBeam } from "../sounds.js";
 
 import { Loot } from "./loot.js";
 import { player as playerCfg } from "../config.js";
+import { addScore, SCORE } from "../score.js";
 
 /**
  * Defensive pods that orbit the boss
@@ -286,7 +287,10 @@ export class BossOrbiter extends BaseEntity {
       this.hp -= other.damage;
       this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 0), 0.1));
       this.applyEffect(new gameEffects.ShakeEffect(0.2, 0.1));
-      if (this.hp <= 0) this.destroy();
+      if (this.hp <= 0) {
+        addScore(this.hasLoot ? SCORE.orbiterLoot : SCORE.orbiter);
+        this.destroy();
+      }
       return false;
     }
     return false;
@@ -405,6 +409,7 @@ export class BossMissile extends BaseEntity {
       this.applyEffect(new gameEffects.ShakeEffect(0.15, 0.1));
       this.applyEffect(new gameEffects.KnockbackEffect(other.velocity, 0.1));
       if (this.hp <= 0) {
+        addScore(SCORE.missile);
         new MissileExplosion(this.pos.copy(), 3);
         this.destroy();
       }

@@ -29,6 +29,7 @@ import {
   starfield as starCfg,
 } from "./src/config.js";
 import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
+import { resetScore } from "./src/score.js";
 import { initializeGameAssets, initializePlayer } from "./src/commonSetup.js";
 import { Boss } from "./src/entities/boss.js";
 import {
@@ -107,6 +108,7 @@ export function resetGame() {
 
   setupBoundaries();
   gameTime = 0;
+  resetScore();
   gameState = GAME_STATES.PLAYING;
 }
 

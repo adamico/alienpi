@@ -208,7 +208,7 @@ export const weapons = {
     exhaustOffsets: [vec2(0, -1.3)],
   },
   latch: {
-    label: "LATCH",
+    label: "BEAM",
     count: [3, 5, 7], // max simultaneous beams
     cooldown: [40, 32, 24], // frames between damage ticks per beam
     damage: [1, 1, 1], // fixed damage at all levels
@@ -535,9 +535,15 @@ export const strings = {
     musicHotkey: " [M]",
     links: {
       discord: { label: "DISCORD", url: "https://discord.gg/PLACEHOLDER" },
-      github: { label: "GITHUB", url: "https://github.com/PLACEHOLDER/PLACEHOLDER" },
+      github: {
+        label: "GITHUB",
+        url: "https://github.com/PLACEHOLDER/PLACEHOLDER",
+      },
       itch: { label: "ITCH.IO", url: "https://PLACEHOLDER.itch.io/" },
-      bluesky: { label: "BLUESKY", url: "https://bsky.app/profile/PLACEHOLDER" },
+      bluesky: {
+        label: "BLUESKY",
+        url: "https://bsky.app/profile/PLACEHOLDER",
+      },
     },
   },
 };
