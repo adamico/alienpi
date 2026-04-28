@@ -15,7 +15,7 @@ import {
   vec2,
 } from "./engine.js";
 import { sprites } from "./sprites.js";
-import { system } from "./config.js";
+import { system, settings } from "./config.js";
 
 /**
  * Spawns a high-energy impact spark burst for the latch weapon.
@@ -100,7 +100,7 @@ export function explode(pos, size) {
   const s = Math.max(1.2, size); // Minimum effective size for visual punch
 
   // --- STAGE 1: Instant Flash Circle ---
-  new FlashCircle(pos, s * 1.5);
+  if (settings.flashEnabled) new FlashCircle(pos, s * 1.5);
 
   // --- STAGE 2: Expanding Fireball ---
   new ParticleEmitter(
@@ -269,6 +269,7 @@ class FlashCircle extends EngineObject {
  * @param {number} duration
  */
 export function applyScreenShake(amplitude = 0.5, duration = 0.2) {
+  if (!settings.shakeEnabled) return;
   new ScreenShaker(amplitude, duration);
 }
 
@@ -359,6 +360,7 @@ export class FlashEffect extends EntityEffect {
   }
 
   render(entity, renderPos, drawSize) {
+    if (!settings.flashEnabled) return;
     const color = this.color.copy();
     color.a *= 1 - this.timer.getPercent();
 
