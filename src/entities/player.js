@@ -37,6 +37,7 @@ import {
   FlashEffect,
   spawnMuzzleFlash,
   applyScreenShake,
+  spawnFloatingText,
 } from "../gameEffects.js";
 import { vibrate } from "../gamepad.js";
 
@@ -119,12 +120,32 @@ export class Player extends BaseEntity {
       // All cases say the weapon name first, then the action sting after
       // the name finishes (duration-accurate gap via playSequenced).
       const nameSound = weaponNameSounds[targetKey];
+      const label = (weaponsCfg[targetKey]?.label ?? targetKey).toUpperCase();
+      const textPos = this.pos.add(vec2(0, 1.5));
       if (wasLocked) {
         playSequenced(nameSound, soundWeaponUnlock);
+        spawnFloatingText(textPos, `${label} UNLOCKED!`, {
+          color: rgb(0.4, 1, 0.6),
+          size: 1.2,
+          duration: 1.6,
+          rise: 3.0,
+        });
       } else if (this.weaponLevels[targetKey] === this.maxLevel) {
         playSequenced(nameSound, soundWeaponMax);
+        spawnFloatingText(textPos, `${label} MAX!`, {
+          color: rgb(1, 0.85, 0.3),
+          size: 1.4,
+          duration: 1.8,
+          rise: 3.2,
+        });
       } else {
         playSequenced(nameSound, soundWeaponUpgrade);
+        spawnFloatingText(textPos, `${label} UPGRADED!`, {
+          color: rgb(0.4, 0.9, 1),
+          size: 1.1,
+          duration: 1.4,
+          rise: 2.6,
+        });
       }
 
       // If we just enabled a weapon that was level 0, or upgraded the current one, refresh visuals

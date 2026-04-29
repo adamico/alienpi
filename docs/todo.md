@@ -66,7 +66,7 @@
 - ~~V11: add weapon change animations. Priority: medium.~~ DONE
 - ~~V12: add font to the game. Priority: high.~~ DONE
 - ~~V13: make loot entity sprites be rendered on top of the explosion particles. Priority: medium.~~ DONE
-- V14: add floating text system (game effects) like "1000!", "Vulcan Upgraded!" Priority: high.
+- ~~V14: add floating text system (game effects) like "1000!", "Vulcan Upgraded!" Priority: high.~~ DONE (`FloatingText` EngineObject + `spawnFloatingText` in gameEffects.js; score popups via `addScoreAt` tier-tinted by amount; weapon upgrade/unlock/max stings spawned from `Player.upgradeWeapon`)
 
 ## Accessibility
 

@@ -1,6 +1,7 @@
 import {
   Color,
   drawCircle,
+  drawText,
   drawTile,
   EngineObject,
   ParticleEmitter,
@@ -13,9 +14,12 @@ import {
   time,
   Timer,
   vec2,
+  WHITE,
+  BLACK,
 } from "./engine.js";
 import { sprites } from "./sprites.js";
 import { system, settings } from "./config.js";
+import { FONT_MENU } from "./fonts.js";
 
 /**
  * Spawns a high-energy impact spark burst for the latch weapon.
@@ -277,6 +281,72 @@ function spawnSmokeBurst(pos, size) {
     false,
     false,
   );
+}
+
+/**
+ * Floating combat text that drifts upward and fades out, e.g. score popups
+ * ("+100") or weapon-state stings ("VULCAN UPGRADED!"). Lives in world space
+ * so it scales/scrolls with the camera.
+ */
+class FloatingText extends EngineObject {
+  constructor(pos, text, opts = {}) {
+    super(pos, vec2(0));
+    this.text = String(text);
+    this.duration = opts.duration ?? 1.0;
+    this.timer = new Timer(this.duration);
+    this.size = opts.size ?? 1.2;
+    this.color = (opts.color ?? WHITE).copy();
+    this.lineColor = (opts.lineColor ?? BLACK).copy();
+    this.lineWidth = opts.lineWidth ?? 0.15;
+    this.font = opts.font ?? FONT_MENU;
+    this.rise = opts.rise ?? 2.0; // total world-units to drift upward
+    this.startPos = pos.copy();
+    this.renderOrder = 1000; // above everything except UI
+  }
+
+  update() {
+    if (this.timer.elapsed()) {
+      this.destroy();
+      return;
+    }
+    super.update();
+  }
+
+  render() {
+    const p = this.timer.getPercent(); // 0 → 1
+    // Ease-out drift; pop in fast then settle
+    const drift = this.rise * (1 - (1 - p) * (1 - p));
+    // Slight punch-in: scale up quickly then hold
+    const scale = p < 0.15 ? 0.6 + (p / 0.15) * 0.4 : 1.0;
+    const alpha = p < 0.7 ? 1 : 1 - (p - 0.7) / 0.3;
+
+    const drawPos = vec2(this.startPos.x, this.startPos.y + drift);
+    const c = this.color.copy();
+    c.a *= alpha;
+    const lc = this.lineColor.copy();
+    lc.a *= alpha;
+    drawText(
+      this.text,
+      drawPos,
+      this.size * scale,
+      c,
+      this.lineWidth,
+      lc,
+      "center",
+      this.font,
+    );
+  }
+}
+
+/**
+ * Spawn a floating world-space text effect at `pos`. Returns the entity in
+ * case the caller wants to chain effects on it.
+ * @param {import('./engine.js').Vector2} pos
+ * @param {string|number} text
+ * @param {object} [opts]
+ */
+export function spawnFloatingText(pos, text, opts) {
+  return new FloatingText(pos, text, opts);
 }
 
 /**

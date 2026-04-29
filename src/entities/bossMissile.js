@@ -12,7 +12,7 @@ import * as gameEffects from "../gameEffects.js";
 import { system, missile as missileCfg } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
-import { addScore, SCORE } from "../score.js";
+import { addScoreAt, SCORE } from "../score.js";
 
 /**
  * Homing missile fired by the boss — destroyable by player bullets
@@ -129,7 +129,7 @@ export class BossMissile extends BaseEntity {
       this.applyEffect(new gameEffects.ShakeEffect(0.15, 0.1));
       this.applyEffect(new gameEffects.KnockbackEffect(other.velocity, 0.1));
       if (this.hp <= 0) {
-        addScore(SCORE.missile);
+        addScoreAt(this.pos, SCORE.missile);
         new MissileExplosion(this.pos.copy(), 3);
         this.destroy();
       }

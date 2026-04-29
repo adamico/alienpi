@@ -20,7 +20,7 @@ import { sprites } from "../sprites.js";
 import { soundExplosion1 } from "../sounds.js";
 import * as gameEffects from "../gameEffects.js";
 import { vibrate } from "../gamepad.js";
-import { addScore, SCORE } from "../score.js";
+import { addScoreAt, SCORE } from "../score.js";
 
 import { BossOrbiter } from "./bossOrbiter.js";
 import { BossMissile } from "./bossMissile.js";
@@ -486,7 +486,7 @@ export class Boss extends BaseEntity {
       this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.1));
       this.applyEffect(new gameEffects.ShakeEffect(0.05, 0.1));
       if (this.hp <= 0) {
-        addScore(SCORE.boss);
+        addScoreAt(this.pos, SCORE.boss);
         soundExplosion1.play();
         vibrate(600, 1.0, 1.0);
         this.destroy();

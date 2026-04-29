@@ -16,7 +16,7 @@ import {
 } from "../config.js";
 import { BaseEntity } from "./baseEntity.js";
 import { Loot } from "./loot.js";
-import { addScore, SCORE } from "../score.js";
+import { addScoreAt, SCORE } from "../score.js";
 
 /**
  * Defensive pods that orbit the boss
@@ -256,7 +256,10 @@ export class BossOrbiter extends BaseEntity {
       this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 0), 0.1));
       this.applyEffect(new gameEffects.ShakeEffect(0.2, 0.1));
       if (this.hp <= 0) {
-        addScore(this.hasLoot ? SCORE.orbiterLoot : SCORE.orbiter);
+        addScoreAt(
+          this.pos,
+          this.hasLoot ? SCORE.orbiterLoot : SCORE.orbiter,
+        );
         this.destroy();
       }
       return false;
