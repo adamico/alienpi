@@ -25,7 +25,7 @@ import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 
 import { system, loadSettings, GAME_STATES } from "./src/config.js";
 import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
-import { resetScore } from "./src/score.js";
+import { resetScore, loadHighScore, commitHighScore } from "./src/score.js";
 import { initializeGameAssets, initializePlayer } from "./src/commonSetup.js";
 import { Boss } from "./src/entities/boss.js";
 import {
@@ -60,6 +60,7 @@ export let gameWon = false;
 
 async function gameInit() {
   loadSettings();
+  loadHighScore();
   await preloadFonts();
   setFontDefault(FONT_HUD);
   await initializeGameAssets();
@@ -153,6 +154,7 @@ function enterGameOver() {
   system.isResetting = false;
   setPaused(true);
   gameOverTime = timeReal;
+  commitHighScore();
 }
 
 const MENU_KEYS = [

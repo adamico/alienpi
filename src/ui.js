@@ -34,7 +34,7 @@ import {
 import { gameState, gameTime, gameWon, currentBoss } from "../game.js";
 import { Menu, adjustSetting } from "./menuNav.js";
 import { FONT_MENU } from "./fonts.js";
-import { formatScore } from "./score.js";
+import { formatScore, formatHighScore, getScore, getHighScore } from "./score.js";
 
 let uiRoot;
 let scoreText, timeText;
@@ -63,6 +63,7 @@ let settingsTitle,
   settingsSfxSlider,
   settingsMenuRows = [];
 let retryText, gameOverTitleText, backToTitleText, finalScoreText;
+let gameOverHighScoreText, titleHighScoreText, hudHighScoreText;
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 const WEAPON_LOOT_MAPPING = {
@@ -168,6 +169,16 @@ export function initUI() {
   scoreText.textAlign = "left";
   scoreText.fontShadow = true;
   hudGroup.addChild(scoreText);
+
+  hudHighScoreText = new UIText(
+    vec2(0, 0),
+    vec2(300, 24),
+    strings.ui.highScorePrefix + "000000",
+  );
+  hudHighScoreText.textColor = new Color(1, 0.85, 0.3, 0.8);
+  hudHighScoreText.textAlign = "left";
+  hudHighScoreText.fontShadow = true;
+  hudGroup.addChild(hudHighScoreText);
 
   timeText = new UIText(
     vec2(0, 0),
@@ -342,6 +353,17 @@ function setupTitleScreen() {
   controlsBody.textHeight = 18;
   controlsBody.textColor = WHITE.copy();
   controlGroup.addChild(controlsBody);
+
+  titleHighScoreText = new UIText(
+    vec2(0, -110),
+    vec2(600, 30),
+    strings.ui.highScorePrefix + formatHighScore(),
+  );
+  titleHighScoreText.textHeight = 22;
+  titleHighScoreText.font = FONT_MENU;
+  titleHighScoreText.textColor = rgb(1, 0.85, 0.3);
+  titleHighScoreText.fontShadow = true;
+  titleGroup.addChild(titleHighScoreText);
 
   titleMenuRows = [
     makeRow(titleGroup, 140),
@@ -612,7 +634,18 @@ function setupGameOverScreen() {
   finalScoreText.textColor = rgb(1, 1, 1);
   finalScoreText.fontShadow = true;
 
+  gameOverHighScoreText = new UIText(
+    vec2(0, 35),
+    vec2(800, 40),
+    strings.ui.highScorePrefix + formatHighScore(),
+  );
+  gameOverHighScoreText.textHeight = 26;
+  gameOverHighScoreText.font = FONT_MENU;
+  gameOverHighScoreText.textColor = rgb(1, 0.85, 0.3);
+  gameOverHighScoreText.fontShadow = true;
+
   gameOverGroup.addChild(finalScoreText);
+  gameOverGroup.addChild(gameOverHighScoreText);
   gameOverGroup.addChild(retryText);
   gameOverGroup.addChild(backToTitleText);
 }
@@ -955,6 +988,17 @@ export function updateUI() {
     }
     retryText.visible = (timeReal * 2) % 2 < 1.2;
     finalScoreText.text = strings.ui.finalScorePrefix + formatScore();
+    const isNewHigh = getScore() >= getHighScore() && getScore() > 0;
+    gameOverHighScoreText.text = isNewHigh
+      ? strings.ui.newHighScoreLabel
+      : strings.ui.highScorePrefix + formatHighScore();
+    gameOverHighScoreText.textColor = isNewHigh
+      ? rgb(0.4, 1, 0.6)
+      : rgb(1, 0.85, 0.3);
+  }
+
+  if (titleGroup.visible) {
+    titleHighScoreText.text = strings.ui.highScorePrefix + formatHighScore();
   }
 
   const uiCenterX = mainCanvasSize.x / 2;
@@ -967,6 +1011,19 @@ export function updateUI() {
   scoreText.localPos = vec2(uiAnchor.x, uiAnchor.y);
   scoreText.size = vec2(300, 40).scale(hudScale);
   scoreText.textHeight = 30 * hudScale;
+
+  hudHighScoreText.localPos = vec2(uiAnchor.x, uiAnchor.y + 28 * hudScale);
+  hudHighScoreText.size = vec2(300, 24).scale(hudScale);
+  hudHighScoreText.textHeight = 18 * hudScale;
+  const liveScore = getScore();
+  const liveHigh = getHighScore();
+  const beatingHigh = liveScore > liveHigh && liveHigh > 0;
+  hudHighScoreText.text =
+    strings.ui.highScorePrefix +
+    (beatingHigh ? formatScore() : formatHighScore());
+  hudHighScoreText.textColor = beatingHigh
+    ? new Color(0.4, 1, 0.6, 0.95)
+    : new Color(1, 0.85, 0.3, 0.8);
 
   timeText.localPos = vec2(-uiAnchor.x, uiAnchor.y);
   timeText.size = vec2(300, 40).scale(hudScale);

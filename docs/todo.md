@@ -35,7 +35,7 @@
 - G2: add weapon tutorials. Priority: medium
 - G3: add difficulty levels. Priority: low
 - G4: add attract mode. Priority: low
-- G5: add introductory lore dialog. Priority: medium
+- ~~G5: add introductory lore dialog. Priority: medium~~ DONE
 - ~~G6: add victory dialog. Priority: medium.~~ DONE (victory/game-over screen handled in `updateUI` via `gameWon` flag — distinct title, color, and prompt)
 - ~~G7: add gamepad vibration. Priority: medium~~ DONE (`src/gamepad.js` wraps the dual-rumble actuator; fires on player hit, boss death, win/lose)
 

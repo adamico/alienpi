@@ -11,9 +11,42 @@ export const SCORE = {
 };
 
 let score = 0;
+let highScore = 0;
+
+const HIGHSCORE_STORAGE_KEY = "alienpi.highscore.v1";
 
 export function getScore() {
   return score;
+}
+
+export function getHighScore() {
+  return highScore;
+}
+
+export function loadHighScore() {
+  try {
+    const raw = localStorage.getItem(HIGHSCORE_STORAGE_KEY);
+    const parsed = raw ? parseInt(raw, 10) : 0;
+    highScore = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  } catch {
+    highScore = 0;
+  }
+}
+
+// Returns true if the run set a new high score.
+export function commitHighScore() {
+  if (score <= highScore) return false;
+  highScore = score;
+  try {
+    localStorage.setItem(HIGHSCORE_STORAGE_KEY, String(highScore));
+  } catch {
+    // Storage write failed (private mode, quota): keep in-memory value.
+  }
+  return true;
+}
+
+export function formatHighScore(width = 6) {
+  return highScore.toString().padStart(width, "0");
 }
 
 export function addScore(n) {

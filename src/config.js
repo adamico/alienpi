@@ -537,6 +537,8 @@ export const strings = {
     backToTitlePrompt: "ESC: TITLE",
     victoryPrompt: "SPACE: PLAY AGAIN",
     finalScorePrefix: "FINAL SCORE: ",
+    highScorePrefix: "HIGH SCORE: ",
+    newHighScoreLabel: "NEW HIGH SCORE!",
     settingsTitle: "SETTINGS",
     creditsTitle: "CREDITS",
     loreTitle: "The story so far",
