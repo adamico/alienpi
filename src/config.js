@@ -84,6 +84,8 @@ export const system = {
     "shipA3.png",
     "shipB2.png",
     "shipC3.png",
+    "shipA_bullets.png",
+    "shipB_bullets.png",
   ].map((p) => `${ASSET_PATH}${p}`),
   shootKey: "Space",
   focusKey: "ShiftLeft",
@@ -131,26 +133,31 @@ const VULCAN_BASE_DAMAGE = 0.6;
 const VULCAN_DAMAGE_STEP = 0;
 
 const vulcanBullet = {
-  sheet: SPRITE_SHEET2_NAME,
-  sprite: "laserBlue04.png",
+  sheet: "",
+  sprite: "shipA_bullets.png",
   speed: [VULCAN_BASE_SPEED, VULCAN_BASE_SPEED * 1.25, VULCAN_BASE_SPEED * 1.5],
-  size: vec2(0.2, 0.2),
+  size: vec2(0.5, 0.5),
   despawnRadius: 0.5,
   hitboxScale: 1.0,
   mirrorY: true,
   trailLength: 5,
+  squishHz: 15,
+  squishScale: 0.4,
 };
 
 const shotgunBullet = {
-  sheet: SPRITE_SHEET_NAME,
-  sprite: "spaceMissiles_037.png",
+  sheet: "",
+  sprite: "shipB_bullets.png",
   speed: 0.5,
-  size: vec2(0.25, 0.25),
+  size: vec2(1.0, 1.0),
   despawnRadius: 0.5,
-  hitboxScale: 0.8,
+  hitboxScale: 0.25,
   mirrorY: true,
   trailLength: 3,
   renderOrder: 1,
+  animFrames: 8,
+  animFrameSize: vec2(32, 64),
+  animFps: 24,
 };
 
 const vulcanYOffset = 0.4;

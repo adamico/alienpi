@@ -1,4 +1,4 @@
-import { WHITE, ParticleEmitter, rgb, vec2, time } from "../engine.js";
+import { WHITE, ParticleEmitter, TileInfo, rgb, vec2, time } from "../engine.js";
 import {
   engine,
   weapons,
@@ -59,6 +59,45 @@ export class Bullet extends BaseEntity {
     if (finalCfg.trailLength) {
       this.applyEffect(new TrailEffect(finalCfg.trailLength));
     }
+
+    // Sprite-strip animation: split a horizontal Nx1 strip into per-frame tiles
+    // and advance through them at animFps. The strip is loaded as a single
+    // TileInfo by loadDynamicSpritesheet, so derive a frame-0 sub-tile here.
+    // Sprite-strip animation. The strip is packed via loadDynamicSpritesheet,
+    // which shrinks the loaded tile by 1px on each side for bleed prevention,
+    // so we can't just divide that tile evenly. Instead, take the original
+    // packed origin (baseTile.pos minus the 1px bleed) and build per-frame
+    // TileInfos at the configured frameSize, each with their own 1px bleed.
+    if (finalCfg.animFrames && this.sprite) {
+      const baseTile = this.sprite;
+      const frameSize = finalCfg.animFrameSize;
+      const bleed = 1;
+      const origin = baseTile.pos.subtract(vec2(bleed));
+      this.animFrameTiles = [];
+      for (let i = 0; i < finalCfg.animFrames; i++) {
+        this.animFrameTiles.push(
+          new TileInfo(
+            vec2(origin.x + i * frameSize.x + bleed, origin.y + bleed),
+            vec2(frameSize.x - bleed * 2, frameSize.y - bleed * 2),
+            baseTile.textureInfo,
+          ),
+        );
+      }
+      this.animFps = finalCfg.animFps ?? 12;
+      // Recompute visual size against per-frame aspect.
+      const w = this.visualSize.x;
+      const aspect = frameSize.y / frameSize.x;
+      this.visualSize = vec2(w, w * aspect);
+      this.size = this.visualSize.scale(this.hitboxScale);
+      this.sprite = this.animFrameTiles[0];
+    }
+
+    // 2-frame x-axis squish to fake Y-axis spin.
+    if (finalCfg.squishHz) {
+      this.squishHz = finalCfg.squishHz;
+      this.squishScale = finalCfg.squishScale ?? 0.4;
+      this.baseVisualWidth = this.visualSize.x;
+    }
   }
 
   /**
@@ -101,6 +140,20 @@ export class Bullet extends BaseEntity {
 
     // Manually move based on our velocity to bypass the engine's 0.4 clamp.
     this.pos = this.pos.add(this.projectileVelocity);
+
+    if (this.squishHz) {
+      const tick = Math.floor((time - this.spawnTime) * this.squishHz) & 1;
+      this.visualSize.x = tick
+        ? this.baseVisualWidth * this.squishScale
+        : this.baseVisualWidth;
+    }
+
+    if (this.animFrameTiles) {
+      const f =
+        Math.floor((time - this.spawnTime) * this.animFps) %
+        this.animFrameTiles.length;
+      this.sprite = this.animFrameTiles[f];
+    }
     super.update();
   }
 
