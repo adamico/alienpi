@@ -19,6 +19,7 @@ import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { soundExplosion1 } from "../sounds.js";
 import * as gameEffects from "../gameEffects.js";
+import { vibrate } from "../gamepad.js";
 import { addScore, SCORE } from "../score.js";
 
 import { BossOrbiter } from "./bossOrbiter.js";
@@ -65,6 +66,7 @@ export class Boss extends BaseEntity {
     this.fireEmitters = [];
     this.orbiters = [];
     this.initFireEmitters();
+    this.initExhaustEmitters();
     this.workingVec = vec2();
     this.workingVec2 = vec2();
 
@@ -109,6 +111,80 @@ export class Boss extends BaseEntity {
       );
       this.addChild(emitter, offset);
       this.fireEmitters.push(emitter);
+    }
+  }
+
+  // Two thrust plumes that emerge from the back of the hull relative to the
+  // current movement direction. `updateExhaust` rotates the emit angle, moves
+  // the spawn offsets, and gates emitRate on actual speed so the boss only
+  // visibly thrusts while it's moving.
+  initExhaustEmitters() {
+    this.exhaustEmitters = [];
+    for (let i = 0; i < 2; i++) {
+      const emitter = new ParticleEmitter(
+        this.pos,
+        PI / 2, // angle (overwritten each frame)
+        0.4, // emitSize
+        0, // emitTime (loop)
+        0, // emitRate (gated on speed)
+        0.4, // emitConeAngle
+        sprites.get("smoke_04.png", system.particleSheetName),
+        rgb(1, 0.6, 0.3, 0.9),
+        rgb(1, 0.3, 0.1, 0.9),
+        rgb(0.3, 0.1, 0.05, 0),
+        rgb(0.2, 0.05, 0.02, 0),
+        0.7, // particleTime
+        1.2, // sizeStart
+        2.4, // sizeEnd
+        0.18, // speed
+        0.05, // angleSpeed
+        0.94, // damping
+        1, // angleDamping
+        0, // gravityScale
+        0.4, // particleConeAngle
+        0.1, // fadeRate
+        0.3, // randomness
+        false, // collideTiles
+        true, // additive
+        false, // randomColorLinear
+        -1, // renderOrder (behind boss)
+        true, // localSpace
+      );
+      this.addChild(emitter, vec2(0, 0));
+      this.exhaustEmitters.push(emitter);
+    }
+  }
+
+  updateExhaust() {
+    if (!this.exhaustEmitters) return;
+    // Threshold tuned to the smaller of (entry-glide, idle-drift) speeds so
+    // the plume cuts out cleanly when the boss settles between waypoints.
+    const speed = this.velocity.length();
+    const minSpeed = 0.01;
+    if (speed < minSpeed) {
+      for (const e of this.exhaustEmitters) e.emitRate = 0;
+      return;
+    }
+
+    // Particles eject opposite to velocity (the "back"). Perpendicular axis
+    // spreads the two plumes apart so they read as twin thrusters.
+    const dir = this.velocity.scale(1 / speed);
+    const back = dir.scale(-1);
+    const perp = vec2(-dir.y, dir.x); // 90° CCW
+    const backAngle = Math.atan2(back.y, back.x);
+
+    // Spawn offsets sit just behind the hull (~2.6 units back) and split
+    // ±1.6 units along the perpendicular.
+    const backOffset = 2.6;
+    const sideOffset = 1.6;
+    for (let i = 0; i < this.exhaustEmitters.length; i++) {
+      const e = this.exhaustEmitters[i];
+      const side = i === 0 ? -1 : 1;
+      e.localPos = back.scale(backOffset).add(perp.scale(side * sideOffset));
+      e.angle = backAngle;
+      // Rate ramps with speed so slow drifts give a soft puff and fast
+      // dashes give a strong plume; 0.05 wu/frame ≈ full output.
+      e.emitRate = Math.min(120, speed * 2400);
     }
   }
 
@@ -378,6 +454,7 @@ export class Boss extends BaseEntity {
       if (this.hp <= 0) {
         addScore(SCORE.boss);
         soundExplosion1.play();
+        vibrate(600, 1.0, 1.0);
         this.destroy();
       }
       return false;

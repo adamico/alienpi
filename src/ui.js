@@ -40,8 +40,18 @@ let uiRoot;
 let scoreText, timeText;
 let healthIcons = [];
 let weaponIcons = [];
-let hudGroup, titleGroup, pauseGroup, gameOverGroup, settingsGroup;
-let titleText, subtitleText, controlGroup, controlsTitle, controlsBody;
+let hudGroup,
+  titleGroup,
+  pauseGroup,
+  gameOverGroup,
+  settingsGroup,
+  creditsGroup,
+  loreGroup;
+let titleBossDecor;
+let titleInitialTexts = [];
+let controlGroup, controlsTitle, controlsBody;
+let creditsTitleText, creditsBodyText, creditsBackText;
+let loreTitleText, loreBodyText, loreStartText;
 let bossHealthGroup, bossHealthBg, bossHealthFg;
 let titleMenuRows = [];
 let pauseTitleText,
@@ -88,6 +98,10 @@ export const settingsMenu = new Menu();
 let titleHandlers = {
   start: () => {},
   openSettings: () => {},
+  openCredits: () => {},
+};
+let creditsHandlers = {
+  back: () => {},
 };
 let pauseHandlers = {
   resume: () => {},
@@ -95,11 +109,22 @@ let pauseHandlers = {
 let settingsHandlers = {
   back: () => {},
 };
+let loreHandlers = {
+  start: () => {},
+};
 
-export function setMenuHandlers({ title, pause, settings: settingsH }) {
+export function setMenuHandlers({
+  title,
+  pause,
+  settings: settingsH,
+  credits,
+  lore,
+}) {
   if (title) titleHandlers = { ...titleHandlers, ...title };
   if (pause) pauseHandlers = { ...pauseHandlers, ...pause };
   if (settingsH) settingsHandlers = { ...settingsHandlers, ...settingsH };
+  if (credits) creditsHandlers = { ...creditsHandlers, ...credits };
+  if (lore) loreHandlers = { ...loreHandlers, ...lore };
 }
 
 function makeRow(parent, y, h = 40) {
@@ -184,41 +209,129 @@ export function initUI() {
   setupPauseScreen();
   setupGameOverScreen();
   setupSettingsScreen();
+  setupCreditsScreen();
+  setupLoreScreen();
   rebuildMenus();
+}
+
+// Lays out a title with the first letter of each word styled larger and
+// in an accent color. Pieces are absolute-positioned inside `parent` based
+// on canvas-pixel widths measured against FONT_MENU so the result stays
+// centered horizontally at `y`.
+const TITLE_INITIAL_HEIGHT = 100;
+const TITLE_REST_HEIGHT = 64;
+const TITLE_INITIAL_COLORS = [
+  rgb(1, 0.4, 0.5), // ALIEN — pink/red
+  rgb(0.4, 0.9, 1), // ORBIT — cyan
+  rgb(1, 0.85, 0.3), // ASSAULT — gold
+];
+
+function buildSegmentedTitle(parent, title, y, opts = {}) {
+  const { offset = vec2(0, 0), glowTint = null } = opts;
+  if (!glowTint) titleInitialTexts = [];
+  const words = title.split(/\s+/);
+  const spaceWidth = TITLE_REST_HEIGHT * 0.45;
+
+  // Measure full layout width first to compute a centered start x.
+  let totalWidth = 0;
+  const measured = words.map((w) => {
+    const initial = w.slice(0, 1);
+    const rest = w.slice(1);
+    const wInitial = measureTextWidth(initial, TITLE_INITIAL_HEIGHT, FONT_MENU);
+    const wRest = rest
+      ? measureTextWidth(rest, TITLE_REST_HEIGHT, FONT_MENU)
+      : 0;
+    totalWidth += wInitial + wRest;
+    return { initial, rest, wInitial, wRest };
+  });
+  totalWidth += spaceWidth * (words.length - 1);
+
+  let cursor = -totalWidth / 2;
+  measured.forEach((seg, i) => {
+    // Initial: positioned by its left edge -> center pos = cursor + width/2.
+    const initX = cursor + seg.wInitial / 2;
+    const initial = new UIText(
+      vec2(initX + offset.x, y + offset.y),
+      vec2(seg.wInitial + 20, TITLE_INITIAL_HEIGHT + 20),
+      seg.initial,
+    );
+    initial.textHeight = TITLE_INITIAL_HEIGHT;
+    initial.font = FONT_MENU;
+    initial.fontShadow = !glowTint;
+    const accent =
+      glowTint || TITLE_INITIAL_COLORS[i % TITLE_INITIAL_COLORS.length];
+    initial.textColor = accent.copy();
+    if (!glowTint) {
+      initial._baseColor = accent.copy();
+      titleInitialTexts.push(initial);
+    }
+    parent.addChild(initial);
+    cursor += seg.wInitial;
+
+    if (seg.rest) {
+      const restX = cursor + seg.wRest / 2;
+      // Slight downward nudge so optical baselines line up with the bigger
+      // initial letter (top-aligned looks lopsided otherwise).
+      const restY = y + (TITLE_INITIAL_HEIGHT - TITLE_REST_HEIGHT) / 2;
+      const rest = new UIText(
+        vec2(restX + offset.x, restY + offset.y),
+        vec2(seg.wRest + 20, TITLE_REST_HEIGHT + 20),
+        seg.rest,
+      );
+      rest.textHeight = TITLE_REST_HEIGHT;
+      rest.font = FONT_MENU;
+      rest.fontShadow = !glowTint;
+      rest.textColor = (glowTint || WHITE).copy();
+      parent.addChild(rest);
+      cursor += seg.wRest;
+    }
+    cursor += spaceWidth;
+  });
 }
 
 function setupTitleScreen() {
   titleGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  titleGroup.color = new Color(0, 0, 0.1, 0.7);
+  // Thinner overlay so the starfield reads through behind the menu.
+  titleGroup.color = new Color(0, 0, 0.08, 0.35);
   titleGroup.lineWidth = 0;
   uiRoot.addChild(titleGroup);
 
-  titleText = new UIText(vec2(0, -200), vec2(1000, 120), strings.ui.title);
-  titleText.textHeight = 100;
-  titleText.fontShadow = true;
-  titleText.font = FONT_MENU;
-  titleText.textColor = rgb(0.4, 0.7, 1);
-  titleGroup.addChild(titleText);
+  // Big faded boss sprite as a backdrop, sits behind everything else.
+  const bossSprite = sprites.get("boss2.png");
+  if (bossSprite) {
+    titleBossDecor = new UITile(vec2(0, -40), vec2(420, 420), bossSprite);
+    titleBossDecor.color = new Color(1, 0.4, 0.4, 0.18);
+    titleGroup.addChild(titleBossDecor);
+  }
 
-  subtitleText = new UIText(vec2(0, -110), vec2(1000, 40), strings.ui.subtitle);
-  subtitleText.textHeight = 30;
-  subtitleText.font = FONT_MENU;
-  subtitleText.textColor = WHITE.copy();
-  titleGroup.addChild(subtitleText);
+  // Word-by-word render with a two-pass chromatic glow behind the bright
+  // text. The initial letter of each word is bigger and recolored; the rest
+  // stays white. The glow passes share the same layout but use a uniform
+  // tint so the shimmer reads as one coherent halo.
+  buildSegmentedTitle(titleGroup, strings.ui.title, -200, {
+    offset: vec2(-3, 2),
+    glowTint: new Color(1, 0.2, 0.5, 0.45),
+  });
+  buildSegmentedTitle(titleGroup, strings.ui.title, -200, {
+    offset: vec2(3, -2),
+    glowTint: new Color(0.2, 0.8, 1, 0.45),
+  });
+  buildSegmentedTitle(titleGroup, strings.ui.title, -200);
 
-  controlGroup = new UIObject(vec2(0, -10), vec2(600, 200));
+  controlGroup = new UIObject(vec2(0, -30), vec2(600, 160));
   controlGroup.color = new Color(0, 0, 0, 0);
   controlGroup.lineWidth = 0;
   titleGroup.addChild(controlGroup);
 
   controlsTitle = new UIText(
-    vec2(0, -60),
+    vec2(0, -50),
     vec2(400, 30),
     strings.ui.controlsTitle,
   );
-  controlsTitle.textHeight = 24;
+  controlsTitle.textHeight = 22;
   controlsTitle.font = FONT_MENU;
-  controlsTitle.textColor = rgb(0.2, 1, 0.2);
+  controlsTitle.textColor = rgb(0.2, 1, 0.4);
+  controlsTitle.fontShadow = true;
   controlGroup.addChild(controlsTitle);
 
   controlsBody = new UIText(
@@ -226,19 +339,94 @@ function setupTitleScreen() {
     vec2(600, 100),
     strings.ui.controlsBody,
   );
-  controlsBody.textHeight = 20;
+  controlsBody.textHeight = 18;
   controlsBody.textColor = WHITE.copy();
   controlGroup.addChild(controlsBody);
 
-  // Menu rows live in a vertical stack at the bottom.
   titleMenuRows = [
-    makeRow(titleGroup, 130),
-    makeRow(titleGroup, 175),
+    makeRow(titleGroup, 140),
+    makeRow(titleGroup, 185),
     makeRow(titleGroup, 230),
-    makeRow(titleGroup, 270),
-    makeRow(titleGroup, 310),
-    makeRow(titleGroup, 350),
+    makeRow(titleGroup, 275),
+    makeRow(titleGroup, 320),
+    makeRow(titleGroup, 365),
   ];
+}
+
+function setupLoreScreen() {
+  loreGroup = new UIObject(vec2(0, 0), mainCanvasSize);
+  loreGroup.color = new Color(0.02, 0.02, 0.08, 0.85);
+  loreGroup.lineWidth = 0;
+  uiRoot.addChild(loreGroup);
+
+  loreTitleText = new UIText(
+    vec2(0, -270),
+    vec2(800, 100),
+    strings.ui.loreTitle,
+  );
+  loreTitleText.textHeight = 70;
+  loreTitleText.font = FONT_MENU;
+  loreTitleText.fontShadow = true;
+  loreTitleText.textColor = rgb(1, 0.8, 0.2);
+  loreGroup.addChild(loreTitleText);
+
+  loreBodyText = new UIText(vec2(0, 0), vec2(900, 420), strings.ui.loreBody);
+  loreBodyText.textHeight = 22;
+  loreBodyText.font = FONT_MENU;
+  loreBodyText.textColor = WHITE.copy();
+  loreBodyText.fontShadow = true;
+  loreGroup.addChild(loreBodyText);
+
+  loreStartText = new UIText(
+    vec2(0, 280),
+    vec2(800, 40),
+    strings.ui.loreStartPrompt,
+  );
+  loreStartText.textHeight = 20;
+  loreStartText.font = FONT_MENU;
+  loreStartText.textColor = WHITE.copy();
+  loreStartText.fontShadow = true;
+  loreGroup.addChild(loreStartText);
+}
+
+function setupCreditsScreen() {
+  creditsGroup = new UIObject(vec2(0, 0), mainCanvasSize);
+  creditsGroup.color = new Color(0.02, 0.02, 0.08, 0.85);
+  creditsGroup.lineWidth = 0;
+  uiRoot.addChild(creditsGroup);
+
+  creditsTitleText = new UIText(
+    vec2(0, -260),
+    vec2(800, 100),
+    strings.ui.creditsTitle,
+  );
+  creditsTitleText.textHeight = 70;
+  creditsTitleText.font = FONT_MENU;
+  creditsTitleText.fontShadow = true;
+  creditsTitleText.textColor = rgb(1, 0.8, 0.2);
+  creditsGroup.addChild(creditsTitleText);
+
+  creditsBodyText = new UIText(
+    vec2(0, 0),
+    vec2(900, 420),
+    strings.ui.creditsBody,
+  );
+  creditsBodyText.textHeight = 22;
+  creditsBodyText.font = FONT_MENU;
+  creditsBodyText.textColor = WHITE.copy();
+  creditsBodyText.fontShadow = true;
+  creditsGroup.addChild(creditsBodyText);
+
+  creditsBackText = new UIText(
+    vec2(0, 280),
+    vec2(800, 40),
+    strings.ui.creditsBackPrompt,
+  );
+  creditsBackText.textHeight = 20;
+  creditsBackText.font = FONT_MENU;
+  creditsBackText.textColor = rgb(0.6, 0.9, 1);
+  creditsBackText.fontShadow = true;
+  creditsGroup.addChild(creditsBackText);
 }
 
 // Shared layout constants for the audio/video settings block reused by both
@@ -484,6 +672,11 @@ function rebuildMenus() {
       label: () => "SETTINGS",
       activate: () => titleHandlers.openSettings(),
     },
+    {
+      kind: "action",
+      label: () => "CREDITS",
+      activate: () => titleHandlers.openCredits(),
+    },
     // {
     //   kind: "action",
     //   label: () => links.discord.label,
@@ -693,20 +886,34 @@ export function updateUI() {
 
   hudGroup.size = mainCanvasSize;
   titleGroup.size = mainCanvasSize;
+  loreGroup.size = mainCanvasSize;
   pauseGroup.size = mainCanvasSize;
   gameOverGroup.size = mainCanvasSize;
   settingsGroup.size = mainCanvasSize;
+  creditsGroup.size = mainCanvasSize;
 
   hudGroup.visible =
-    gameState !== GAME_STATES.TITLE && gameState !== GAME_STATES.SETTINGS;
+    gameState !== GAME_STATES.TITLE &&
+    gameState !== GAME_STATES.SETTINGS &&
+    gameState !== GAME_STATES.CREDITS &&
+    gameState !== GAME_STATES.LORE;
   titleGroup.visible = gameState === GAME_STATES.TITLE;
   pauseGroup.visible = gameState === GAME_STATES.PAUSE;
+  loreGroup.visible = gameState === GAME_STATES.LORE;
   gameOverGroup.visible = gameState === GAME_STATES.GAMEOVER;
   settingsGroup.visible = gameState === GAME_STATES.SETTINGS;
+  creditsGroup.visible = gameState === GAME_STATES.CREDITS;
 
   if (titleGroup.visible) {
     updateMenuInteraction(titleMenu, titleMenuRows);
     paintMenu(titleMenu, titleMenuRows, FOCUS_COLOR, IDLE_COLOR);
+
+    // Pulse the highlighted initial letters so the title feels alive.
+    const pulse = 0.85 + 0.15 * Math.sin(timeReal * 3);
+    for (const t of titleInitialTexts) {
+      t.textColor = t._baseColor.copy();
+      t.textColor.a *= pulse;
+    }
   }
 
   if (settingsGroup.visible) {

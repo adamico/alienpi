@@ -9,6 +9,7 @@ import {
   mouseWasPressed,
   gamepadWasPressed,
   Color,
+  engineObjects,
 } from "./src/engine.js";
 
 import {
@@ -31,6 +32,7 @@ import { Boss } from "./src/entities/boss.js";
 import { BossOrbiter } from "./src/entities/bossOrbiter.js";
 import { BossMissile } from "./src/entities/bossMissile.js";
 import { Loot } from "./src/entities/loot.js";
+import { Bullet } from "./src/entities/bullet.js";
 import * as gameEffects from "./src/gameEffects.js";
 import { updateSoundVolumes } from "./src/sounds.js";
 
@@ -62,6 +64,19 @@ function setupUIListeners() {
   behaviorToggle.addEventListener("change", (e) => {
     behaviorEnabled = e.target.checked;
   });
+
+  const clearBtn = document.getElementById("clear-entities");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      // Wipe everything except the player and the playfield boundaries.
+      // Bullets are also cleared so leftover enemy fire doesn't surprise you
+      // after a reset.
+      const SPAWNED = [Enemy, Boss, BossOrbiter, BossMissile, Loot, Bullet];
+      for (const obj of engineObjects.slice()) {
+        if (SPAWNED.some((C) => obj instanceof C)) obj.destroy();
+      }
+    });
+  }
 
   entitySelect.addEventListener("change", () => {
     const type = entitySelect.value;
@@ -143,7 +158,22 @@ function setupUIListeners() {
   }
 }
 
-// common setup functions removed as they are now in commonSetup.js
+const WEAPON_INPUT_MAP = {
+  vulcan: "vulcanLevel",
+  shotgun: "shotgunLevel",
+  latch: "latchLevel",
+};
+
+function syncWeaponLevelInputs() {
+  for (const [key, id] of Object.entries(WEAPON_INPUT_MAP)) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const level = String(player.weaponLevels[key] ?? 0);
+    // Skip while the user is actively typing into the field.
+    if (document.activeElement === el) continue;
+    if (el.value !== level) el.value = level;
+  }
+}
 
 function gameUpdate() {
   // Drive the same input pipeline as the real game so player movement,
@@ -164,6 +194,12 @@ function gameUpdate() {
     }
   }
   updateSoundVolumes();
+
+  // Mirror live weapon levels back into the HTML inputs so picking up loot
+  // (or the on-pickup upgrade flow) is visible without manual refresh.
+  if (player) {
+    syncWeaponLevelInputs();
+  }
 
   // Gamepad Debug: Log button numbers to console
   for (let i = 0; i < 16; ++i) {

@@ -9,12 +9,12 @@
 
 - ~~M1: add flash effects toggle in the settings. Priority: high~~ DONE
 - ~~M2: add screen shake effect toggle in the settings. Priority: high~~ DONE
-- M3: add credits. Priority: low
-- M4: add main menu image. Priority: medium
+- ~~M3: add credits. Priority: low~~ DONE (placeholder credits screen reachable from title menu)
+- ~~M4: add main menu image. Priority: medium~~ DONE (stylish title with neon glow stack, decorative ship/boss sprites, thinned overlay so the starfield reads through)
 - ~~M5: add keyboard navigation to the menus. Priority: high~~ DONE
 - ~~M6: add keyboard navigation to the pause menu. Priority: high~~ DONE
 - ~~M7: improve pause menu display — extract shared settings panel component reused by both pause and settings screens. Priority: low~~ DONE (sliders, rows, and item list now built by shared `buildSharedSettings*` helpers; pause uses the same dark-overlay layout as settings)
-- M8: improve main menu display. Priority: low
+- ~~M8: improve main menu display. Priority: low~~DONE (replaced the placeholder "Start Game" text with the same styled title as the title screen, plus a "Settings" option below it; also added a decorative boss sprite floating in the background)
 - ~~M9: add social links to main menu. Priority: high.~~ DONE (placeholder URLs)
 - ~~M10: add link to feedback/discord in main menu. Priority: high~~ DONE (placeholder URL)
 - M11: wire social links. Priority: medium
@@ -37,7 +37,7 @@
 - G4: add attract mode. Priority: low
 - G5: add introductory lore dialog. Priority: medium
 - ~~G6: add victory dialog. Priority: medium.~~ DONE (victory/game-over screen handled in `updateUI` via `gameWon` flag — distinct title, color, and prompt)
-- G7: add gamepad vibration. Priority: medium
+- ~~G7: add gamepad vibration. Priority: medium~~ DONE (`src/gamepad.js` wraps the dual-rumble actuator; fires on player hit, boss death, win/lose)
 
 ## Sounds
 
@@ -56,7 +56,7 @@
 - ~~V1: replace bullet sprites with animated versions. Priority: high~~ DONE
 - ~~V2: add banking effect to the player sprite. Priority: medium~~ DONE
 - V3: add small sprites for each weapon. Priority: low
-- V4: Improve the boss movement visuals with particles or exhaust effects. Priority: low
+- ~~V4: Improve the boss movement visuals with particles or exhaust effects. Priority: low~~ DONE (twin smoke/fire exhaust plumes streaming out the back of the hull, additive, render-order behind the sprite)
 - ~~V5: recolor boss sprite. green -> red. Priority: high~~ DONE
 - ~~V6: recolor boss orbiter sprite. green -> red. Priority: high.~~ DONE
 - ~~V7: readd orbiters life line. Priority: high.~~ DONE
@@ -66,6 +66,7 @@
 - ~~V11: add weapon change animations. Priority: medium.~~ DONE
 - ~~V12: add font to the game. Priority: high.~~ DONE
 - ~~V13: make loot entity sprites be rendered on top of the explosion particles. Priority: medium.~~ DONE
+- V14: add floating text system (game effects) like "1000!", "Vulcan Upgraded!" Priority: high.
 
 ## Accessibility
 
@@ -76,8 +77,8 @@
 ## Testing
 
 - ~~T1: improve the test lab reusing elements from the actual game. Priority: high~~ DONE (extracted `drawPlayField`, `drawMarquee`, `setupBoundaries` to `src/scene.js`; test.js now uses the shared scene helpers, runs the same input pipeline as the game, and keeps the player inside boundaries)
-- T2: add a button to clear the spawned entities. Priority: medium
-- T3: when the player collects a spawned loot, update the weapon level in the ui. Priority: medium
+- ~~T2: add a button to clear the spawned entities. Priority: medium~~ DONE (Clear Spawned Entities button wipes Enemy/Boss/Orbiter/Missile/Loot/Bullet, keeps player + boundaries)
+- ~~T3: when the player collects a spawned loot, update the weapon level in the ui. Priority: medium~~ DONE (test.js mirrors `player.weaponLevels` into the HTML inputs each frame, skipping the focused field)
 
 ## Publishing
 

@@ -2,8 +2,6 @@
 
 import {
   vec2,
-  drawTextScreen,
-  WHITE,
   engineInit,
   glSetAntialias,
   setCanvasPixelated,
@@ -25,7 +23,7 @@ import {
 } from "./src/engine.js";
 import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 
-import { system, settings, loadSettings, GAME_STATES } from "./src/config.js";
+import { system, loadSettings, GAME_STATES } from "./src/config.js";
 import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
 import { resetScore } from "./src/score.js";
 import { initializeGameAssets, initializePlayer } from "./src/commonSetup.js";
@@ -38,6 +36,7 @@ import {
   updateSoundVolumes,
 } from "./src/sounds.js";
 import { input } from "./src/input.js";
+import { vibrate } from "./src/gamepad.js";
 import { drawPlayField, drawMarquee, setupBoundaries } from "./src/scene.js";
 import {
   initUI,
@@ -72,12 +71,14 @@ async function gameInit() {
   setMenuHandlers({
     title: {
       start: () => {
-        resetGame();
-        setPaused(false);
+        gameState = GAME_STATES.LORE;
       },
       openSettings: () => {
         previousState = gameState;
         gameState = GAME_STATES.SETTINGS;
+      },
+      openCredits: () => {
+        gameState = GAME_STATES.CREDITS;
       },
     },
     pause: {
@@ -89,6 +90,17 @@ async function gameInit() {
     settings: {
       back: () => {
         gameState = previousState;
+      },
+    },
+    credits: {
+      back: () => {
+        gameState = GAME_STATES.TITLE;
+      },
+    },
+    lore: {
+      start: () => {
+        resetGame();
+        setPaused(false);
       },
     },
   });
@@ -123,11 +135,13 @@ function gameUpdate() {
     gameState = GAME_STATES.GAMEOVER;
     setPaused(true);
     gameOverTime = timeReal;
+    vibrate(800, 1.0, 1.0);
   } else if (currentBoss && currentBoss.destroyed) {
     gameWon = true;
     gameState = GAME_STATES.GAMEOVER;
     setPaused(true);
     gameOverTime = timeReal;
+    vibrate(400, 0.6, 0.4);
   }
 }
 
@@ -198,6 +212,11 @@ function dispatchMenu(menu) {
 function gameUpdatePost() {
   if (gameState === GAME_STATES.TITLE) {
     dispatchMenu(titleMenu);
+  } else if (gameState === GAME_STATES.LORE) {
+    if (inputActions.confirm()) {
+      resetGame();
+      setPaused(false);
+    }
   } else if (gameState === GAME_STATES.PLAYING) {
     if (inputActions.pause()) {
       gameState = GAME_STATES.PAUSE;
@@ -215,6 +234,10 @@ function gameUpdatePost() {
       gameState = previousState;
     } else {
       dispatchMenu(settingsMenu);
+    }
+  } else if (gameState === GAME_STATES.CREDITS) {
+    if (inputActions.cancel() || inputActions.confirm()) {
+      gameState = GAME_STATES.TITLE;
     }
   } else if (gameState === GAME_STATES.GAMEOVER) {
     if (timeReal - gameOverTime > 1.0) {
@@ -242,7 +265,10 @@ function updateDPSLog() {
 function desiredMusic() {
   switch (gameState) {
     case GAME_STATES.TITLE:
-      return soundTitleMusic;
+    case GAME_STATES.CREDITS:
+      return soundTitleMusic; // Placeholder, could be a separate track for credits
+    case GAME_STATES.LORE:
+      return soundTitleMusic; // Placeholder, could be a separate track for lore
     case GAME_STATES.PLAYING:
     case GAME_STATES.PAUSE:
       return soundBossMusic;
@@ -279,30 +305,6 @@ function gameRender() {
 
 function gameRenderPost() {
   drawMarquee();
-  drawUI();
-}
-
-function drawUI() {
-  if (settings.customDebug) drawDebug();
-}
-
-function drawDebug() {
-  const debugX = 120;
-  if (currentBoss) {
-    drawTextScreen(
-      `BOSS HP: ${currentBoss.hp}`,
-      vec2(system.canvasSize.x / 2, 50),
-      32,
-      WHITE,
-    );
-  }
-
-  drawTextScreen(
-    `WEAPON: ${player.currentWeapon.label}`,
-    vec2(debugX, 120),
-    24,
-    WHITE,
-  );
 }
 
 glSetAntialias(true);

@@ -2,10 +2,12 @@ import { vec2, rgb, PI } from "./engine.js";
 
 export const GAME_STATES = {
   TITLE: "TITLE",
+  LORE: "LORE",
   PLAYING: "PLAYING",
   PAUSE: "PAUSE",
   GAMEOVER: "GAMEOVER",
   SETTINGS: "SETTINGS",
+  CREDITS: "CREDITS",
 };
 
 const ASSET_PATH = "public/assets/";
@@ -528,10 +530,7 @@ export const strings = {
     controlsTitle: "CONTROLS",
     controlsBody:
       "WASD / ARROWS : MOVE\nSPACE : PRIMARY WEAPON\nSHIFT : FOCUS SPEED\nQ : SWITCH WEAPON",
-    startPrompt: "PRESS ENTER TO BEGIN",
-    playPrompt: "PRESS <KEY> TO PLAY",
     pauseTitle: "PAUSED",
-    resumePrompt: "PRESS ESC TO RESUME",
     gameOverTitle: "MISSION FAILED",
     victoryTitle: "MISSION COMPLETE",
     retryPrompt: "SPACE: RETRY",
@@ -539,6 +538,14 @@ export const strings = {
     victoryPrompt: "SPACE: PLAY AGAIN",
     finalScorePrefix: "FINAL SCORE: ",
     settingsTitle: "SETTINGS",
+    creditsTitle: "CREDITS",
+    loreTitle: "The story so far",
+    creditsBody:
+      "DESIGN & CODE\nkc00l\n\nENGINE\nLittleJS by killedbyapixel\n\nART\nNano Banana + procedural assets + Kenney.nl assets\n\nFONTS\nOrbitron  ·  Exo2  ·  Titillium Web\n\nSOUND\nZZFX by killedbyapixel + SUNO\n\nThanks for playing!",
+    creditsBackPrompt: "ESC: BACK",
+    loreBody:
+      'As above, so below.\n\nFor eons, the collective spirit of Gaia flourished in the silence of the void,\na tapestry of a billion souls woven into one pulsing consciousness.\nBut the stars have shifted. Out of the deep black comes an ancient hunger -\na parasite entity drawn to the warmth of our unified essence.\n\nIt arrives not as a fleet, but as a celestial omen: The Seventh Sun.\nA burning glow now chokes the horizon, turning the atmosphere\ninto a crucible of fire and rot. As the world below dissolves\ninto blood and chaos, the "Collective" is no longer a dream — it is a target.\n\n"The last of the many shall be the first of the one."\n\nYou have been called from the wreckage of the weak. Chosen by Gaia herself\nto act as her sword and shield, you must ascend to the high orbit\nwhere the heat is greatest. Within the heart of the fiery stone\nlies the Key — a singular truth that can either lock the gates of our\ndestruction or burn our civilization to ash. The clock is ticking. The rot is spreading.\n\nChosen One: Will you fall, or will you run?',
+    loreStartPrompt: "SPACE: ACCEPT YOUR FATE",
     settingsPrompt: "PRESS [S] FOR SETTINGS",
     backPrompt: "PRESS [ESC] TO GO BACK",
     scorePrefix: "SCORE: ",
@@ -552,15 +559,15 @@ export const strings = {
     sfxHotkey: " [S]",
     musicHotkey: " [M]",
     links: {
-      discord: { label: "DISCORD", url: "https://discord.gg/PLACEHOLDER" },
+      discord: { label: "DISCORD", url: "https://discord.gg/wswZGPQ2hg" },
       github: {
         label: "GITHUB",
-        url: "https://github.com/PLACEHOLDER/PLACEHOLDER",
+        url: "https://github.com/adamico/alienpi",
       },
-      itch: { label: "ITCH.IO", url: "https://PLACEHOLDER.itch.io/" },
+      itch: { label: "ITCH.IO", url: "https://kc00l.itch.io/" },
       bluesky: {
         label: "BLUESKY",
-        url: "https://bsky.app/profile/PLACEHOLDER",
+        url: "https://bsky.app/profile/fifthlayerstudio.bsky.social",
       },
     },
   },

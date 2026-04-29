@@ -38,6 +38,7 @@ import {
   spawnMuzzleFlash,
   applyScreenShake,
 } from "../gameEffects.js";
+import { vibrate } from "../gamepad.js";
 
 export let player = null;
 
@@ -699,6 +700,7 @@ export class Player extends BaseEntity {
     this.hp -= amount;
     this.applyEffect(new FlashEffect(new Color(1, 0, 0), 0.1));
     applyScreenShake(0.3, 0.1);
+    vibrate(180, 0.7, 0.9);
     this.startInvulnerability({ duration: 2 });
 
     if (this.hp <= 0) {
