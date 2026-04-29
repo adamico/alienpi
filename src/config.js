@@ -308,6 +308,12 @@ export const missile = {
   mirrorY: true,
   volleys: 3, // nova pulses between each missile salvo
   lifetime: 6, // seconds before missile detonates
+  fanHalfAngleBase: PI / 6, // half-angle of rear fan at stage 0
+  fanHalfAngleStageBonus: PI / 24, // extra half-angle per stage
+  spawnLateralJitter: 0.25, // per-missile x offset at spawn
+  repelRadius: 1.5, // neighbour distance for inter-missile repulsion
+  repelStrength: 0.012, // peak per-frame repel acceleration
+  ejectDuration: 0.3, // seconds of uncapped coast before homing kicks in
 };
 
 export const enemy = {

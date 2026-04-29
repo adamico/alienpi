@@ -244,7 +244,9 @@ export class Boss extends BaseEntity {
       this.pulseTimer = 0;
       this.telegraphTimer.set(1.0); // 1 second telegraph
       this.telegraphAction = () => this.novaPulse();
-      this.addChild(new gameEffects.Shockwave(new Color(1, 0.4, 0, 0.8), 1.0, 2.5));
+      this.addChild(
+        new gameEffects.Shockwave(new Color(1, 0.4, 0, 0.8), 1.0, 2.5),
+      );
     }
   }
 
@@ -308,27 +310,25 @@ export class Boss extends BaseEntity {
   }
 
   fireMissiles() {
-    const missileLifetime = missileCfg.lifetime - this.stage * 1.0;
+    const stage = this.stage;
+    const missileLifetime = missileCfg.lifetime - stage * 1.0;
+    const missileSpeed = missileCfg.speed * (1 + stage * 0.2);
 
-    // Offsets relative to boss centre (world units)
-    // Front = top of ship (positive Y), Back = bottom (negative Y)
-    const spawnOffsets = [
-      vec2(-1.2, 2.5), // front-left
-      vec2(1.2, 2.5), // front-right
-      vec2(-1.2, -2.5), // back-left
-      vec2(1.2, -2.5), // back-right
-    ];
-    const kickSpeed = 0.6;
-    for (const offset of spawnOffsets) {
-      const spawnPos = this.pos.add(offset);
-      // Back missiles (negative Y offset) kick upward so they initially face
-      // the top of the screen before homing curves them toward the player.
-      // Front missiles kick outward-and-up as before.
-      const kick =
-        offset.y < 0
-          ? vec2(Math.sign(offset.x) * kickSpeed * 0.3, kickSpeed) // up + slight lateral
-          : offset.normalize(kickSpeed);
-      new BossMissile(spawnPos, kick, missileLifetime);
+    // 4..8 missiles, all launched from the back of the boss in a downward fan.
+    const count = 4 + stage;
+    const kickSpeed = 0.2;
+    const fanHalfAngle =
+      missileCfg.fanHalfAngleBase + stage * missileCfg.fanHalfAngleStageBonus;
+    // Y-up: boss faces -Y (toward player), so its back is +Y. Missiles eject
+    // upward and away, then homing curves them back down toward the player.
+    const backOffset = vec2(0, 2.5);
+    for (let i = 0; i < count; i++) {
+      const t = count === 1 ? 0.5 : i / (count - 1);
+      const angle = PI / 2 + (t * 2 - 1) * fanHalfAngle;
+      const lateral = (t * 2 - 1) * missileCfg.spawnLateralJitter * count;
+      const spawnPos = this.pos.add(backOffset).add(vec2(lateral, 0));
+      const kick = vec2(Math.cos(angle), Math.sin(angle)).scale(kickSpeed);
+      new BossMissile(spawnPos, kick, missileLifetime, missileSpeed);
     }
   }
 

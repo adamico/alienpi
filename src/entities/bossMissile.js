@@ -23,7 +23,7 @@ export class BossMissile extends BaseEntity {
    * @param {Vector2} [initialVel]
    * @param {number} [lifetime]
    */
-  constructor(pos, initialVel, lifetime) {
+  constructor(pos, initialVel, lifetime, speed) {
     super(
       pos,
       missileCfg.sprite,
@@ -34,17 +34,20 @@ export class BossMissile extends BaseEntity {
       missileCfg.mirrorY,
     );
     this.hp = missileCfg.hp;
-    this.velocity = initialVel ?? vec2(0, -missileCfg.speed);
+    this.maxSpeed = speed ?? missileCfg.speed;
+    this.velocity = initialVel ?? vec2(0, -this.maxSpeed);
     this.setCollision(true, false);
     this.mass = 0;
     this.isEnemy = true; // so player bullets recognise it
     this.renderOrder = 8;
     this.lifeTimer = new Timer(lifetime ?? missileCfg.lifetime);
+    this.ejectTimer = new Timer(missileCfg.ejectDuration);
     this.explosionCallback = null; // We handle explosion manually in destroy()
   }
 
   update() {
-    if (player && !player.destroyed) {
+    const ejecting = !this.ejectTimer.elapsed();
+    if (!ejecting && player && !player.destroyed) {
       const toPlayer = player.pos.subtract(this.pos);
       const dist = toPlayer.length();
       if (dist > 0.1) {
@@ -52,11 +55,25 @@ export class BossMissile extends BaseEntity {
           toPlayer.normalize().scale(missileCfg.homingStrength),
         );
       }
+      // Swarm repulsion: push away from nearby missiles so they don't stack.
+      const repelRadius = missileCfg.repelRadius;
+      engineObjectsCallback(this.pos, vec2(repelRadius * 2), (o) => {
+        if (o === this || o.destroyed || !(o instanceof BossMissile)) return;
+        const delta = this.pos.subtract(o.pos);
+        const d = delta.length();
+        if (d > 0 && d < repelRadius) {
+          this.velocity = this.velocity.add(
+            delta.normalize().scale(missileCfg.repelStrength * (1 - d / repelRadius)),
+          );
+        }
+      });
       // Cap speed
-      if (this.velocity.length() > missileCfg.speed) {
-        this.velocity = this.velocity.normalize().scale(missileCfg.speed);
+      if (this.velocity.length() > this.maxSpeed) {
+        this.velocity = this.velocity.normalize().scale(this.maxSpeed);
       }
-      // Rotate sprite to face movement direction
+    }
+    // Rotate sprite to face movement direction (also during ejection coast).
+    if (this.velocity.lengthSquared() > 0) {
       this.angle = this.velocity.angle();
     }
 

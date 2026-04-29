@@ -2,7 +2,7 @@
 
 ## Boss
 
-- B1: One more boss attack to make the shotgun weapon useful. something like the diving drones, with low hp but in huge numbers. Priority: high
+- ~~B1: One more boss attack to make the shotgun weapon useful. something like the diving drones, with low hp but in huge numbers. Maybe turn the missile attack into a swarm attackPriority: high~~ DONE (missiles now spawn in volleys of 3 with a fan spread, and the missile count is increased at higher weapon levels)
 - ~~B2: Add boss health bar when he appears. Priority: medium~~ DONE
 
 ## Menus
