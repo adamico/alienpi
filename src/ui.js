@@ -156,7 +156,7 @@ export function initUI() {
   new UISystemPlugin();
   uiSystem.nativeHeight = 0;
 
-  uiRoot = new UIObject(mainCanvasSize.scale(0.5), mainCanvasSize);
+  uiRoot = new UIObject(mainCanvasSize.scale(0.5).floor(), mainCanvasSize);
   uiRoot.color = new Color(0, 0, 0, 0);
   uiRoot.lineWidth = 0;
 
@@ -357,6 +357,8 @@ function setupTitleScreen() {
     strings.ui.controlsBody,
   );
   controlsBody.textHeight = 18;
+  controlsBody.font = FONT_MENU;
+  controlsBody.fontShadow = true;
   controlsBody.textColor = WHITE.copy();
   controlGroup.addChild(controlsBody);
 
@@ -956,7 +958,7 @@ export function updateUI() {
 
   const hudScale = mainCanvasSize.y / 720;
 
-  uiRoot.pos = mainCanvasSize.scale(0.5);
+  uiRoot.pos = mainCanvasSize.scale(0.5).floor();
   uiRoot.size = mainCanvasSize;
 
   hudGroup.size = mainCanvasSize;
@@ -1057,8 +1059,8 @@ export function updateUI() {
     }
   }
 
-  const uiCenterX = mainCanvasSize.x / 2;
-  const uiCenterY = mainCanvasSize.y / 2;
+  const uiCenterX = Math.floor(mainCanvasSize.x / 2);
+  const uiCenterY = Math.floor(mainCanvasSize.y / 2);
   // y-margin clears the boss bar (top padding + bar height + gap) so score/time
   // sit beneath it instead of overlapping.
   const margin = vec2(130 * hudScale, 100 * hudScale);
