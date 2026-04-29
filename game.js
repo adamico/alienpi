@@ -12,7 +12,6 @@ import {
   timeDelta,
   engineObjectsDestroy,
   keyWasPressed,
-  mouseWasPressed,
   mouseWasReleased,
   setPaused,
   setDebugWatermark,
@@ -174,11 +173,7 @@ const MENU_KEYS = [
 let lastGamepadStick = vec2(0);
 const inputActions = {
   confirm: () =>
-    keyWasPressed("Enter") ||
-    keyWasPressed("Space") ||
-    mouseWasPressed(0) ||
-    mouseWasReleased(0) ||
-    gamepadWasReleased(0),
+    keyWasPressed("Enter") || keyWasPressed("Space") || gamepadWasReleased(0),
   cancel: () =>
     keyWasPressed("Escape") || gamepadWasReleased(8) || gamepadWasReleased(1),
   pause: () =>
@@ -227,7 +222,7 @@ function gameUpdatePost() {
   if (gameState === GAME_STATES.TITLE) {
     dispatchMenu(titleMenu);
   } else if (gameState === GAME_STATES.LORE) {
-    if (inputActions.confirm()) {
+    if (inputActions.confirm() || mouseWasReleased(0)) {
       resetGame();
       setPaused(false);
     }
@@ -250,12 +245,16 @@ function gameUpdatePost() {
       dispatchMenu(settingsMenu);
     }
   } else if (gameState === GAME_STATES.CREDITS) {
-    if (inputActions.cancel() || inputActions.confirm()) {
+    if (
+      inputActions.cancel() ||
+      inputActions.confirm() ||
+      mouseWasReleased(0)
+    ) {
       gameState = GAME_STATES.TITLE;
     }
   } else if (gameState === GAME_STATES.GAMEOVER) {
     if (timeReal - gameOverTime > 1.0) {
-      if (inputActions.confirm()) {
+      if (inputActions.confirm() || mouseWasReleased(0)) {
         resetGame();
         setPaused(false);
       } else if (inputActions.cancel()) {

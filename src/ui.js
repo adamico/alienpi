@@ -34,7 +34,12 @@ import {
 import { gameState, gameTime, gameWon, currentBoss } from "../game.js";
 import { Menu, adjustSetting } from "./menuNav.js";
 import { FONT_MENU } from "./fonts.js";
-import { formatScore, formatHighScore, getScore, getHighScore } from "./score.js";
+import {
+  formatScore,
+  formatHighScore,
+  getScore,
+  getHighScore,
+} from "./score.js";
 
 let uiRoot;
 let scoreText, timeText;
@@ -64,6 +69,7 @@ let settingsTitle,
   settingsMenuRows = [];
 let retryText, gameOverTitleText, backToTitleText, finalScoreText;
 let gameOverHighScoreText, titleHighScoreText, hudHighScoreText;
+let socialIcons = [];
 
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 const WEAPON_LOOT_MAPPING = {
@@ -373,6 +379,43 @@ function setupTitleScreen() {
     makeRow(titleGroup, 320),
     makeRow(titleGroup, 365),
   ];
+
+  setupSocialIcons();
+}
+
+const SOCIAL_LINKS = [
+  { sprite: "discord.png", key: "discord" },
+  { sprite: "github.png", key: "github" },
+  { sprite: "itchio.png", key: "itch" },
+  { sprite: "bluesky.png", key: "bluesky" },
+];
+
+// Keep tint white — non-white colors hit a slow per-pixel tint path
+// in LittleJS's Canvas2D drawTile (getImageData + JS loop). Alpha alone
+// uses globalAlpha and stays cheap.
+const SOCIAL_IDLE_COLOR = new Color(1, 1, 1, 0.45);
+const SOCIAL_HOVER_COLOR = new Color(1, 1, 1, 1);
+
+function setupSocialIcons() {
+  socialIcons = [];
+  const iconSize = 48;
+  const spacing = 64;
+  const totalWidth = (SOCIAL_LINKS.length - 1) * spacing;
+  const baseX = -totalWidth / 2;
+  const y = 320;
+
+  SOCIAL_LINKS.forEach((entry, i) => {
+    const tile = sprites.get(entry.sprite);
+    if (!tile) return;
+    const aspect = tile.size.y / tile.size.x;
+    const w = iconSize;
+    const h = iconSize * aspect;
+    const icon = new UITile(vec2(baseX + i * spacing, y), vec2(w, h), tile);
+    icon.lineWidth = 0;
+    icon.color = SOCIAL_IDLE_COLOR;
+    titleGroup.addChild(icon);
+    socialIcons.push({ icon, key: entry.key, hovered: false });
+  });
 }
 
 function setupLoreScreen() {
@@ -674,10 +717,9 @@ function setupSettingsScreen() {
   settingsMenuRows = buildSharedSettingsRows(settingsGroup);
 }
 
-// TODO: reenable when social media links are setup
-// function openLink(url) {
-//   window.open(url, "_blank", "noopener,noreferrer");
-// }
+function openLink(url) {
+  window.open(url, "_blank", "noopener,noreferrer");
+}
 
 // Reflects the on/off state into all volume sliders: forced to 0 when disabled,
 // restored to the saved volume when re-enabled. Called from toggle handlers and
@@ -999,6 +1041,20 @@ export function updateUI() {
 
   if (titleGroup.visible) {
     titleHighScoreText.text = strings.ui.highScorePrefix + formatHighScore();
+
+    const links = strings.ui.links;
+    const clicked = mouseWasReleased(0);
+    for (const entry of socialIcons) {
+      const hovered = entry.icon.isHoverObject();
+      if (hovered !== entry.hovered) {
+        entry.icon.color = hovered ? SOCIAL_HOVER_COLOR : SOCIAL_IDLE_COLOR;
+        entry.hovered = hovered;
+      }
+      if (hovered && clicked) {
+        const link = links[entry.key];
+        if (link) openLink(link.url);
+      }
+    }
   }
 
   const uiCenterX = mainCanvasSize.x / 2;
