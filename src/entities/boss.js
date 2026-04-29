@@ -114,77 +114,110 @@ export class Boss extends BaseEntity {
     }
   }
 
-  // Two thrust plumes that emerge from the back of the hull relative to the
-  // current movement direction. `updateExhaust` rotates the emit angle, moves
-  // the spawn offsets, and gates emitRate on actual speed so the boss only
-  // visibly thrusts while it's moving.
+  // The boss hull is a square; we mount two emitters on each of the four
+  // sides at fixed positions and angles. Only the side opposite to the
+  // dominant velocity axis emits at any given moment (e.g. moving right
+  // lights up the LEFT side firing leftward), so the exhaust always reads
+  // as thrust pushing the ship in its actual direction of travel.
   initExhaustEmitters() {
-    this.exhaustEmitters = [];
-    for (let i = 0; i < 2; i++) {
-      const emitter = new ParticleEmitter(
-        this.pos,
-        PI / 2, // angle (overwritten each frame)
-        0.4, // emitSize
-        0, // emitTime (loop)
-        0, // emitRate (gated on speed)
-        0.4, // emitConeAngle
-        sprites.get("smoke_04.png", system.particleSheetName),
-        rgb(1, 0.6, 0.3, 0.9),
-        rgb(1, 0.3, 0.1, 0.9),
-        rgb(0.3, 0.1, 0.05, 0),
-        rgb(0.2, 0.05, 0.02, 0),
-        0.7, // particleTime
-        1.2, // sizeStart
-        2.4, // sizeEnd
-        0.18, // speed
-        0.05, // angleSpeed
-        0.94, // damping
-        1, // angleDamping
-        0, // gravityScale
-        0.4, // particleConeAngle
-        0.1, // fadeRate
-        0.3, // randomness
-        false, // collideTiles
-        true, // additive
-        false, // randomColorLinear
-        -1, // renderOrder (behind boss)
-        true, // localSpace
-      );
-      this.addChild(emitter, vec2(0, 0));
-      this.exhaustEmitters.push(emitter);
+    // Positions are anchored to the hull edges. The boss is roughly 8 wu;
+    // ±3.4 puts emitters at the visible edge, ±1.5 splits the pair on each
+    // side for a clean twin-thruster silhouette.
+    const offset = 2.4;
+    // LittleJS measures emit angles from the +Y axis (angle=0 → up,
+    // angle=PI/2 → right, angle=PI → down, angle=-PI/2 → left).
+    const sides = [
+      {
+        key: "left",
+        positions: [vec2(-offset, -offset), vec2(-offset, offset)],
+        angle: PI / 2,
+      },
+      {
+        key: "right",
+        positions: [vec2(offset, -offset), vec2(offset, offset)],
+        angle: -PI / 2,
+      },
+      {
+        key: "top",
+        positions: [vec2(-offset, offset), vec2(offset, offset)],
+        angle: 0,
+      },
+      {
+        key: "bottom",
+        positions: [vec2(-offset, -offset), vec2(offset, -offset)],
+        angle: PI,
+      },
+    ];
+
+    this.exhaustSides = {};
+    for (const side of sides) {
+      const emitters = side.positions.map((pos) => {
+        const emitter = new ParticleEmitter(
+          this.pos,
+          side.angle,
+          0.3, // emitSize
+          0, // emitTime (loop)
+          0, // emitRate (gated by updateExhaust)
+          0.35, // emitConeAngle
+          sprites.get("smoke_04.png", system.particleSheetName),
+          rgb(1, 0.6, 0.3, 0.9),
+          rgb(1, 0.3, 0.1, 0.9),
+          rgb(0.3, 0.1, 0.05, 0),
+          rgb(0.2, 0.05, 0.02, 0),
+          0.6, // particleTime
+          1.0, // sizeStart
+          2.2, // sizeEnd
+          0.18, // speed
+          0.05, // angleSpeed
+          0.94, // damping
+          1, // angleDamping
+          0, // gravityScale
+          0.35, // particleConeAngle
+          0.1, // fadeRate
+          0.3, // randomness
+          false, // collideTiles
+          true, // additive
+          false, // randomColorLinear
+          -1, // renderOrder (behind boss)
+          true, // localSpace — required so emitter.angle drives direction
+        );
+        this.addChild(emitter, pos, side.angle);
+        return emitter;
+      });
+      this.exhaustSides[side.key] = emitters;
     }
   }
 
   updateExhaust() {
-    if (!this.exhaustEmitters) return;
-    // Threshold tuned to the smaller of (entry-glide, idle-drift) speeds so
-    // the plume cuts out cleanly when the boss settles between waypoints.
-    const speed = this.velocity.length();
+    if (!this.exhaustSides) return;
+
+    const vx = this.velocity.x;
+    const vy = this.velocity.y;
     const minSpeed = 0.01;
-    if (speed < minSpeed) {
-      for (const e of this.exhaustEmitters) e.emitRate = 0;
-      return;
+
+    // Pick which side fires based on the dominant velocity axis. The active
+    // side is the one *opposite* to motion: moving right (+vx) → LEFT side
+    // fires leftward (its mounted angle is PI).
+    let activeKey = null;
+    let activeSpeed = 0;
+    if (Math.abs(vx) >= Math.abs(vy)) {
+      if (Math.abs(vx) >= minSpeed) {
+        activeKey = vx > 0 ? "left" : "right";
+        activeSpeed = Math.abs(vx);
+      }
+    } else {
+      if (Math.abs(vy) >= minSpeed) {
+        activeKey = vy > 0 ? "bottom" : "top";
+        activeSpeed = Math.abs(vy);
+      }
     }
 
-    // Particles eject opposite to velocity (the "back"). Perpendicular axis
-    // spreads the two plumes apart so they read as twin thrusters.
-    const dir = this.velocity.scale(1 / speed);
-    const back = dir.scale(-1);
-    const perp = vec2(-dir.y, dir.x); // 90° CCW
-    const backAngle = Math.atan2(back.y, back.x);
-
-    // Spawn offsets sit just behind the hull (~2.6 units back) and split
-    // ±1.6 units along the perpendicular.
-    const backOffset = 2.6;
-    const sideOffset = 1.6;
-    for (let i = 0; i < this.exhaustEmitters.length; i++) {
-      const e = this.exhaustEmitters[i];
-      const side = i === 0 ? -1 : 1;
-      e.localPos = back.scale(backOffset).add(perp.scale(side * sideOffset));
-      e.angle = backAngle;
-      // Rate ramps with speed so slow drifts give a soft puff and fast
-      // dashes give a strong plume; 0.05 wu/frame ≈ full output.
-      e.emitRate = Math.min(120, speed * 2400);
+    // Rate scales with the dominant component so faster moves give a
+    // stronger plume; 0.05 wu/frame ≈ full output.
+    const rate = Math.min(120, activeSpeed * 2400);
+    for (const [key, emitters] of Object.entries(this.exhaustSides)) {
+      const on = key === activeKey;
+      for (const e of emitters) e.emitRate = on ? rate : 0;
     }
   }
 
@@ -218,6 +251,7 @@ export class Boss extends BaseEntity {
       this.updateAttacks();
     }
     this.updateVisuals();
+    this.updateExhaust();
     super.update();
   }
 

@@ -133,16 +133,26 @@ function gameUpdate() {
 
   if (player && player.hp <= 0) {
     gameState = GAME_STATES.GAMEOVER;
-    setPaused(true);
-    gameOverTime = timeReal;
+    enterGameOver();
     vibrate(800, 1.0, 1.0);
   } else if (currentBoss && currentBoss.destroyed) {
     gameWon = true;
     gameState = GAME_STATES.GAMEOVER;
-    setPaused(true);
-    gameOverTime = timeReal;
+    enterGameOver();
     vibrate(400, 0.6, 0.4);
   }
+}
+
+// Wipe the playfield on game over: pause halts updates but particles and
+// child emitters that were live in the last frame stay resident and pile up
+// across replays. Destroying everything lets GC reclaim them and keeps the
+// game-over overlay rendering over a clean field.
+function enterGameOver() {
+  system.isResetting = true;
+  engineObjectsDestroy();
+  system.isResetting = false;
+  setPaused(true);
+  gameOverTime = timeReal;
 }
 
 const MENU_KEYS = [
