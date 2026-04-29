@@ -428,6 +428,30 @@ export const soundWeaponSwitch = new Sound([
   0.03,
 ]); // Switch
 
+export const soundGameOverJingle = new Sound([
+  1.4,
+  ,
+  65.40639,
+  ,
+  0.7,
+  0.7,
+  3,
+  1.7,
+  -0.05,
+  ,
+  ,
+  ,
+  ,
+  0.1,
+  ,
+  ,
+  0.08,
+  0.7,
+  1,
+  0.04,
+  1,
+]); // Music 510
+
 // Spoken weapon names — played alongside unlock/max feedback sounds
 export const soundNameVulcan = new Sound("public/assets/sounds/vulcan.mp3");
 export const soundNameShotgun = new Sound("public/assets/sounds/shotgun.mp3");

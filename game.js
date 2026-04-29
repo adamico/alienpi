@@ -33,6 +33,7 @@ import {
   soundTitleMusic,
   soundVictoryMusic,
   soundGameOverMusic,
+  soundGameOverJingle,
   updateSoundVolumes,
 } from "./src/sounds.js";
 import { input } from "./src/input.js";
@@ -149,6 +150,7 @@ function gameUpdate() {
 // across replays. Destroying everything lets GC reclaim them and keeps the
 // game-over overlay rendering over a clean field.
 function enterGameOver() {
+  soundGameOverJingle.play();
   system.isResetting = true;
   engineObjectsDestroy();
   system.isResetting = false;
