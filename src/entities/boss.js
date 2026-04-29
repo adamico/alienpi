@@ -21,12 +21,10 @@ import { soundExplosion1 } from "../sounds.js";
 import * as gameEffects from "../gameEffects.js";
 import { addScore, SCORE } from "../score.js";
 
-import {
-  BossOrbiter,
-  BossMissile,
-  BossBeam,
-  BossShield,
-} from "./bossChildren.js";
+import { BossOrbiter } from "./bossOrbiter.js";
+import { BossMissile } from "./bossMissile.js";
+import { BossBeam } from "./bossBeam.js";
+import { BossShield } from "./bossShield.js";
 /**
  * Boss with dynamic movement, fire emitters, and pulse attacks
  */

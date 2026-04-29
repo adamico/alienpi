@@ -93,6 +93,46 @@ export function spawnLatchBeamSpark(pos, s) {
 }
 
 /**
+ * Continuous golden sparkle emitter used to mark loot-bearing entities.
+ * Returns the emitter so the caller can `addChild` it onto a parent that
+ * carries it through space (for `localSpace: true` tracking).
+ *
+ * @param {import('./engine.js').Vector2} pos
+ * @param {number} emitSize - Emission radius (typically the entity's size.x * 0.5)
+ */
+export function spawnLootSparkles(pos, emitSize) {
+  return new ParticleEmitter(
+    pos,
+    0, // angle
+    emitSize,
+    0, // emitTime (loop)
+    15, // emitRate
+    PI * 2, // emitConeAngle
+    sprites.get("spark_01.png", system.particleSheetName),
+    rgb(1, 1, 0.5), // colorStartA
+    rgb(1, 0.8, 0.2), // colorStartB
+    rgb(1, 0.5, 0, 0), // colorEndA
+    rgb(1, 0.2, 0, 0), // colorEndB
+    0.6, // particleTime
+    0.1, // sizeStart
+    0.02, // sizeEnd
+    0.02, // speed
+    0.05, // angleSpeed
+    0.95, // damping
+    1, // angleDamping
+    -0.01, // gravityScale (slight float up)
+    PI * 2, // particleConeAngle
+    0.1, // fadeRate
+    0.5, // randomness
+    false, // collideTiles
+    true, // additive
+    true, // randomColorLinear
+    10, // renderOrder
+    true, // localSpace
+  );
+}
+
+/**
  * Creates a standard explosion at the given position.
  * @param {import('./engine.js').Vector2} pos
  */

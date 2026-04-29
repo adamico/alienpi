@@ -80,6 +80,7 @@ export const system = {
     "boss2.png",
     "drone.png",
     "drone-looter.png",
+    "homing2.png",
     "shipA3.png",
     "shipB2.png",
     "shipC3.png",
@@ -189,7 +190,7 @@ export const weapons = {
     cooldown: [40, 32, 24],
     count: [3, 5, 7],
     pierce: 3,
-    damage: [0.8, 1.25, 1.5],
+    damage: [1, 1.3, 1.6],
     coneBase: (40 * PI) / 180,
     coneMin: (16 * PI) / 180,
     coneMax: (80 * PI) / 180,
@@ -211,7 +212,7 @@ export const weapons = {
     label: "BEAM",
     count: [3, 5, 7], // max simultaneous beams
     cooldown: [40, 32, 24], // frames between damage ticks per beam
-    damage: [1, 1.25, 1.5], // fixed damage at all levels
+    damage: [0.75, 1, 1.25], // fixed damage at all levels
     range: [16, 16, 16], // max lock distance in world units
     muzzleOffsets: [
       [vec2(0, 0)], // Level 1
@@ -297,12 +298,12 @@ export const bossBullet = {
 };
 
 export const missile = {
-  sheet: SPRITE_SHEET_NAME,
-  sprite: "spaceMissiles_006.png",
-  hp: 3,
-  speed: 0.12,
+  sheet: "",
+  sprite: "homing2.png",
+  hp: 2,
+  speed: 0.1,
   homingStrength: 0.008, // acceleration toward player each frame
-  size: vec2(0.7, 0.7),
+  size: vec2(2, 2),
   hitboxScale: 0.7,
   mirrorY: true,
   volleys: 3, // nova pulses between each missile salvo
