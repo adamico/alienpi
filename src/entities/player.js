@@ -181,7 +181,6 @@ export class Player extends BaseEntity {
       }
 
       soundWeaponSwitch.play();
-      this.shootTimer = 0;
       this.updateWeaponSprite();
 
       // Cycling away from latch breaks any active tethers.
