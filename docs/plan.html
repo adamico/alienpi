@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ECON-SHMUP // Design Doc</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap");
+
+      :root {
+        --bg: #0a0c10;
+        --surface: #10141c;
+        --border: #1e2a3a;
+        --accent: #00d4ff;
+        --accent2: #ff6b2b;
+        --accent3: #7fff6b;
+        --text: #c8d8e8;
+        --muted: #4a6080;
+        --heading: #e8f4ff;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Barlow Condensed", sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        min-height: 100vh;
+        padding: 40px 20px;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(
+            ellipse at 20% 50%,
+            rgba(0, 212, 255, 0.04) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse at 80% 20%,
+            rgba(255, 107, 43, 0.04) 0%,
+            transparent 60%
+          );
+        pointer-events: none;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 24px;
+        margin-bottom: 40px;
+      }
+
+      .label {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 11px;
+        color: var(--accent);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      h1 {
+        font-size: 52px;
+        font-weight: 700;
+        color: var(--heading);
+        letter-spacing: -1px;
+        line-height: 1;
+        margin-bottom: 8px;
+      }
+
+      h1 span {
+        color: var(--accent2);
+      }
+
+      .subtitle {
+        font-size: 18px;
+        color: var(--muted);
+        font-weight: 300;
+        letter-spacing: 1px;
+      }
+
+      .meta {
+        margin-top: 16px;
+        font-family: "Share Tech Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        gap: 24px;
+      }
+
+      .meta span {
+        color: var(--accent3);
+      }
+
+      section {
+        margin-bottom: 40px;
+      }
+
+      h2 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        font-family: "Share Tech Mono", monospace;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      h2::before {
+        content: "//";
+        color: var(--muted);
+      }
+
+      h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--heading);
+        margin-bottom: 8px;
+        margin-top: 20px;
+      }
+
+      p {
+        color: var(--text);
+        font-size: 17px;
+        font-weight: 300;
+        margin-bottom: 12px;
+      }
+
+      .highlight {
+        color: var(--accent3);
+        font-weight: 600;
+      }
+
+      .callout {
+        background: var(--surface);
+        border-left: 3px solid var(--accent);
+        padding: 16px 20px;
+        margin: 16px 0;
+        font-size: 17px;
+      }
+
+      .callout.warning {
+        border-left-color: var(--accent2);
+      }
+
+      .callout.success {
+        border-left-color: var(--accent3);
+      }
+
+      .phases {
+        display: grid;
+        gap: 12px;
+      }
+
+      .phase {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: 16px;
+        align-items: start;
+      }
+
+      .phase-num {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 32px;
+        color: var(--accent2);
+        line-height: 1;
+        opacity: 0.5;
+      }
+
+      .phase-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--heading);
+        margin-bottom: 4px;
+      }
+
+      .phase-desc {
+        font-size: 15px;
+        color: var(--muted);
+        font-weight: 300;
+      }
+
+      .phase-tag {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 10px;
+        color: var(--accent3);
+        letter-spacing: 2px;
+        margin-bottom: 4px;
+      }
+
+      .loop {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .loop-step {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 12px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--heading);
+        text-align: center;
+        flex: 1;
+        min-width: 100px;
+      }
+
+      .loop-arrow {
+        font-family: "Share Tech Mono", monospace;
+        color: var(--accent);
+        font-size: 18px;
+        padding: 0 4px;
+        flex-shrink: 0;
+      }
+
+      .loop-step.highlight-step {
+        border-color: var(--accent2);
+        color: var(--accent2);
+      }
+
+      .knobs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .knob {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 14px 16px;
+      }
+
+      .knob-name {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 11px;
+        color: var(--accent);
+        letter-spacing: 2px;
+        margin-bottom: 4px;
+      }
+
+      .knob-desc {
+        font-size: 14px;
+        color: var(--muted);
+        font-weight: 300;
+      }
+
+      .questions {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .question {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 14px 16px;
+        font-size: 15px;
+        display: flex;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .q-num {
+        font-family: "Share Tech Mono", monospace;
+        color: var(--accent2);
+        font-size: 12px;
+        padding-top: 2px;
+        flex-shrink: 0;
+      }
+
+      .q-text {
+        color: var(--text);
+        font-weight: 300;
+      }
+
+      .q-note {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+
+      footer {
+        margin-top: 60px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="label">Game Design Document — Session Notes</div>
+        <h1>ECON<span>-</span>SHMUP</h1>
+        <div class="subtitle">An economy-driven shoot-em-up prototype</div>
+        <div class="meta">
+          <div>ENGINE <span>Custom JS / WebGL</span></div>
+          <div>SCOPE <span>Solo Dev / Vertical Slices</span></div>
+          <div>INSPIRED BY <span>Eve Online · C64 Ghostbusters</span></div>
+        </div>
+      </header>
+
+      <section>
+        <h2>Core Concept</h2>
+        <p>
+          A classic shoot-em-up where the meta-game is an
+          <span class="highlight">economic survival loop</span>. You start in
+          debt, buy a ship, fly combat missions to earn money, pay repair costs,
+          and gradually unlock manufacturing and automation. Inspired by Eve
+          Online's player-driven economy, compressed into a shmup format.
+        </p>
+        <div class="callout success">
+          The score system becomes the currency. Every kill, every dodge, every
+          pickup earns in-game ISK — not just pride points.
+        </div>
+      </section>
+
+      <section>
+        <h2>Core Game Loop — MVP</h2>
+        <div class="loop">
+          <div class="loop-step highlight-step">Take Loan</div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-step">Buy Ship</div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-step highlight-step">Fly Mission</div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-step">Earn Money</div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-step highlight-step">Pay Repairs</div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-step">Choose Next Run</div>
+        </div>
+        <p>
+          After each mission, the player sees their ammo spent and hull damage
+          taken, then faces a repair bill. The question is: can you afford to
+          keep flying? That financial pressure replaces lives and continues as
+          the tension engine.
+        </p>
+      </section>
+
+      <section>
+        <h2>Existing Foundation</h2>
+        <p>The prototype builds on an existing boss-fight shmup with:</p>
+        <div class="knobs">
+          <div class="knob">
+            <div class="knob-name">3 SHIPS</div>
+            <div class="knob-desc">
+              Each starts with 1 weapon. 2 additional weapons unlock via in-run
+              power-up drops, each upgradable across 3 tiers
+            </div>
+          </div>
+          <div class="knob">
+            <div class="knob-name">3-TIER POWER-UPS</div>
+            <div class="knob-desc">
+              Random loot drops in-run. Unlock AND upgrade weapons — no two runs
+              identical
+            </div>
+          </div>
+          <div class="knob">
+            <div class="knob-name">JUICY COMBAT</div>
+            <div class="knob-desc">
+              Particles, post-processing, WebGL — already polished
+            </div>
+          </div>
+          <div class="knob">
+            <div class="knob-name">SCORE SYSTEM</div>
+            <div class="knob-desc">
+              Ready to convert directly into in-game currency
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Development Phases</h2>
+        <div class="phases">
+          <div class="phase">
+            <div class="phase-num">01</div>
+            <div>
+              <div class="phase-tag">MVP — BUILD THIS FIRST</div>
+              <div class="phase-title">Loan → Fight → Repair</div>
+              <div class="phase-desc">
+                Convert score to Substrate. Add purification (repair) + ammo
+                costs after each run. Tune the payout-vs-repair ratio until the
+                loop feels right. Validate: do players want to grind the boss
+                again for economic reasons?
+              </div>
+              <div
+                style="
+                  margin-top: 10px;
+                  padding-top: 10px;
+                  border-top: 1px solid var(--border);
+                "
+              >
+                <div class="phase-tag">DEATH MECHANIC</div>
+                <div class="phase-desc">
+                  On ship destruction, all acquired Substrate is kept. Ship loss
+                  is penalty enough at this stage. Forgiving by design — keeps
+                  early players engaged with the loop without frustration
+                  spirals.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phase">
+            <div class="phase-num">02</div>
+            <div>
+              <div class="phase-tag">VERTICAL SLICE 2</div>
+              <div class="phase-title">Mission Board + Insurance</div>
+              <div class="phase-desc">
+                Multiple contract types with different payouts and risk levels.
+                Player chooses based on available Substrate and ship condition.
+                Difficulty affects reward.
+              </div>
+              <div
+                style="
+                  margin-top: 10px;
+                  padding-top: 10px;
+                  border-top: 1px solid var(--border);
+                "
+              >
+                <div class="phase-tag">SUBSTRATE ANCHOR DEVICE</div>
+                <div class="phase-desc">
+                  A purchasable device bought before each run. On ship
+                  destruction, anchors acquired Substrate so Gaia can recover
+                  it. Two tiers: partial recovery (50%) or full recovery (100%)
+                  at higher cost. Forces a meaningful pre-run spending decision:
+                  safety net vs. maximum investment.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phase">
+            <div class="phase-num">03</div>
+            <div>
+              <div class="phase-tag">VERTICAL SLICE 3</div>
+              <div class="phase-title">Manufacturing</div>
+              <div class="phase-desc">
+                Option to source parts and build ships yourself, cheaper than
+                buying off-the-shelf. Buy a workshop. Assemble components. Sell
+                surplus to NPC market.
+              </div>
+            </div>
+          </div>
+          <div class="phase">
+            <div class="phase-num">04</div>
+            <div>
+              <div class="phase-tag">LATE GAME</div>
+              <div class="phase-title">Automation</div>
+              <div class="phase-desc">
+                Production lines run passively. Hire workers. Build passive
+                income streams. Scale from lone pilot to industrial operation.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Tuning Knobs — Phase 1</h2>
+        <p>
+          The entire economy balance lives in these ratios. This is the primary
+          design work of the MVP:
+        </p>
+        <div class="knobs">
+          <div class="knob">
+            <div class="knob-name">PAYOUT RATE</div>
+            <div class="knob-desc">
+              How much money per kill / per boss clear
+            </div>
+          </div>
+          <div class="knob">
+            <div class="knob-name">REPAIR COST</div>
+            <div class="knob-desc">
+              Hull damage → credits. The core tension lever
+            </div>
+          </div>
+          <div class="knob">
+            <div class="knob-name">AMMO COST</div>
+            <div class="knob-desc">Resupply price between runs</div>
+          </div>
+          <div class="knob">
+            <div class="knob-name">LOAN PRESSURE</div>
+            <div class="knob-desc">
+              Repayment schedule — ticking clock or flexible?
+            </div>
+          </div>
+        </div>
+        <div class="callout warning" style="margin-top: 16px">
+          If repairs cost more than you earn, you're in a death spiral. If
+          repairs cost too little, there's no tension. The sweet spot is tight
+          margins with room to improve through skill.
+        </div>
+      </section>
+
+      <section>
+        <h2>Open Questions</h2>
+        <div class="questions">
+          <div class="question">
+            <div class="q-num">Q1</div>
+            <div>
+              <div class="q-text">
+                Full run required, or can the player abort mid-fight?
+              </div>
+              <div class="q-note">
+                Option: allow retreat with partial earnings but still pay repair
+                costs — preserves capital, sacrifices payout. Very Eve-like.
+              </div>
+            </div>
+          </div>
+          <div class="question">
+            <div class="q-num">Q2</div>
+            <div>
+              <div class="q-text">
+                Is the current boss variety enough to sustain replays?
+              </div>
+              <div class="q-note">
+                The random weapon unlock order already creates meaningful run
+                variation — finding your best weapon early vs. late changes the
+                power curve significantly. Test the economy loop first before
+                adding procedural boss behavior. If players grind the same boss
+                for money, variety is sufficient.
+              </div>
+            </div>
+          </div>
+          <div class="question">
+            <div class="q-num">Q3</div>
+            <div>
+              <div class="q-text">
+                When does manufacturing unlock — time, milestone, or cash
+                threshold?
+              </div>
+              <div class="q-note">
+                Gating needs to feel like a natural opportunity, not a wall.
+              </div>
+            </div>
+          </div>
+          <div class="question">
+            <div class="q-num">Q4</div>
+            <div>
+              <div class="q-text">
+                Should weapon unlocks ever become purchasable between runs?
+              </div>
+              <div class="q-note">
+                Phase 1: weapons stay as pure in-run drops (random, free). Later
+                phases: option to buy a guaranteed weapon unlock before a
+                mission — trading money for reliability vs. gambling on drops.
+                Interesting economy tradeoff.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Lore — The Corruption Cycle</h2>
+        <p>
+          An alien entity is invading Earth — not merely conquering it, but
+          <span class="highlight">converting</span> it. Earth's matter, energy,
+          and living systems are being absorbed and transformed into something
+          hostile and alien. A hero, chosen by the collective planetary
+          consciousness <span class="highlight">Gaia</span>, is the last line of
+          resistance.
+        </p>
+
+        <h3>The Resource: Reclaimed Substrate</h3>
+        <p>
+          When you destroy alien ships, you don't earn money — you
+          <span class="highlight">liberate corrupted Earth matter</span>. Your
+          vessel, being Gaia-attuned, passively purifies what it salvages during
+          combat. Wreckage releases Reclaimed Substrate: recovered Earth essence
+          freed from alien corruption.
+        </p>
+
+        <div class="knobs" style="margin-top: 16px">
+          <div class="knob">
+            <div class="knob-name">RECLAIMED SUBSTRATE</div>
+            <div class="knob-desc">
+              The core resource. Harvested from enemy wreckage. Fuels all
+              operations.
+            </div>
+          </div>
+          <div class="knob">
+            <div class="knob-name">CORRUPTION TOLL</div>
+            <div class="knob-desc">
+              Your ship absorbs alien corruption during combat. Cleansing it
+              between runs costs Substrate.
+            </div>
+          </div>
+          <div class="knob">
+            <div class="knob-name">DIRECTED GAIA ENERGY</div>
+            <div class="knob-desc">
+              What ammunition actually is — purified Substrate channeled as
+              weaponized Earth force.
+            </div>
+          </div>
+          <div class="knob">
+            <div class="knob-name">GAIA ADVANCE</div>
+            <div class="knob-desc">
+              The "loan" — Gaia's collective fronts you initial purified
+              reserves to begin the fight, trusting you to replenish them.
+            </div>
+          </div>
+        </div>
+
+        <h3>Economy Reframed Through Lore</h3>
+        <div class="questions" style="margin-top: 12px">
+          <div class="question">
+            <div class="q-num">→</div>
+            <div>
+              <div class="q-text">Repairs = Purification</div>
+              <div class="q-note">
+                Your ship isn't just damaged — it's been contaminated by
+                proximity to the alien entity. Cleansing costs Substrate.
+              </div>
+            </div>
+          </div>
+          <div class="question">
+            <div class="q-num">→</div>
+            <div>
+              <div class="q-text">
+                Ammo resupply = Refined Substrate converted to Gaia energy
+              </div>
+              <div class="q-note">
+                You're not buying bullets — you're converting recovered matter
+                back into directed force.
+              </div>
+            </div>
+          </div>
+          <div class="question">
+            <div class="q-num">→</div>
+            <div>
+              <div class="q-text">
+                Manufacturing (late game) = Purification infrastructure
+              </div>
+              <div class="q-note">
+                You're not building a factory — you're constructing refinement
+                networks that accelerate Earth's recovery.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout success" style="margin-top: 16px">
+          The cycle is self-sustaining by design: destroy the alien, reclaim
+          what was taken, use it to destroy more. You are not a mercenary. You
+          are the mechanism of Earth's recovery.
+        </div>
+
+        <h3>Pre-Run Briefing Text (MVP)</h3>
+        <div
+          class="callout"
+          style="
+            font-size: 15px;
+            line-height: 1.9;
+            font-style: italic;
+            border-left-color: var(--muted);
+          "
+        >
+          As above, so below.<br /><br />
+          For eons, the collective spirit of Gaia flourished in the silence of
+          the void — a tapestry of a billion souls woven into one pulsing
+          consciousness. But the stars have shifted. Out of the deep black comes
+          an ancient hunger: The Seventh Sun. A burning glow that chokes the
+          horizon, turning the atmosphere into a crucible of fire and rot.<br /><br />
+          The Collective is no longer a dream. It is a target.<br /><br />
+          <span style="color: var(--accent); font-style: normal"
+            >"The last of the many shall be the first of the one."</span
+          ><br /><br />
+          You have been chosen. Ascend to high orbit. Find the Key within the
+          heart of the fiery stone. The rot is spreading. The Substrate bleeds
+          into the void.
+        </div>
+
+        <div
+          class="callout"
+          style="
+            font-family: &quot;Share Tech Mono&quot;, monospace;
+            font-size: 13px;
+            line-height: 1.9;
+            margin-top: 8px;
+          "
+        >
+          GAIA UPLINK ESTABLISHED<br /><br />
+          <span style="color: var(--muted); font-style: italic"
+            >In reclaiming what is taken, you sustain what remains.</span
+          ><br /><br />
+          Substrate advance issued: 50,000 units. Your vessel is attuned. Your
+          weapons are charged.<br /><br />
+          Replenish what you spend. Recover what was taken.<br /><br />
+          Chosen One: Will you fall, or will you rise?<br /><br />
+        </div>
+      </section>
+
+      <section>
+        <h2>Design Philosophy</h2>
+        <div class="callout">
+          Build vertically. Validate each layer before adding the next. One
+          complete, playable loop is worth more than four half-built systems.
+          The economy loop is the game — combat is the input mechanism.
+        </div>
+      </section>
+
+      <footer>
+        <div>ECON-SHMUP // DESIGN NOTES</div>
+        <div>SESSION 01 — CONCEPT PHASE</div>
+      </footer>
+    </div>
+  </body>
+</html>
