@@ -463,16 +463,15 @@ export const shield = {
 };
 
 export const loot = {
-  sheet: SPRITE_SHEET2_NAME,
   speed: 0.05,
   hitboxScale: 0.8,
-  size: vec2(1, 1),
+  size: vec2(1.5, 0.65),
   mirrorY: true,
   types: {
-    blue: { sprite: "powerupBlue_bolt.png", label: "Blue Bolt" },
-    green: { sprite: "powerupGreen_bolt.png", label: "Green Bolt" },
-    red: { sprite: "powerupRed_bolt.png", label: "Red Bolt" },
-    star: { sprite: "powerupYellow_star.png", label: "Yellow Star" },
+    blue: { letter: "V", color: rgb(0.2, 0.6, 0.8), label: "Vulcan" },
+    green: { letter: "B", color: rgb(0.2, 0.65, 0.25), label: "Beam" },
+    red: { letter: "S", color: rgb(1, 0.2, 0.2), label: "Shotgun" },
+    star: { letter: "★", color: rgb(0.75, 0.6, 0.1), label: "Star Upgrade" },
   },
 };
 

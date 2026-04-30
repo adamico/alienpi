@@ -4,17 +4,22 @@ import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
 import { soundLootCollect } from "../sounds.js";
 import { PulseEffect } from "../gameEffects.js";
+import { drawLootCell } from "../lootIcon.js";
 
 export class Loot extends BaseEntity {
   constructor(pos, typeKey) {
     const typeCfg = lootCfg.types[typeKey];
     super(
       pos,
-      typeCfg.sprite,
-      lootCfg.sheet,
+      null, // no sprite
+      null, // no sheet
       lootCfg.hitboxScale,
       lootCfg.size,
     );
+
+    // Override BaseEntity's visualSize which defaults to vec2(1) when no sprite is provided
+    this.visualSize = lootCfg.size.copy();
+    this.size = this.visualSize.scale(lootCfg.hitboxScale);
 
     this.typeKey = typeKey;
     this.label = typeCfg.label;
@@ -45,6 +50,26 @@ export class Loot extends BaseEntity {
     }
 
     super.update();
+  }
+
+  render() {
+    const typeCfg = lootCfg.types[this.typeKey];
+    const alpha = this.color.a;
+
+    // Base color with entity tint/alpha applied
+    const c = typeCfg.color.copy();
+    c.r *= this.color.r;
+    c.g *= this.color.g;
+    c.b *= this.color.b;
+    c.a *= alpha;
+
+    if (this.additiveColor) {
+      c.r = Math.min(1, c.r + this.additiveColor.r * this.additiveColor.a);
+      c.g = Math.min(1, c.g + this.additiveColor.g * this.additiveColor.a);
+      c.b = Math.min(1, c.b + this.additiveColor.b * this.additiveColor.a);
+    }
+
+    drawLootCell(this.pos, this.visualSize, c, typeCfg.letter, false);
   }
 
   collect() {

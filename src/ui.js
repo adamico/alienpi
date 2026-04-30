@@ -33,6 +33,7 @@ import {
 } from "./config.js";
 import { gameState, gameTime, gameWon, currentBoss } from "../game.js";
 import { Menu, adjustSetting } from "./menuNav.js";
+import { drawLootCell } from "./lootIcon.js";
 import { FONT_MENU } from "./fonts.js";
 import {
   formatScore,
@@ -922,11 +923,15 @@ function setupHealthUI() {
 const PIP_FILLED = "■"; // ■
 const PIP_EMPTY = "□"; // □
 
+// Icon dimensions that match the loot entity's native aspect ratio so
+// drawLootCell renders identically in the HUD and in the playfield.
+const LOOT_ICON_H = 26; // target height in UI pixels
+const LOOT_ICON_W = Math.round(LOOT_ICON_H * (lootCfg.size.x / lootCfg.size.y));
+
 function setupWeaponUI() {
   WEAPON_ORDER.forEach((key, i) => {
     const lootKey = WEAPON_LOOT_MAPPING[key];
-    const lootSpriteName = lootCfg.types[lootKey].sprite;
-    const lootSprite = sprites.get(lootSpriteName, lootCfg.sheet);
+    const typeCfg = lootCfg.types[lootKey];
 
     const container = new UIObject(vec2(0, 0), vec2(220, 44));
     container.color = new Color(0, 0, 0, 0);
@@ -934,7 +939,19 @@ function setupWeaponUI() {
     container.cornerRadius = 6;
     hudGroup.addChild(container);
 
-    const icon = new UITile(vec2(-85, 0), vec2(36, 36), lootSprite);
+    const icon = new UIObject(vec2(-85, 0), vec2(LOOT_ICON_W, LOOT_ICON_H));
+    icon.color = new Color(0, 0, 0, 0); // transparent — onRender draws the hex
+    icon.lineWidth = 0;
+    icon.cornerRadius = 0;
+    icon._alpha = 1.0; // controlled per-frame in updateUI
+    icon.onRender = function () {
+      // Delegate entirely to drawLootCell — same code path as the in-world
+      // loot entity so aspect/proportions always match.
+      // Build a fresh color each frame to pick up the alpha set in updateUI.
+      const c = typeCfg.color.copy();
+      c.a *= this._alpha;
+      drawLootCell(this.pos, this.size, c, typeCfg.letter, true);
+    };
     container.addChild(icon);
 
     const nameText = new UIText(vec2(-50, 0), vec2(110, 28), "", "left");
@@ -949,7 +966,15 @@ function setupWeaponUI() {
     pipsText.fontShadow = true;
     container.addChild(pipsText);
 
-    weaponIcons.push({ key, container, icon, nameText, pipsText, index: i });
+    weaponIcons.push({
+      key,
+      container,
+      icon,
+      nameText,
+      pipsText,
+      index: i,
+      typeCfg,
+    });
   });
 }
 
@@ -1063,7 +1088,7 @@ export function updateUI() {
   const uiCenterY = Math.floor(mainCanvasSize.y / 2);
   // y-margin clears the boss bar (top padding + bar height + gap) so score/time
   // sit beneath it instead of overlapping.
-  const margin = vec2(130 * hudScale, 100 * hudScale);
+  const margin = vec2(125 * hudScale, 100 * hudScale);
   const uiAnchor = vec2(-uiCenterX + margin.x, -uiCenterY + margin.y);
 
   scoreText.localPos = vec2(uiAnchor.x, uiAnchor.y);
@@ -1104,13 +1129,14 @@ export function updateUI() {
       uiAnchor.x,
       uiAnchor.y + 150 * hudScale + item.index * 54 * hudScale,
     );
-    item.container.size = vec2(220, 44).scale(hudScale);
-    item.icon.size = vec2(36, 36).scale(hudScale);
-    item.icon.localPos = vec2(-85 * hudScale, 0);
-    item.nameText.localPos = vec2(-50 * hudScale, 0);
+    item.container.size = vec2(235, 44).scale(hudScale);
+    item.icon.size = vec2(LOOT_ICON_W, LOOT_ICON_H).scale(hudScale);
+    item.icon.localPos = vec2(-80 * hudScale, 0);
+    item.icon.cornerRadius = 0;
+    item.nameText.localPos = vec2(-35 * hudScale, 0);
     item.nameText.size = vec2(110, 28).scale(hudScale);
     item.nameText.textHeight = 16 * hudScale;
-    item.pipsText.localPos = vec2(100 * hudScale, 0);
+    item.pipsText.localPos = vec2(110 * hudScale, 0);
     item.pipsText.size = vec2(70, 28).scale(hudScale);
     item.pipsText.textHeight = 16 * hudScale;
 
@@ -1124,23 +1150,28 @@ export function updateUI() {
       item.pipsText.text =
         PIP_FILLED.repeat(level) + PIP_EMPTY.repeat(maxLevel - level);
 
+      // The icon alpha is controlled by setting a tinted color on the UIObject;
+      // drawLootCell reads typeCfg.color directly so we bake the alpha into a
+      // temporary overridden color via a closure-captured reference that the
+      // onRender callback reads. We achieve this by storing the desired alpha on
+      // the icon object itself and rebuilding the color each frame.
       if (level === 0) {
         item.container.color = new Color(0, 0, 0, 0);
         item.container.lineWidth = 0;
-        item.icon.color = new Color(1, 1, 1, 0.2);
+        item.icon._alpha = 0.2;
         item.nameText.textColor = new Color(1, 1, 1, 0.5);
         item.pipsText.textColor = new Color(1, 1, 1, 0.5);
       } else if (active) {
         item.container.color = new Color(0.2, 1, 0.2, 0.12);
         item.container.lineColor = rgb(0.3, 1, 0.3);
         item.container.lineWidth = 2;
-        item.icon.color = WHITE.copy();
+        item.icon._alpha = 1.0;
         item.nameText.textColor = rgb(0.4, 1, 0.4);
         item.pipsText.textColor = rgb(0.4, 1, 0.4);
       } else {
         item.container.color = new Color(0, 0, 0, 0);
         item.container.lineWidth = 0;
-        item.icon.color = new Color(1, 1, 1, 0.7);
+        item.icon._alpha = 0.7;
         item.nameText.textColor = WHITE.copy();
         item.pipsText.textColor = WHITE.copy();
       }
