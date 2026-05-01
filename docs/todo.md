@@ -2,7 +2,6 @@
 
 ## Menus
 
-- M11: wire social links. Priority: medium
 - M14: add gamepad controller images to the menus. Priority: low
 - M15: add control remapping. Priority: low
 
@@ -18,7 +17,7 @@
 
 ## Visuals
 
-- V16: the beam attack boss telegraph should be more visible. Priority: medium.
+- ~~V16: the beam attack boss telegraph should be more visible. Priority: medium.~~ ✓ DONE
 
 ## Accessibility
 
@@ -29,7 +28,6 @@
 - P3: add itch.io pipeline. Priority: medium
 - P4: add analytics. Priority: low
 - P5: add feedback form. Priority: medium
-- P6: add post-launch updates. Priority: low
 
 ## bugs & performance
 

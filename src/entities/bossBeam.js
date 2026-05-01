@@ -30,7 +30,7 @@ export class BossBeam extends EngineObject {
     this.renderOrder = -1;
 
     this.state = "starting";
-    this.startTimer = new Timer(0.5); // 0.5s charge telegraph
+    this.startTimer = new Timer(beamCfg.startDuration); // charge telegraph duration
     this.lifeTimer = new Timer(); // will be set when active
     this.endTimer = new Timer(); // will be set when ending
     this.soundTimer = 0; // retriggers soundBossBeam while active
@@ -93,11 +93,14 @@ export class BossBeam extends EngineObject {
   }
 
   updateColor() {
-    const color =
-      this.state !== "starting"
-        ? rgb(1, 0, 0, 0.7) // Active / Ending
-        : rgb(1, 1, 1, 0.3); // Starting (Telegraphing)
-    this.color = color;
+    if (this.state === "starting") {
+      // Telegraph: pulsing yellow/orange warning effect
+      const pulse = Math.sin(this.startTimer.getPercent() * Math.PI * 4) * 0.5 + 0.5;
+      const baseAlpha = 0.5 + pulse * 0.3; // pulses between 0.5-0.8
+      this.color = rgb(1, 0.7, 0, baseAlpha); // Yellow-orange warning
+    } else {
+      this.color = rgb(1, 0, 0, 0.7); // Active / Ending (red)
+    }
   }
 
   updateSound() {
@@ -134,11 +137,6 @@ export class BossBeam extends EngineObject {
   }
 
   render() {
-    if (this.state === "starting") {
-      super.render();
-      return;
-    }
-
     const color = this.color;
     const glowColor = color.copy();
     glowColor.a *= 0.3;
@@ -149,15 +147,28 @@ export class BossBeam extends EngineObject {
     const jitter = rand(-0.01, 0.01);
     const renderAngle = this.angle + jitter;
 
-    // 1. Subtle Glow (Close to hitbox to avoid confusion)
-    drawRect(
-      this.pos,
-      vec2(this.size.x, this.size.y * 1.2),
-      glowColor,
-      renderAngle,
-    );
+    // During telegraph: add dramatic expanding glow for more visibility
+    if (this.state === "starting") {
+      const glowScale = 1 + this.startTimer.getPercent() * 0.5; // Expands during charge
+      drawRect(
+        this.pos,
+        vec2(this.size.x * glowScale, this.size.y * glowScale * 1.5),
+        glowColor,
+        renderAngle,
+      );
+    } else {
+      // 1. Subtle Glow (Close to hitbox to avoid confusion)
+      drawRect(
+        this.pos,
+        vec2(this.size.x, this.size.y * 1.2),
+        glowColor,
+        renderAngle,
+      );
+    }
+
     // 2. Main Beam (Matches hitbox)
     drawRect(this.pos, this.size, color, renderAngle);
+
     // 3. Hot Core (Thin and bright)
     drawRect(
       this.pos,

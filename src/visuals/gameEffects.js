@@ -764,13 +764,7 @@ export function spawnMuzzleFlash(
  * @param {number} [opts.renderOrder=1]
  */
 export function createPersistentMuzzleEmitter(pos, opts) {
-  const {
-    spriteName,
-    color,
-    sizeScale,
-    duration,
-    renderOrder = 1,
-  } = opts;
+  const { spriteName, color, sizeScale, duration, renderOrder = 1 } = opts;
 
   return new ParticleEmitter(
     pos,
@@ -815,13 +809,7 @@ export function createPersistentMuzzleEmitter(pos, opts) {
  * @param {number} [opts.renderOrder=-2]
  */
 export function createPersistentExhaustEmitter(pos, opts) {
-  const {
-    colorStart,
-    colorEnd,
-    emitRate,
-    sizeStart,
-    renderOrder = -2,
-  } = opts;
+  const { colorStart, colorEnd, emitRate, sizeStart, renderOrder = -2 } = opts;
 
   return new ParticleEmitter(
     pos,

@@ -375,10 +375,10 @@ export class Boss extends BaseEntity {
         this.telegraphAction = () => this.fireBeams();
         this.applyEffect(
           new gameEffects.GatheringChargeEffect(
-            new Color(1, 0, 0, 0.6),
+            new Color(1, 0.7, 0, 0.9),
             1.5,
             8.0,
-            32,
+            48,
           ),
         );
       } else {

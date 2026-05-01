@@ -26,6 +26,7 @@ export const beam = {
   rate: 600,
   rotationSpeed: 0.007,
   width: 1.2,
+  startDuration: 0.75, // telegraph charge time in seconds
 };
 
 export const orbiter = {
