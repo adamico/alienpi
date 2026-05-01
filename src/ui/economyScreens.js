@@ -186,9 +186,6 @@ export function createEconomyScreens(uiRoot) {
   return {
     homeGroup,
     postRunGroup,
-    setHomeVisible(visible) {
-      homeGroup.visible = visible;
-    },
     setPostRunVisible(visible) {
       postRunGroup.visible = visible;
       if (!visible) {

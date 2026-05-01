@@ -103,7 +103,6 @@ export function updateUI() {
   pauseGroup.visible = gameState === GAME_STATES.PAUSE;
   loreView.setVisible(gameState === GAME_STATES.LORE);
   preRunGroup.visible = gameState === GAME_STATES.HOME;
-  gameOverGroup.visible = gameState === GAME_STATES.POST_RUN;
   settingsGroup.visible = gameState === GAME_STATES.SETTINGS;
   creditsView.setVisible(gameState === GAME_STATES.CREDITS);
 
@@ -127,7 +126,7 @@ export function updateUI() {
     economyScreens.updateHome();
   }
 
-  economyScreens.setPostRunVisible(gameOverGroup.visible);
+  economyScreens.setPostRunVisible(gameState === GAME_STATES.POST_RUN);
   if (gameOverGroup.visible) {
     economyScreens.updatePostRun({ gameWon, lastRunDebrief });
   }
@@ -135,8 +134,6 @@ export function updateUI() {
   if (hudGroup.visible) {
     hudView.update({ gameTime, currentBoss });
   }
-
-  if (!uiRoot) return;
 
   if (gameState === GAME_STATES.TITLE) {
     titleView.processPointer(titleMenu);
