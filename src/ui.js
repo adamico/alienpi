@@ -9,34 +9,21 @@ import {
   UITile,
   timeReal,
   mainCanvasSize,
-  cameraScale,
   Color,
   mouseWasReleased,
 } from "./engine.js";
 
-import { player } from "./entities/player.js";
 import { sprites } from "./sprites.js";
 import {
-  player as playerCfg,
-  loot as lootCfg,
-  weapons as weaponsCfg,
-  system,
   settings,
   saveSettings,
   GAME_STATES,
   strings,
 } from "./config.js";
 import { Menu } from "./menuNav.js";
-import { drawLootCell } from "./lootIcon.js";
 import { FONT_MENU } from "./fonts.js";
 import { formatScore, formatHighScore } from "./score.js";
-import {
-  getSubstrate,
-  getDebt,
-  getLastRun,
-  formatSubstrate,
-  resetEconomy,
-} from "./economy.js";
+import { resetEconomy } from "./economy.js";
 import {
   makeMenuRow,
   updateMenuInteraction,
@@ -49,13 +36,14 @@ import {
   updateSharedSliderInput,
 } from "./ui/settingsShared.js";
 import { createLoreScreen, createCreditsScreen } from "./ui/storyScreens.js";
+import { createHudView } from "./ui/hudView.js";
+import { createEconomyScreens } from "./ui/economyScreens.js";
 
 let uiStateProvider = null;
 
 let uiRoot;
-let scoreText, timeText;
-let healthIcons = [];
-let weaponIcons = [];
+let hudView;
+let economyScreens;
 let hudGroup,
   titleGroup,
   pauseGroup,
@@ -64,21 +52,9 @@ let hudGroup,
   settingsGroup,
   creditsGroup,
   loreGroup;
-let preRunTitleText,
-  preRunBalanceText,
-  preRunDebtText,
-  preRunLastRunText,
-  preRunLaunchText;
-let postRunEarningsText,
-  postRunBossBonusText,
-  postRunRepairText,
-  postRunNetText,
-  postRunBalanceText,
-  postRunDebtText;
 let titleBossDecor;
 let titleInitialTexts = [];
 let controlGroup, controlsTitle, controlsBody;
-let bossHealthGroup, bossHealthBg, bossHealthFg;
 let titleMenuRows = [];
 let pauseTitleText,
   pauseMusicSlider,
@@ -89,23 +65,8 @@ let settingsTitle,
   settingsSfxSlider,
   settingsMenuRows = [];
 let retryText, gameOverTitleText, backToTitleText, finalScoreText;
-let gameOverHighScoreText, titleHighScoreText, hudHighScoreText;
+let gameOverHighScoreText, titleHighScoreText;
 let socialIcons = [];
-let postRunCacheWon = null;
-let postRunCacheBalance = NaN;
-let postRunCacheEarnings = NaN;
-let postRunCacheBossBonus = NaN;
-let postRunCacheRepair = NaN;
-let postRunCacheNet = NaN;
-let postRunCacheDebt = NaN;
-let postRunCacheHasDebrief = null;
-
-const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
-const WEAPON_LOOT_MAPPING = {
-  vulcan: "blue",
-  shotgun: "red",
-  latch: "green",
-};
 
 const measureCanvas = document.createElement("canvas");
 const measureCtx = measureCanvas.getContext("2d");
@@ -113,15 +74,6 @@ function measureTextWidth(text, pxHeight, font) {
   measureCtx.font = `${pxHeight}px ${font}`;
   return measureCtx.measureText(text).width;
 }
-
-const BOSS_BAR = {
-  padding: 40, // top margin and left/right margin from canvas edge
-  height: 32, // outer bar height
-  border: 2, // bg border line width
-  fgInset: 4, // gap between bg edge and fg edge (framed look)
-  revealDuration: 0.6, // seconds for scale + flash reveal
-};
-let bossBarRevealStartT = null;
 
 const FOCUS_COLOR = rgb(1, 0.9, 0.3);
 const IDLE_COLOR = WHITE;
@@ -177,66 +129,8 @@ export function initUI({ getUIState }) {
   uiRoot.lineWidth = 0;
 
   // HUD
-  hudGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  hudGroup.color = new Color(0, 0, 0, 0);
-  hudGroup.lineWidth = 0;
-  uiRoot.addChild(hudGroup);
-
-  scoreText = new UIText(
-    vec2(0, 0),
-    vec2(300, 30),
-    strings.ui.substratePrefix + "0",
-  );
-  scoreText.textColor = rgb(0.4, 1, 0.7);
-  scoreText.textAlign = "left";
-  scoreText.fontShadow = true;
-  hudGroup.addChild(scoreText);
-
-  hudHighScoreText = new UIText(
-    vec2(0, 0),
-    vec2(300, 24),
-    strings.ui.debtPrefix + "0",
-  );
-  hudHighScoreText.textColor = new Color(1, 0.5, 0.3, 0.85);
-  hudHighScoreText.textAlign = "left";
-  hudHighScoreText.fontShadow = true;
-  hudGroup.addChild(hudHighScoreText);
-
-  timeText = new UIText(
-    vec2(0, 0),
-    vec2(300, 30),
-    strings.ui.timePrefix + "00:00",
-  );
-  timeText.textColor = WHITE.copy();
-  timeText.textAlign = "right";
-  timeText.fontShadow = true;
-  hudGroup.addChild(timeText);
-
-  setupHealthUI();
-  setupWeaponUI();
-
-  // Boss Health Bar — actual size set per-frame in updateBossHealthBar.
-  bossHealthGroup = new UIObject(
-    vec2(0, 0),
-    vec2(BOSS_BAR.height, BOSS_BAR.height),
-  );
-  bossHealthGroup.color = new Color(0, 0, 0, 0);
-  bossHealthGroup.lineWidth = 0;
-  hudGroup.addChild(bossHealthGroup);
-
-  bossHealthBg = new UIObject(
-    vec2(0, 0),
-    vec2(BOSS_BAR.height, BOSS_BAR.height),
-  );
-  bossHealthBg.lineWidth = BOSS_BAR.border;
-  bossHealthGroup.addChild(bossHealthBg);
-
-  bossHealthFg = new UIObject(
-    vec2(0, 0),
-    vec2(BOSS_BAR.height, BOSS_BAR.height),
-  );
-  bossHealthFg.lineWidth = 0;
-  bossHealthBg.addChild(bossHealthFg);
+  hudView = createHudView(uiRoot);
+  hudGroup = hudView.root;
 
   setupTitleScreen();
   setupPauseScreen();
@@ -244,8 +138,9 @@ export function initUI({ getUIState }) {
   setupSettingsScreen();
   setupCreditsScreen();
   setupLoreScreen();
-  setupPreRunScreen();
-  extendPostRunScreen();
+  economyScreens = createEconomyScreens(uiRoot);
+  preRunGroup = economyScreens.homeGroup;
+  gameOverGroup = economyScreens.postRunGroup;
   rebuildMenus();
 }
 
@@ -535,102 +430,6 @@ function setupGameOverScreen() {
   gameOverGroup.addChild(backToTitleText);
 }
 
-function makeDebriefLine(parent, y, label, color = WHITE) {
-  const t = new UIText(vec2(0, y), vec2(800, 32), label);
-  t.textHeight = 24;
-  t.font = FONT_MENU;
-  t.textColor = color.copy();
-  t.fontShadow = true;
-  parent.addChild(t);
-  return t;
-}
-
-function setupPreRunScreen() {
-  preRunGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  preRunGroup.color = new Color(0.04, 0.06, 0.12, 0.85);
-  preRunGroup.lineWidth = 0;
-  uiRoot.addChild(preRunGroup);
-
-  preRunTitleText = new UIText(
-    vec2(0, -160),
-    vec2(800, 100),
-    strings.ui.homeTitle,
-  );
-  preRunTitleText.textHeight = 70;
-  preRunTitleText.font = FONT_MENU;
-  preRunTitleText.textColor = rgb(0.4, 0.9, 1);
-  preRunTitleText.fontShadow = true;
-  preRunGroup.addChild(preRunTitleText);
-
-  preRunBalanceText = makeDebriefLine(
-    preRunGroup,
-    -40,
-    strings.ui.homeBalanceLabel,
-    rgb(0.4, 1, 0.7),
-  );
-  preRunDebtText = makeDebriefLine(
-    preRunGroup,
-    0,
-    strings.ui.homeDebtLabel,
-    rgb(1, 0.5, 0.3),
-  );
-  preRunLastRunText = makeDebriefLine(
-    preRunGroup,
-    40,
-    strings.ui.homeLastRunLabel,
-    new Color(0.85, 0.85, 0.85, 1),
-  );
-
-  preRunLaunchText = new UIText(
-    vec2(0, 130),
-    vec2(800, 50),
-    strings.ui.homeLaunchPrompt,
-  );
-  preRunLaunchText.textHeight = 28;
-  preRunLaunchText.font = FONT_MENU;
-  preRunLaunchText.textColor = WHITE.copy();
-  preRunLaunchText.fontShadow = true;
-  preRunGroup.addChild(preRunLaunchText);
-
-  const homeExitText = new UIText(
-    vec2(0, 180),
-    vec2(800, 32),
-    strings.ui.homeExitPrompt,
-  );
-  homeExitText.textHeight = 18;
-  homeExitText.font = FONT_MENU;
-  homeExitText.textColor = new Color(0.7, 0.7, 0.7, 1);
-  homeExitText.fontShadow = true;
-  preRunGroup.addChild(homeExitText);
-}
-
-// Adds debrief breakdown rows to the existing gameOverGroup (now POST_RUN).
-function extendPostRunScreen() {
-  postRunEarningsText = makeDebriefLine(gameOverGroup, 80, "");
-  postRunEarningsText.fontShadow = false;
-  postRunBossBonusText = makeDebriefLine(
-    gameOverGroup,
-    110,
-    "",
-    rgb(1, 0.85, 0.3),
-  );
-  postRunBossBonusText.fontShadow = false;
-  postRunRepairText = makeDebriefLine(gameOverGroup, 140, "", rgb(1, 0.5, 0.3));
-  postRunRepairText.fontShadow = false;
-  postRunNetText = makeDebriefLine(gameOverGroup, 175, "", rgb(0.4, 1, 0.7));
-  postRunNetText.fontShadow = false;
-  postRunNetText.textHeight = 28;
-  postRunBalanceText = makeDebriefLine(
-    gameOverGroup,
-    215,
-    "",
-    rgb(0.4, 1, 0.7),
-  );
-  postRunBalanceText.fontShadow = false;
-  postRunDebtText = makeDebriefLine(gameOverGroup, 245, "", rgb(1, 0.5, 0.3));
-  postRunDebtText.fontShadow = false;
-}
-
 function setupSettingsScreen() {
   settingsGroup = new UIObject(vec2(0, 0), mainCanvasSize);
   settingsGroup.color = new Color(0.05, 0.05, 0.1, 0.9);
@@ -760,127 +559,11 @@ function rebuildMenus() {
   ]);
 }
 
-function updateBossHealthBar(currentBoss, uiCenterY, hudScale) {
-  const visible =
-    currentBoss && !currentBoss.destroyed && currentBoss.state !== "entering";
-  if (!visible) {
-    bossHealthGroup.visible = false;
-    bossBarRevealStartT = null;
-    return;
-  }
-  if (bossBarRevealStartT === null) bossBarRevealStartT = timeReal;
-  bossHealthGroup.visible = true;
-
-  const elapsed = timeReal - bossBarRevealStartT;
-  const t = Math.min(1, elapsed / BOSS_BAR.revealDuration);
-  const ease = t * t * (3 - 2 * t); // smoothstep
-  const flash = 1 - ease; // 1 = fully white, 0 = final color
-
-  // Position: top of canvas + padding, centered horizontally.
-  const yOffset = BOSS_BAR.padding + BOSS_BAR.height / 2;
-  bossHealthGroup.localPos = vec2(0, -uiCenterY + yOffset * hudScale);
-
-  // Background: bar fits inside the playfield with `padding` from each
-  // playfield edge (i.e. side padding includes the marquee band), scaled by
-  // the reveal animation.
-  const playfieldWidth = system.levelSize.x * cameraScale;
-  const marqueeWidth = (mainCanvasSize.x - playfieldWidth) / 2;
-  const fullBgWidth =
-    mainCanvasSize.x - (marqueeWidth + BOSS_BAR.padding * hudScale) * 2;
-  const bgWidth = fullBgWidth * ease;
-  bossHealthBg.size = vec2(bgWidth, BOSS_BAR.height * hudScale);
-
-  // Foreground: insets within bg, width tracks current HP.
-  const hpPercent = Math.max(0, currentBoss.hp / currentBoss.maxHp);
-  const fgMaxWidth = (fullBgWidth - BOSS_BAR.fgInset * 2 * hudScale) * ease;
-  const fgWidth = fgMaxWidth * hpPercent;
-  bossHealthFg.size = vec2(
-    fgWidth,
-    (BOSS_BAR.height - BOSS_BAR.fgInset * 2) * hudScale,
-  );
-  bossHealthFg.localPos = vec2(-(fgMaxWidth - fgWidth) / 2, 0);
-
-  // Color flash: white → final colors as the reveal completes.
-  bossHealthBg.color = new Color(0.2 + 0.8 * flash, flash, flash, 0.7);
-  bossHealthBg.lineColor = new Color(1, flash, flash);
-  bossHealthFg.color = new Color(1, 0.2 + 0.8 * flash, 0.2 + 0.8 * flash);
-}
-
-function setupHealthUI() {
-  const heartSprite = sprites.get(playerCfg.hpIcon, playerCfg.hpIconSheet);
-  for (let i = 0; i < playerCfg.hp; i++) {
-    const icon = new UITile(vec2(0, 0), vec2(37, 26).scale(0.8), heartSprite);
-    icon.color = WHITE.copy();
-    hudGroup.addChild(icon);
-    healthIcons.push(icon);
-  }
-}
-
-const PIP_FILLED = "■"; // ■
-const PIP_EMPTY = "□"; // □
-
-// Icon dimensions that match the loot entity's native aspect ratio so
-// drawLootCell renders identically in the HUD and in the playfield.
-const LOOT_ICON_H = 26; // target height in UI pixels
-const LOOT_ICON_W = Math.round(LOOT_ICON_H * (lootCfg.size.x / lootCfg.size.y));
-
-function setupWeaponUI() {
-  WEAPON_ORDER.forEach((key, i) => {
-    const lootKey = WEAPON_LOOT_MAPPING[key];
-    const typeCfg = lootCfg.types[lootKey];
-
-    const container = new UIObject(vec2(0, 0), vec2(220, 44));
-    container.color = new Color(0, 0, 0, 0);
-    container.lineWidth = 0;
-    container.cornerRadius = 6;
-    hudGroup.addChild(container);
-
-    const icon = new UIObject(vec2(-85, 0), vec2(LOOT_ICON_W, LOOT_ICON_H));
-    icon.color = new Color(0, 0, 0, 0); // transparent — onRender draws the hex
-    icon.lineWidth = 0;
-    icon.cornerRadius = 0;
-    icon._alpha = 1.0; // controlled per-frame in updateUI
-    icon.onRender = function () {
-      // Delegate entirely to drawLootCell — same code path as the in-world
-      // loot entity so aspect/proportions always match.
-      // Build a fresh color each frame to pick up the alpha set in updateUI.
-      const c = typeCfg.color.copy();
-      c.a *= this._alpha;
-      drawLootCell(this.pos, this.size, c, typeCfg.letter, true);
-    };
-    container.addChild(icon);
-
-    const nameText = new UIText(vec2(-50, 0), vec2(110, 28), "", "left");
-    nameText.textHeight = 16;
-    nameText.font = FONT_MENU;
-    nameText.fontShadow = true;
-    container.addChild(nameText);
-
-    const pipsText = new UIText(vec2(85, 0), vec2(70, 28), "", "right");
-    pipsText.textHeight = 16;
-    pipsText.font = FONT_MENU;
-    pipsText.fontShadow = true;
-    container.addChild(pipsText);
-
-    weaponIcons.push({
-      key,
-      container,
-      icon,
-      nameText,
-      pipsText,
-      index: i,
-      typeCfg,
-    });
-  });
-}
-
 export function updateUI() {
   if (!uiRoot) return;
 
   const { gameState, gameTime, gameWon, currentBoss, lastRunDebrief } =
     uiStateProvider();
-
-  const hudScale = mainCanvasSize.y / 720;
 
   uiRoot.pos = mainCanvasSize.scale(0.5).floor();
   uiRoot.size = mainCanvasSize;
@@ -894,8 +577,9 @@ export function updateUI() {
   settingsGroup.size = mainCanvasSize;
   creditsGroup.size = mainCanvasSize;
 
-  hudGroup.visible =
-    gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSE;
+  hudView.setVisible(
+    gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSE,
+  );
   titleGroup.visible = gameState === GAME_STATES.TITLE;
   pauseGroup.visible = gameState === GAME_STATES.PAUSE;
   loreGroup.visible = gameState === GAME_STATES.LORE;
@@ -903,17 +587,6 @@ export function updateUI() {
   gameOverGroup.visible = gameState === GAME_STATES.POST_RUN;
   settingsGroup.visible = gameState === GAME_STATES.SETTINGS;
   creditsGroup.visible = gameState === GAME_STATES.CREDITS;
-
-  if (!gameOverGroup.visible) {
-    postRunCacheWon = null;
-    postRunCacheBalance = NaN;
-    postRunCacheEarnings = NaN;
-    postRunCacheBossBonus = NaN;
-    postRunCacheRepair = NaN;
-    postRunCacheNet = NaN;
-    postRunCacheDebt = NaN;
-    postRunCacheHasDebrief = null;
-  }
 
   if (titleGroup.visible) {
     paintMenu(titleMenu, titleMenuRows, FOCUS_COLOR, IDLE_COLOR);
@@ -937,118 +610,12 @@ export function updateUI() {
   }
 
   if (preRunGroup.visible) {
-    preRunBalanceText.text =
-      strings.ui.homeBalanceLabel +
-      ": " +
-      formatSubstrate(getSubstrate(), { compact: false });
-    preRunDebtText.text =
-      strings.ui.homeDebtLabel +
-      ": " +
-      formatSubstrate(getDebt(), { compact: false });
-    preRunDebtText.visible = getDebt() > 0;
-    const last = getLastRun();
-    preRunLastRunText.visible = !!last;
-    if (last) {
-      const sign = last.net >= 0 ? "+" : "";
-      preRunLastRunText.text =
-        strings.ui.homeLastRunLabel +
-        ": " +
-        sign +
-        formatSubstrate(last.net, { compact: false });
-      preRunLastRunText.textColor =
-        last.net >= 0 ? new Color(0.4, 1, 0.7, 1) : new Color(1, 0.5, 0.3, 1);
-    }
-    preRunLaunchText.visible = (timeReal * 2) % 2 < 1.2;
+    economyScreens.updateHome();
   }
 
+  economyScreens.setPostRunVisible(gameOverGroup.visible);
   if (gameOverGroup.visible) {
-    const d = lastRunDebrief;
-    const hasDebrief = !!d;
-    const balanceForHeadline = d ? d.balance : getSubstrate();
-    const earnings = d ? d.earnings : NaN;
-    const bossBonus = d ? d.bossBonus : NaN;
-    const repair = d ? d.repair : NaN;
-    const net = d ? d.net : NaN;
-    const debt = d ? d.debt : NaN;
-    const shouldRefresh =
-      postRunCacheWon !== gameWon ||
-      postRunCacheHasDebrief !== hasDebrief ||
-      postRunCacheBalance !== balanceForHeadline ||
-      postRunCacheEarnings !== earnings ||
-      postRunCacheBossBonus !== bossBonus ||
-      postRunCacheRepair !== repair ||
-      postRunCacheNet !== net ||
-      postRunCacheDebt !== debt;
-
-    if (shouldRefresh) {
-      postRunCacheWon = gameWon;
-      postRunCacheHasDebrief = hasDebrief;
-      postRunCacheBalance = balanceForHeadline;
-      postRunCacheEarnings = earnings;
-      postRunCacheBossBonus = bossBonus;
-      postRunCacheRepair = repair;
-      postRunCacheNet = net;
-      postRunCacheDebt = debt;
-
-      if (gameWon) {
-        gameOverTitleText.text = strings.ui.postRunVictoryTitle;
-        gameOverTitleText.textColor = rgb(0.4, 1, 0.4);
-      } else {
-        gameOverTitleText.text = strings.ui.postRunDefeatTitle;
-        gameOverTitleText.textColor = rgb(1, 0.2, 0.2);
-      }
-      retryText.text = strings.ui.postRunContinuePrompt;
-
-      // Headline is the post-run Substrate balance — the score row is gone in
-      // favor of the economy framing.
-      finalScoreText.text =
-        strings.ui.postRunSubstratePrefix +
-        formatSubstrate(balanceForHeadline, { compact: false });
-      finalScoreText.textColor = rgb(0.4, 1, 0.7);
-      gameOverHighScoreText.visible = false;
-
-      const showBreakdown = !!d;
-      postRunEarningsText.visible = showBreakdown;
-      postRunBossBonusText.visible = showBreakdown && d && d.bossBonus > 0;
-      postRunRepairText.visible = showBreakdown;
-      postRunNetText.visible = showBreakdown;
-      postRunBalanceText.visible = showBreakdown;
-      postRunDebtText.visible = showBreakdown && d && d.debt > 0;
-      if (d) {
-        postRunEarningsText.text =
-          strings.ui.postRunEarningsLabel +
-          ": +" +
-          formatSubstrate(d.earnings, { compact: false });
-        postRunBossBonusText.text =
-          strings.ui.postRunBossBonusLabel +
-          ": +" +
-          formatSubstrate(d.bossBonus, { compact: false });
-        postRunRepairText.text =
-          strings.ui.postRunRepairLabel +
-          ": -" +
-          formatSubstrate(d.repair, { compact: false });
-        const netSign = d.net >= 0 ? "+" : "";
-        postRunNetText.text =
-          strings.ui.postRunNetLabel +
-          ": " +
-          netSign +
-          formatSubstrate(d.net, { compact: false });
-        postRunNetText.textColor =
-          d.net >= 0 ? rgb(0.4, 1, 0.7) : rgb(1, 0.5, 0.3);
-        postRunBalanceText.text =
-          strings.ui.postRunBalanceLabel +
-          ": " +
-          formatSubstrate(d.balance, { compact: false });
-        postRunDebtText.text =
-          strings.ui.postRunDebtLabel +
-          ": " +
-          formatSubstrate(d.debt, { compact: false });
-      }
-    }
-
-    // Keep the continue cue near the bottom edge so it reads as a footer hint.
-    retryText.localPos = vec2(0, Math.floor(mainCanvasSize.y * 0.42));
-    retryText.visible = (timeReal * 2) % 2 < 1.2;
+    economyScreens.updatePostRun({ gameWon, lastRunDebrief });
   }
 
   if (titleGroup.visible) {
@@ -1070,101 +637,7 @@ export function updateUI() {
   }
 
   if (hudGroup.visible) {
-    const uiCenterX = Math.floor(mainCanvasSize.x / 2);
-    const uiCenterY = Math.floor(mainCanvasSize.y / 2);
-    // y-margin clears the boss bar (top padding + bar height + gap) so score/time
-    // sit beneath it instead of overlapping.
-    const margin = vec2(125 * hudScale, 100 * hudScale);
-    const uiAnchor = vec2(-uiCenterX + margin.x, -uiCenterY + margin.y);
-
-    scoreText.localPos = vec2(uiAnchor.x, uiAnchor.y);
-    scoreText.size = vec2(300, 40).scale(hudScale);
-    scoreText.textHeight = 30 * hudScale;
-    scoreText.text =
-      strings.ui.substratePrefix + formatSubstrate(getSubstrate());
-
-    hudHighScoreText.localPos = vec2(uiAnchor.x, uiAnchor.y + 28 * hudScale);
-    hudHighScoreText.size = vec2(300, 24).scale(hudScale);
-    hudHighScoreText.textHeight = 18 * hudScale;
-    const debt = getDebt();
-    hudHighScoreText.visible = debt > 0;
-    hudHighScoreText.text = strings.ui.debtPrefix + formatSubstrate(debt);
-
-    timeText.localPos = vec2(-uiAnchor.x, uiAnchor.y);
-    timeText.size = vec2(300, 40).scale(hudScale);
-    timeText.textHeight = 30 * hudScale;
-
-    healthIcons.forEach((icon, i) => {
-      icon.localPos = vec2(
-        uiAnchor.x + (i - 3) * 32 * hudScale,
-        uiAnchor.y + 60 * hudScale,
-      );
-      icon.size = vec2(37, 26).scale(0.8 * hudScale);
-      if (player) {
-        const alive = i < player.hp;
-        icon.color = alive ? WHITE.copy() : new Color(0.7, 0.7, 0.6, 0.55);
-      }
-    });
-
-    weaponIcons.forEach((item) => {
-      item.container.localPos = vec2(
-        uiAnchor.x,
-        uiAnchor.y + 150 * hudScale + item.index * 54 * hudScale,
-      );
-      item.container.size = vec2(235, 44).scale(hudScale);
-      item.icon.size = vec2(LOOT_ICON_W, LOOT_ICON_H).scale(hudScale);
-      item.icon.localPos = vec2(-80 * hudScale, 0);
-      item.icon.cornerRadius = 0;
-      item.nameText.localPos = vec2(-35 * hudScale, 0);
-      item.nameText.size = vec2(110, 28).scale(hudScale);
-      item.nameText.textHeight = 16 * hudScale;
-      item.pipsText.localPos = vec2(110 * hudScale, 0);
-      item.pipsText.size = vec2(70, 28).scale(hudScale);
-      item.pipsText.textHeight = 16 * hudScale;
-
-      if (player) {
-        const level = player.weaponLevels[item.key];
-        const maxLevel = player.maxLevel;
-        const active = player.currentWeaponKey === item.key;
-        const cfg = weaponsCfg[item.key];
-        const name = cfg && cfg.label ? cfg.label : item.key.toUpperCase();
-        item.nameText.text = name;
-        item.pipsText.text =
-          PIP_FILLED.repeat(level) + PIP_EMPTY.repeat(maxLevel - level);
-
-        // The icon alpha is controlled by setting a tinted color on the UIObject;
-        // drawLootCell reads typeCfg.color directly so we bake the alpha into a
-        // temporary overridden color via a closure-captured reference that the
-        // onRender callback reads. We achieve this by storing the desired alpha on
-        // the icon object itself and rebuilding the color each frame.
-        if (level === 0) {
-          item.container.color = new Color(0, 0, 0, 0);
-          item.container.lineWidth = 0;
-          item.icon._alpha = 0.2;
-          item.nameText.textColor = new Color(1, 1, 1, 0.5);
-          item.pipsText.textColor = new Color(1, 1, 1, 0.5);
-        } else if (active) {
-          item.container.color = new Color(0.2, 1, 0.2, 0.12);
-          item.container.lineColor = rgb(0.3, 1, 0.3);
-          item.container.lineWidth = 2;
-          item.icon._alpha = 1.0;
-          item.nameText.textColor = rgb(0.4, 1, 0.4);
-          item.pipsText.textColor = rgb(0.4, 1, 0.4);
-        } else {
-          item.container.color = new Color(0, 0, 0, 0);
-          item.container.lineWidth = 0;
-          item.icon._alpha = 0.7;
-          item.nameText.textColor = WHITE.copy();
-          item.pipsText.textColor = WHITE.copy();
-        }
-      }
-    });
-
-    updateBossHealthBar(currentBoss, uiCenterY, hudScale);
-
-    const minutes = Math.floor(gameTime / 60);
-    const seconds = Math.floor(gameTime % 60);
-    timeText.text = `${strings.ui.timePrefix}${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    hudView.update({ gameTime, currentBoss });
   }
 }
 
