@@ -39,6 +39,7 @@ export class BossMissile extends BaseEntity {
     this.setCollision(true, false);
     this.mass = 0;
     this.isEnemy = true; // so player bullets recognise it
+    this.scoreOnKill = SCORE.missile;
     this.renderOrder = 8;
     this.lifeTimer = new Timer(lifetime ?? missileCfg.lifetime);
     this.ejectTimer = new Timer(missileCfg.ejectDuration);

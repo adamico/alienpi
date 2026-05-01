@@ -324,7 +324,7 @@ function updateMusic() {
 }
 
 function gameRender() {
-  drawPlayField();
+  drawPlayField({ drawStars: gameState !== GAME_STATES.POST_RUN });
 }
 
 function gameRenderPost() {

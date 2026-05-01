@@ -11,6 +11,7 @@ import {
 import { system, weapons } from "../config.js";
 import { sprites } from "../sprites.js";
 import { soundExplosion1 } from "../sounds.js";
+import { addScoreAt } from "../score.js";
 import { recordDamage } from "../dpsTracker.js";
 import * as gameEffects from "../gameEffects.js";
 
@@ -105,6 +106,9 @@ export class LatchBeam extends EngineObject {
         this.emitImpactSparks();
         if (this.target.hp <= 0) {
           soundExplosion1.play();
+          if (this.target.scoreOnKill) {
+            addScoreAt(this.target.pos, this.target.scoreOnKill);
+          }
           this.target.destroy();
           this.target = null;
         }

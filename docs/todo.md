@@ -1,10 +1,5 @@
 # TODO
 
-## Boss
-
-- ~~B1: One more boss attack to make the shotgun weapon useful. something like the diving drones, with low hp but in huge numbers. Maybe turn the missile attack into a swarm attackPriority: high~~ DONE (missiles now spawn in volleys of 3 with a fan spread, and the missile count is increased at higher weapon levels)
-- ~~B2: Add boss health bar when he appears. Priority: medium~~ DONE
-
 ## Menus
 
 - ~~M1: add flash effects toggle in the settings. Priority: high~~ DONE
@@ -67,6 +62,8 @@
 - ~~V12: add font to the game. Priority: high.~~ DONE
 - ~~V13: make loot entity sprites be rendered on top of the explosion particles. Priority: medium.~~ DONE
 - ~~V14: add floating text system (game effects) like "1000!", "Vulcan Upgraded!" Priority: high.~~ DONE (`FloatingText` EngineObject + `spawnFloatingText` in gameEffects.js; score popups via `addScoreAt` tier-tinted by amount; weapon upgrade/unlock/max stings spawned from `Player.upgradeWeapon`)
+- ~~V15: post run screen "SPACE: CONTINUE" prompt should be at the bottom of the screen instead of being below the final score. Priority: medium.~~ DONE (continue prompt now anchors near the bottom edge in POST_RUN and keeps its blink cadence)
+- V16: the beam attack boss telegraph should be more visible. Priority: medium.
 
 ## Accessibility
 
@@ -90,3 +87,24 @@
 - P4: add analytics. Priority: low
 - P5: add feedback form. Priority: medium
 - P6: add post-launch updates. Priority: low
+
+## bugs & performance
+
+- ~~B1: player engine exhaust are not removed on player death. they persist at game restart. Priority: high.~~ DONE (`BaseEntity.destroy` now forwards `immediate` flag so `engineObjectsDestroy(true)` terminates emitters instantly)
+- ~~B2: when enemies are killed by beams, they don't trigger the score popup. Priority: high.~~ DONE (`LatchBeam` now reads `scoreOnKill` from each target and calls `addScoreAt` before destroying)
+- ~~B3: post run screen has a 10 fps drop. a static screen with some text and buttons should be very cheap to render, so this is likely a bug. Priority: high.~~ DONE (POST_RUN now skips animated starfield draws; debrief screen renders as a static lightweight backdrop)
+- ~~B4: orbiter return logic can get stuck, the orbiter returns to its position and starts orbiting but stays untangible and doesn't trigger the "returning" state. Priority: high.~~ DONE
+
+## balance
+
+- ~~BA1: the initial debt is too high, reduce it to 5000. Priority: high.~~ DONE (`economy.startingLoan` 50000 → 5000; lore uplink line updated to match)
+- ~~BA2: boss progressive difficulty curve is too steep, reduce the damage scaling and/or add more health scaling. Priority: high.~~ DONE (boss HP 500 → 650; per-stage scaling softened: moveScale `0.125 → 0.08`, rateScale `0.25 → 0.15`, missileSpeed `0.2 → 0.12`, missile lifetime drop `1.0 → 0.6`, missile count `4..8 → 4..6`)
+- BA3: the boss nova attack should alternate patterns to make it more hard to avoid. Priority: medium.
+- ~~BA4: One more boss attack to make the shotgun weapon useful. something like the diving drones, with low hp but in huge numbers. Maybe turn the missile attack into a swarm attackPriority: high~~ DONE (missiles now spawn in volleys of 3 with a fan spread, and the missile count is increased at higher weapon levels)
+- ~~BA5: Add boss health bar when he appears. Priority: medium~~ DONE
+
+## game feel
+
+- GF1: add slow-motion effect on orbiter loot death. priority: medium.
+- GF2: add player ship entry animation. priority: medium.
+- GF3: add scene transition effects. priority: low.

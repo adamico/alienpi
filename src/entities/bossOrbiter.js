@@ -51,6 +51,7 @@ export class BossOrbiter extends BaseEntity {
     this.warningTimer = new Timer();
     this.tetherColor = this.color.copy();
     this.isEnemy = true;
+    this.scoreOnKill = hasLoot ? SCORE.orbiterLoot : SCORE.orbiter;
     this.spawnPos = this.pos.copy();
 
     if (this.hasLoot) {

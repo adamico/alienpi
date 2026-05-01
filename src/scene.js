@@ -7,8 +7,8 @@ const PLAYFIELD_COLOR = rgb(0.01, 0.01, 0.02);
 const PLAYFIELD_MARGIN = 1;
 const MASK_SIZE = 100;
 
-/** Background fill + scrolling starfield. */
-export function drawPlayField() {
+/** Background fill + optional scrolling starfield. */
+export function drawPlayField({ drawStars = true } = {}) {
   drawRect(system.cameraPos, vec2(100), MARQUEE_COLOR);
   drawRect(
     system.cameraPos,
@@ -18,6 +18,8 @@ export function drawPlayField() {
     ),
     PLAYFIELD_COLOR,
   );
+
+  if (!drawStars) return;
 
   const pos = vec2(),
     size = vec2(),

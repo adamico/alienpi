@@ -33,6 +33,7 @@ export class Enemy extends BaseEntity {
     this.isDiving = false;
     this.isWaveEnemy = true;
     this.isEnemy = true;
+    this.scoreOnKill = SCORE.enemy;
 
     this.path = null;
     this.pathIndex = 0;
