@@ -124,32 +124,32 @@ export function createTitleScreen(uiRoot, titleMenu, handlers) {
     titleGroup.addChild(bossDecor);
   }
 
-  buildSegmentedTitle(titleGroup, initialTexts, strings.ui.title, -200, {
+  buildSegmentedTitle(titleGroup, initialTexts, strings.title.title, -200, {
     offset: vec2(-3, 2),
     glowTint: new Color(1, 0.2, 0.5, 0.45),
   });
-  buildSegmentedTitle(titleGroup, initialTexts, strings.ui.title, -200, {
+  buildSegmentedTitle(titleGroup, initialTexts, strings.title.title, -200, {
     offset: vec2(3, -2),
     glowTint: new Color(0.2, 0.8, 1, 0.45),
   });
-  buildSegmentedTitle(titleGroup, initialTexts, strings.ui.title, -200);
+  buildSegmentedTitle(titleGroup, initialTexts, strings.title.title, -200);
 
   const controlGroup = new UIObject(vec2(0, -30), vec2(600, 160));
   controlGroup.color = new Color(0, 0, 0, 0);
   controlGroup.lineWidth = 0;
   titleGroup.addChild(controlGroup);
 
-  makeText(controlGroup, vec2(0, -50), vec2(400, 30), strings.ui.controlsTitle,
+  makeText(controlGroup, vec2(0, -50), vec2(400, 30), strings.title.controlsTitle,
     { textHeight: 22, color: rgb(0.2, 1, 0.4) });
 
-  makeText(controlGroup, vec2(0, 20), vec2(600, 100), strings.ui.controlsBody,
+  makeText(controlGroup, vec2(0, 20), vec2(600, 100), strings.title.controlsBody,
     { textHeight: 18, color: WHITE });
 
   const highScoreText = makeText(
     titleGroup,
     vec2(0, -110),
     vec2(600, 30),
-    strings.ui.highScorePrefix + formatHighScore(),
+    strings.title.highScorePrefix + formatHighScore(),
     { textHeight: 22, color: rgb(1, 0.85, 0.3) },
   );
 
@@ -216,9 +216,9 @@ export function createTitleScreen(uiRoot, titleMenu, handlers) {
         text.textColor.a *= pulse;
       }
 
-      highScoreText.text = strings.ui.highScorePrefix + formatHighScore();
+      highScoreText.text = strings.title.highScorePrefix + formatHighScore();
 
-      const links = strings.ui.links;
+      const links = strings.links;
       const clicked = mouseWasReleased(0);
       for (const entry of socialIcons) {
         const hovered = entry.icon.isHoverObject();

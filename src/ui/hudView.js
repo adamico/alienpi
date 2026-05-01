@@ -46,7 +46,7 @@ export function createHudView(parent) {
   const scoreText = new UIText(
     vec2(0, 0),
     vec2(300, 30),
-    strings.ui.substratePrefix + "0",
+    strings.hud.substratePrefix + "0",
   );
   scoreText.textColor = rgb(0.4, 1, 0.7);
   scoreText.textAlign = "left";
@@ -56,7 +56,7 @@ export function createHudView(parent) {
   const hudHighScoreText = new UIText(
     vec2(0, 0),
     vec2(300, 24),
-    strings.ui.debtPrefix + "0",
+    strings.hud.debtPrefix + "0",
   );
   hudHighScoreText.textColor = new Color(1, 0.5, 0.3, 0.85);
   hudHighScoreText.textAlign = "left";
@@ -66,7 +66,7 @@ export function createHudView(parent) {
   const timeText = new UIText(
     vec2(0, 0),
     vec2(300, 30),
-    strings.ui.timePrefix + "00:00",
+    strings.hud.timePrefix + "00:00",
   );
   timeText.textColor = WHITE.copy();
   timeText.textAlign = "right";
@@ -161,14 +161,14 @@ export function createHudView(parent) {
       scoreText.size = vec2(300, 40).scale(hudScale);
       scoreText.textHeight = 30 * hudScale;
       scoreText.text =
-        strings.ui.substratePrefix + formatSubstrate(getSubstrate());
+        strings.hud.substratePrefix + formatSubstrate(getSubstrate());
 
       hudHighScoreText.localPos = vec2(uiAnchor.x, uiAnchor.y + 28 * hudScale);
       hudHighScoreText.size = vec2(300, 24).scale(hudScale);
       hudHighScoreText.textHeight = 18 * hudScale;
       const debt = getDebt();
       hudHighScoreText.visible = debt > 0;
-      hudHighScoreText.text = strings.ui.debtPrefix + formatSubstrate(debt);
+      hudHighScoreText.text = strings.hud.debtPrefix + formatSubstrate(debt);
 
       timeText.localPos = vec2(-uiAnchor.x, uiAnchor.y);
       timeText.size = vec2(300, 40).scale(hudScale);
@@ -239,7 +239,7 @@ export function createHudView(parent) {
 
       const minutes = Math.floor(gameTime / 60);
       const seconds = Math.floor(gameTime % 60);
-      timeText.text = `${strings.ui.timePrefix}${minutes
+      timeText.text = `${strings.hud.timePrefix}${minutes
         .toString()
         .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
     },

@@ -1,10 +1,4 @@
-import {
-  rgb,
-  WHITE,
-  Color,
-  mouseWasReleased,
-  timeReal,
-} from "../engine.js";
+import { rgb, WHITE, Color, mouseWasReleased, timeReal } from "../engine.js";
 import { GAME_STATES, settings, strings } from "../config/index.js";
 import { saveSettings } from "../settings.js";
 import { resetEconomy } from "../economy.js";
@@ -36,7 +30,12 @@ const IDLE_COLOR = WHITE;
  *   processPausePointer(menu)
  *   processSettingsPointer(menu)
  */
-export function createPauseSettingsScreens(uiRoot, pauseMenu, settingsMenu, handlers) {
+export function createPauseSettingsScreens(
+  uiRoot,
+  pauseMenu,
+  settingsMenu,
+  handlers,
+) {
   function makeRow(parent, y, h = 40) {
     return makeMenuRow(parent, y, h);
   }
@@ -46,7 +45,7 @@ export function createPauseSettingsScreens(uiRoot, pauseMenu, settingsMenu, hand
     color: new Color(0, 0, 0, 0.5),
   });
 
-  makeCenterTitle(pauseGroup, -260, strings.ui.pauseTitle, {
+  makeCenterTitle(pauseGroup, -260, strings.pause.title, {
     color: rgb(0.4, 0.7, 1),
   });
 
@@ -60,7 +59,7 @@ export function createPauseSettingsScreens(uiRoot, pauseMenu, settingsMenu, hand
     color: new Color(0.05, 0.05, 0.1, 0.9),
   });
 
-  makeCenterTitle(settingsGroup, -260, strings.ui.settingsTitle, {
+  makeCenterTitle(settingsGroup, -260, strings.settings.settingsTitle, {
     color: rgb(1, 0.8, 0.2),
   });
 

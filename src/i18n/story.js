@@ -1,7 +1,6 @@
-// Lore and credits screens
+// Story screen
 export const story = {
-  loreTitle: "The story so far",
-  loreBody: `As above, so below.
+  body: `As above, so below.
 
 For eons, the collective spirit of Gaia flourished in the silence of the void,
 a tapestry of a billion souls woven into one pulsing consciousness. But the stars
@@ -22,23 +21,6 @@ Substrate advance issued: 5,000 units.
 Your vessel is attuned. Your weapons are charged.
 Replenish what you spend. Recover what was taken.
 Chosen One: Will you fall, or will you rise?`,
-  loreStartPrompt: "SPACE: ACCEPT YOUR FATE",
-  creditsTitle: "CREDITS",
-  creditsBody: `DESIGN & CODE
-kc00l
-
-ENGINE
-LittleJS by killedbyapixel
-
-ART
-Nano Banana + procedural assets + Kenney.nl assets
-
-FONTS
-Orbitron  ·  Exo2  ·  Titillium Web
-
-SOUND
-ZZFX by killedbyapixel + SUNO
-
-Thanks for playing!`,
-  creditsBackPrompt: "ESC: BACK",
+  startPrompt: "SPACE: ACCEPT YOUR FATE",
+  title: "The story so far",
 };

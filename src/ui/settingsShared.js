@@ -47,7 +47,7 @@ export function buildSharedSettingsItems({
     {
       kind: "toggle",
       label: () =>
-        `MUSIC: ${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
+        `MUSIC: ${settings.musicEnabled ? strings.settings.onLabel : strings.settings.offLabel}`,
       toggle: () => {
         settings.musicEnabled = !settings.musicEnabled;
         syncVolumeSliders();
@@ -66,7 +66,7 @@ export function buildSharedSettingsItems({
     {
       kind: "toggle",
       label: () =>
-        `SFX: ${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
+        `SFX: ${settings.soundEffectsEnabled ? strings.settings.onLabel : strings.settings.offLabel}`,
       toggle: () => {
         settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
         syncVolumeSliders();
@@ -86,7 +86,7 @@ export function buildSharedSettingsItems({
     {
       kind: "toggle",
       label: () =>
-        `FLASH EFFECTS: ${settings.flashEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
+        `FLASH EFFECTS: ${settings.flashEnabled ? strings.settings.onLabel : strings.settings.offLabel}`,
       toggle: () => {
         settings.flashEnabled = !settings.flashEnabled;
         saveSettings();
@@ -95,7 +95,7 @@ export function buildSharedSettingsItems({
     {
       kind: "toggle",
       label: () =>
-        `SCREEN SHAKE: ${settings.shakeEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
+        `SCREEN SHAKE: ${settings.shakeEnabled ? strings.settings.onLabel : strings.settings.offLabel}`,
       toggle: () => {
         settings.shakeEnabled = !settings.shakeEnabled;
         saveSettings();
@@ -104,7 +104,7 @@ export function buildSharedSettingsItems({
     {
       kind: "toggle",
       label: () =>
-        `FULLSCREEN: ${isFullscreen() ? strings.ui.onLabel : strings.ui.offLabel}`,
+        `FULLSCREEN: ${isFullscreen() ? strings.settings.onLabel : strings.settings.offLabel}`,
       toggle: () => toggleFullscreen(),
     },
   ];

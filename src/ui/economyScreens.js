@@ -26,24 +26,24 @@ export function createEconomyScreens(uiRoot) {
     color: COLOR_HOME_PANEL_BG,
   });
 
-  makeCenterTitle(homeGroup, -160, strings.ui.homeTitle, {
+  makeCenterTitle(homeGroup, -160, strings.home.title, {
     color: COLOR_HOME_TITLE,
   });
   const homeBalanceText = makeCenterLine(
     homeGroup,
     -40,
-    strings.ui.homeBalanceLabel,
+    strings.home.balanceLabel,
     {
       color: COLOR_POSITIVE,
     },
   );
-  const homeDebtText = makeCenterLine(homeGroup, 0, strings.ui.homeDebtLabel, {
+  const homeDebtText = makeCenterLine(homeGroup, 0, strings.home.debtLabel, {
     color: COLOR_NEGATIVE,
   });
   const homeLastRunText = makeCenterLine(
     homeGroup,
     40,
-    strings.ui.homeLastRunLabel,
+    strings.home.lastRunLabel,
     {
       color: COLOR_NEUTRAL,
     },
@@ -52,14 +52,14 @@ export function createEconomyScreens(uiRoot) {
   const homeLaunchText = makeCenterLine(
     homeGroup,
     130,
-    strings.ui.homeLaunchPrompt,
+    strings.home.launchPrompt,
     {
       boxHeight: 50,
       textHeight: 28,
       color: COLOR_WHITE,
     },
   );
-  makeCenterLine(homeGroup, 180, strings.ui.homeExitPrompt, {
+  makeCenterLine(homeGroup, 180, strings.home.exitPrompt, {
     textHeight: 18,
     color: COLOR_DIM,
   });
@@ -68,7 +68,7 @@ export function createEconomyScreens(uiRoot) {
   const postRunTitleText = makeCenterTitle(
     postRunGroup,
     -90,
-    strings.ui.gameOverTitle,
+    strings.postRun.gameOverTitle,
     {
       textHeight: 80,
       color: COLOR_DEFEAT,
@@ -78,7 +78,7 @@ export function createEconomyScreens(uiRoot) {
   const finalScoreText = makeCenterTitle(
     postRunGroup,
     0,
-    strings.ui.finalScorePrefix,
+    strings.postRun.finalScorePrefix,
     {
       textHeight: 60,
       color: COLOR_WHITE,
@@ -88,10 +88,10 @@ export function createEconomyScreens(uiRoot) {
   const gameOverHighScoreText = makeCenterLine(
     postRunGroup,
     35,
-    strings.ui.highScorePrefix + formatHighScore(),
+    strings.title.highScorePrefix + formatHighScore(),
     { boxHeight: 40, textHeight: 26, color: COLOR_HIGHLIGHT, shadow: false },
   );
-  const retryText = makeCenterLine(postRunGroup, 60, strings.ui.retryPrompt, {
+  const retryText = makeCenterLine(postRunGroup, 60, strings.postRun.retryPrompt, {
     boxHeight: 50,
     textHeight: 24,
     color: COLOR_WHITE,
@@ -163,11 +163,11 @@ export function createEconomyScreens(uiRoot) {
     updateHome() {
       homeGroup.size = mainCanvasSize;
       homeBalanceText.text =
-        strings.ui.homeBalanceLabel +
+        strings.home.balanceLabel +
         ": " +
         formatSubstrate(getSubstrate(), { compact: false });
       homeDebtText.text =
-        strings.ui.homeDebtLabel +
+        strings.home.debtLabel +
         ": " +
         formatSubstrate(getDebt(), { compact: false });
       homeDebtText.visible = getDebt() > 0;
@@ -176,7 +176,7 @@ export function createEconomyScreens(uiRoot) {
       if (last) {
         const sign = last.net >= 0 ? "+" : "";
         homeLastRunText.text =
-          strings.ui.homeLastRunLabel +
+          strings.home.lastRunLabel +
           ": " +
           sign +
           formatSubstrate(last.net, { compact: false });
@@ -217,15 +217,15 @@ export function createEconomyScreens(uiRoot) {
         postRunCacheDebt = debt;
 
         if (gameWon) {
-          postRunTitleText.text = strings.ui.postRunVictoryTitle;
+          postRunTitleText.text = strings.postRun.victoryTitle;
           postRunTitleText.textColor = COLOR_VICTORY.copy();
         } else {
-          postRunTitleText.text = strings.ui.postRunDefeatTitle;
+          postRunTitleText.text = strings.postRun.defeatTitle;
           postRunTitleText.textColor = COLOR_DEFEAT.copy();
         }
-        retryText.text = strings.ui.postRunContinuePrompt;
+        retryText.text = strings.postRun.continuePrompt;
         finalScoreText.text =
-          strings.ui.postRunSubstratePrefix +
+          strings.postRun.substratePrefix +
           formatSubstrate(balanceForHeadline, { compact: false });
         finalScoreText.textColor = COLOR_POSITIVE.copy();
         gameOverHighScoreText.visible = false;
@@ -240,31 +240,31 @@ export function createEconomyScreens(uiRoot) {
 
         if (debrief) {
           postRunEarningsText.text =
-            strings.ui.postRunEarningsLabel +
+            strings.postRun.earningsLabel +
             ": +" +
             formatSubstrate(debrief.earnings, { compact: false });
           postRunBossBonusText.text =
-            strings.ui.postRunBossBonusLabel +
+            strings.postRun.bossBonusLabel +
             ": +" +
             formatSubstrate(debrief.bossBonus, { compact: false });
           postRunRepairText.text =
-            strings.ui.postRunRepairLabel +
+            strings.postRun.repairLabel +
             ": -" +
             formatSubstrate(debrief.repair, { compact: false });
           const netSign = debrief.net >= 0 ? "+" : "";
           postRunNetText.text =
-            strings.ui.postRunNetLabel +
+            strings.postRun.netLabel +
             ": " +
             netSign +
             formatSubstrate(debrief.net, { compact: false });
           postRunNetText.textColor =
             debrief.net >= 0 ? COLOR_POSITIVE.copy() : COLOR_NEGATIVE.copy();
           postRunBalanceText.text =
-            strings.ui.postRunBalanceLabel +
+            strings.postRun.balanceLabel +
             ": " +
             formatSubstrate(debrief.balance, { compact: false });
           postRunDebtText.text =
-            strings.ui.postRunDebtLabel +
+            strings.postRun.debtLabel +
             ": " +
             formatSubstrate(debrief.debt, { compact: false });
         }
