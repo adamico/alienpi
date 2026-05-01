@@ -1,3 +1,10 @@
+import {
+  keyWasPressed,
+  gamepadWasReleased,
+  mouseWasReleased,
+  gamepadStick,
+} from "../engine.js";
+
 export const SCENE_ACTION = {
   NAV_UP: "NAV_UP",
   NAV_DOWN: "NAV_DOWN",
@@ -12,12 +19,7 @@ export const SCENE_ACTION = {
 export function createSceneActionCollector({ vec2 }) {
   let lastGamepadStick = vec2(0);
 
-  return function collectSceneActions({
-    keyWasPressed,
-    gamepadWasReleased,
-    mouseWasReleased,
-    gamepadStick,
-  }) {
+  return function collectSceneActions() {
   const actions = [];
   const seen = new Set();
   const push = (type, source) => {

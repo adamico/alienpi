@@ -1,11 +1,20 @@
 import { vec2, rgb, drawRect, timeReal } from "./engine.js";
-import { system, starfield as starCfg } from "./config.js";
+import { system, starfield as starCfg, GAME_STATES } from "./config.js";
 import { Boundary } from "./entities/boundary.js";
+import { getGameState } from "./world.js";
 
 const MARQUEE_COLOR = rgb(0.05, 0.05, 0.1);
 const PLAYFIELD_COLOR = rgb(0.01, 0.01, 0.02);
 const PLAYFIELD_MARGIN = 1;
 const MASK_SIZE = 100;
+
+export function renderBackground() {
+  drawPlayField({ drawStars: getGameState() !== GAME_STATES.POST_RUN });
+}
+
+export function renderPostBackground() {
+  drawMarquee();
+}
 
 /** Background fill + optional scrolling starfield. */
 export function drawPlayField({ drawStars = true } = {}) {

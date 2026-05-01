@@ -1,11 +1,14 @@
 import { vec2 } from "./engine.js";
-import { system } from "./config.js";
+import { system, GAME_STATES } from "./config.js";
 import { spawnPlayer } from "./entities/player.js";
 import { Boss } from "./entities/boss.js";
 
 let player = null;
 let currentBoss = null;
 let gameTime = 0;
+let gameState = GAME_STATES.TITLE;
+let gameWon = false;
+let lastRunDebrief = null;
 
 export function getPlayer() {
   return player;
@@ -35,4 +38,28 @@ export function tickGameTime(dt) {
 
 export function resetGameTime() {
   gameTime = 0;
+}
+
+export function getGameState() {
+  return gameState;
+}
+
+export function setGameState(state) {
+  gameState = state;
+}
+
+export function getGameWon() {
+  return gameWon;
+}
+
+export function setGameWon(value) {
+  gameWon = value;
+}
+
+export function getLastRunDebrief() {
+  return lastRunDebrief;
+}
+
+export function setLastRunDebrief(value) {
+  lastRunDebrief = value;
 }

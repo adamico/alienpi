@@ -7,32 +7,25 @@ import {
   setCanvasPixelated,
   setTilesPixelated,
   setFontDefault,
-  engineObjects,
-  timeDelta,
   engineObjectsDestroy,
-  keyWasPressed,
-  mouseWasReleased,
+  timeDelta,
   setPaused,
   setDebugWatermark,
   setTouchGamepadEnable,
   setTouchGamepadSize,
-  gamepadWasReleased,
-  gamepadStick,
 } from "./src/engine.js";
 import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 
 import { system, loadSettings, GAME_STATES } from "./src/config.js";
-import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
 import { initializeGameAssets } from "./src/commonSetup.js";
 import { loadHighScore } from "./src/score.js";
 import { loadEconomy } from "./src/economy.js";
 
 import { input } from "./src/input.js";
-import { drawPlayField, drawMarquee } from "./src/scene.js";
+import { renderBackground, renderPostBackground } from "./src/scene.js";
 import {
   initUI,
   updateUI,
-  processMenuPointerInput,
   titleMenu,
   pauseMenu,
   settingsMenu,
@@ -43,11 +36,16 @@ import { SCENE_TRANSITIONS } from "./src/scenes/transitionPolicy.js";
 import { createSceneActionCollector } from "./src/scenes/sceneActions.js";
 import { setDesiredMusic, updateAudio } from "./src/soundManager.js";
 import { createGameScenes } from "./src/scenes/gameScenes.js";
-import { getGameTime, getCurrentBoss } from "./src/world.js";
-
-let gameState = GAME_STATES.TITLE;
-let gameWon = false;
-let lastRunDebrief = null;
+import {
+  getGameTime,
+  getCurrentBoss,
+  getGameState,
+  setGameState,
+  getGameWon,
+  setGameWon,
+  getLastRunDebrief,
+  setLastRunDebrief,
+} from "./src/world.js";
 
 const sceneContext = new SceneContext({
   gameWon,
@@ -63,9 +61,9 @@ const sceneManager = new SceneManager({
 });
 
 sceneManager.subscribe(({ to, context }) => {
-  gameState = to;
-  gameWon = context.gameWon;
-  lastRunDebrief = context.lastRunDebrief;
+  setGameState(to);
+  setGameWon(context.gameWon);
+  setLastRunDebrief(context.lastRunDebrief);
   setDesiredMusic(scenes.get(to)?.getMusic(context));
 });
 
@@ -89,9 +87,6 @@ const scenes = createGameScenes({
     pauseMenu,
     settingsMenu,
   },
-  onDPSTick: () => {
-    if (system.enableDPSLog) updateDPSLog();
-  },
 });
 
 for (const scene of scenes.values()) {
@@ -111,11 +106,11 @@ async function gameInit() {
   setPaused(true);
   initUI({
     getUIState: () => ({
-      gameState,
+      gameState: getGameState(),
       gameTime: getGameTime(),
-      gameWon,
+      gameWon: getGameWon(),
       currentBoss: getCurrentBoss(),
-      lastRunDebrief,
+      lastRunDebrief: getLastRunDebrief(),
     }),
     handlers: {
       title: {
@@ -141,32 +136,11 @@ function gameUpdate() {
 }
 
 function gameUpdatePost() {
-  processMenuPointerInput();
-
-  const { actions } = collectSceneActions({
-    keyWasPressed,
-    gamepadWasReleased,
-    mouseWasReleased,
-    gamepadStick,
-  });
-  sceneManager.updateFrame({ actions, dt: timeDelta, runtime: { gameState } });
+  const { actions } = collectSceneActions();
+  sceneManager.updateFrame({ actions, dt: timeDelta });
 
   updateAudio();
   updateUI();
-}
-
-function updateDPSLog() {
-  const enemies = engineObjects.filter((o) => o.isEnemy);
-  setEnemyCount(enemies.length);
-  tickDPSLog();
-}
-
-function gameRender() {
-  drawPlayField({ drawStars: gameState !== GAME_STATES.POST_RUN });
-}
-
-function gameRenderPost() {
-  drawMarquee();
 }
 
 glSetAntialias(true);
@@ -176,7 +150,7 @@ engineInit(
   gameInit,
   gameUpdate,
   gameUpdatePost,
-  gameRender,
-  gameRenderPost,
+  renderBackground,
+  renderPostBackground,
   system.spriteSheetLists,
 );

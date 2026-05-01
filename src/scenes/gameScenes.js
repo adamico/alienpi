@@ -1,5 +1,7 @@
 import { GAME_STATES } from "../config.js";
-import { setPaused, timeReal } from "../engine.js";
+import { engineObjects, setPaused, timeReal } from "../engine.js";
+import { system } from "../config.js";
+import { tickDPSLog, setEnemyCount } from "../dpsTracker.js";
 import { resetScore, commitHighScore } from "../score.js";
 import { beginRun, commitRun } from "../economy.js";
 import { vibrate } from "../gamepad.js";
@@ -112,10 +114,9 @@ class HomeScene extends BaseScene {
 }
 
 class PlayingScene extends BaseScene {
-  constructor({ transitionTo, onDPSTick }) {
+  constructor({ transitionTo }) {
     super(GAME_STATES.PLAYING);
     this.transitionTo = transitionTo;
-    this.onDPSTick = onDPSTick;
   }
 
   enter() {
@@ -128,7 +129,10 @@ class PlayingScene extends BaseScene {
 
   update(dt) {
     tickGameTime(dt);
-    if (this.onDPSTick) this.onDPSTick();
+    if (system.enableDPSLog) {
+      setEnemyCount(engineObjects.filter((o) => o.isEnemy).length);
+      tickDPSLog();
+    }
 
     const player = getPlayer();
     const boss = getCurrentBoss();

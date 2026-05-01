@@ -128,12 +128,8 @@ export function updateUI() {
   if (hudGroup.visible) {
     hudView.update({ gameTime, currentBoss });
   }
-}
 
-export function processMenuPointerInput() {
   if (!uiRoot) return;
-
-  const { gameState } = uiStateProvider();
 
   if (gameState === GAME_STATES.TITLE) {
     titleView.processPointer(titleMenu);
