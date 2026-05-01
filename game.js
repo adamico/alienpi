@@ -103,7 +103,7 @@ async function gameInit() {
     },
     lore: {
       start: () => {
-        gameState = GAME_STATES.PRE_RUN;
+        gameState = GAME_STATES.HOME;
       },
     },
   });
@@ -226,9 +226,9 @@ function gameUpdatePost() {
     dispatchMenu(titleMenu);
   } else if (gameState === GAME_STATES.LORE) {
     if (inputActions.confirm() || mouseWasReleased(0)) {
-      gameState = GAME_STATES.PRE_RUN;
+      gameState = GAME_STATES.HOME;
     }
-  } else if (gameState === GAME_STATES.PRE_RUN) {
+  } else if (gameState === GAME_STATES.HOME) {
     if (inputActions.confirm() || mouseWasReleased(0)) {
       resetGame();
       setPaused(false);
@@ -264,11 +264,12 @@ function gameUpdatePost() {
     }
   } else if (gameState === GAME_STATES.POST_RUN) {
     if (timeReal - gameOverTime > 1.0) {
-      if (inputActions.confirm() || mouseWasReleased(0)) {
-        gameState = GAME_STATES.PRE_RUN;
-      } else if (inputActions.cancel()) {
-        gameState = GAME_STATES.TITLE;
-        setPaused(true);
+      if (
+        inputActions.confirm() ||
+        inputActions.cancel() ||
+        mouseWasReleased(0)
+      ) {
+        gameState = GAME_STATES.HOME;
       }
     }
   }
@@ -290,7 +291,7 @@ function desiredMusic() {
     case GAME_STATES.CREDITS:
       return soundTitleMusic; // Placeholder, could be a separate track for credits
     case GAME_STATES.LORE:
-    case GAME_STATES.PRE_RUN:
+    case GAME_STATES.HOME:
       return soundTitleMusic; // Placeholder, could be a separate track for lore/pre-run
     case GAME_STATES.PLAYING:
     case GAME_STATES.PAUSE:

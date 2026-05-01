@@ -681,15 +681,15 @@ function setupGameOverScreen() {
   retryText.textColor = WHITE.copy();
   retryText.fontShadow = true;
 
-  backToTitleText = new UIText(
-    vec2(0, 100),
-    vec2(800, 40),
-    strings.ui.backToTitlePrompt,
-  );
+  // Hidden after the HOME hub took over the post-run exit; kept for layout
+  // continuity but rendered invisible to avoid a stray "ESC: TITLE" prompt
+  // on the debrief screen.
+  backToTitleText = new UIText(vec2(0, 100), vec2(800, 40), "");
   backToTitleText.textHeight = 18;
   backToTitleText.font = FONT_MENU;
   backToTitleText.textColor = new Color(0.7, 0.7, 0.7, 1);
   backToTitleText.fontShadow = true;
+  backToTitleText.visible = false;
 
   finalScoreText = new UIText(
     vec2(0, 0),
@@ -736,7 +736,7 @@ function setupPreRunScreen() {
   preRunTitleText = new UIText(
     vec2(0, -160),
     vec2(800, 100),
-    strings.ui.preRunTitle,
+    strings.ui.homeTitle,
   );
   preRunTitleText.textHeight = 70;
   preRunTitleText.font = FONT_MENU;
@@ -747,32 +747,43 @@ function setupPreRunScreen() {
   preRunBalanceText = makeDebriefLine(
     preRunGroup,
     -40,
-    strings.ui.preRunBalanceLabel,
+    strings.ui.homeBalanceLabel,
     rgb(0.4, 1, 0.7),
   );
   preRunDebtText = makeDebriefLine(
     preRunGroup,
     0,
-    strings.ui.preRunDebtLabel,
+    strings.ui.homeDebtLabel,
     rgb(1, 0.5, 0.3),
   );
   preRunLastRunText = makeDebriefLine(
     preRunGroup,
     40,
-    strings.ui.preRunLastRunLabel,
+    strings.ui.homeLastRunLabel,
     new Color(0.85, 0.85, 0.85, 1),
   );
 
   preRunLaunchText = new UIText(
     vec2(0, 130),
     vec2(800, 50),
-    strings.ui.preRunLaunchPrompt,
+    strings.ui.homeLaunchPrompt,
   );
   preRunLaunchText.textHeight = 28;
   preRunLaunchText.font = FONT_MENU;
   preRunLaunchText.textColor = WHITE.copy();
   preRunLaunchText.fontShadow = true;
   preRunGroup.addChild(preRunLaunchText);
+
+  const homeExitText = new UIText(
+    vec2(0, 180),
+    vec2(800, 32),
+    strings.ui.homeExitPrompt,
+  );
+  homeExitText.textHeight = 18;
+  homeExitText.font = FONT_MENU;
+  homeExitText.textColor = new Color(0.7, 0.7, 0.7, 1);
+  homeExitText.fontShadow = true;
+  preRunGroup.addChild(homeExitText);
 }
 
 // Adds debrief breakdown rows to the existing gameOverGroup (now POST_RUN).
@@ -1110,11 +1121,11 @@ export function updateUI() {
     gameState !== GAME_STATES.SETTINGS &&
     gameState !== GAME_STATES.CREDITS &&
     gameState !== GAME_STATES.LORE &&
-    gameState !== GAME_STATES.PRE_RUN;
+    gameState !== GAME_STATES.HOME;
   titleGroup.visible = gameState === GAME_STATES.TITLE;
   pauseGroup.visible = gameState === GAME_STATES.PAUSE;
   loreGroup.visible = gameState === GAME_STATES.LORE;
-  preRunGroup.visible = gameState === GAME_STATES.PRE_RUN;
+  preRunGroup.visible = gameState === GAME_STATES.HOME;
   gameOverGroup.visible = gameState === GAME_STATES.POST_RUN;
   settingsGroup.visible = gameState === GAME_STATES.SETTINGS;
   creditsGroup.visible = gameState === GAME_STATES.CREDITS;
@@ -1158,11 +1169,11 @@ export function updateUI() {
 
   if (preRunGroup.visible) {
     preRunBalanceText.text =
-      strings.ui.preRunBalanceLabel +
+      strings.ui.homeBalanceLabel +
       ": " +
       formatSubstrate(getSubstrate(), { compact: false });
     preRunDebtText.text =
-      strings.ui.preRunDebtLabel +
+      strings.ui.homeDebtLabel +
       ": " +
       formatSubstrate(getDebt(), { compact: false });
     preRunDebtText.visible = getDebt() > 0;
@@ -1171,7 +1182,7 @@ export function updateUI() {
     if (last) {
       const sign = last.net >= 0 ? "+" : "";
       preRunLastRunText.text =
-        strings.ui.preRunLastRunLabel +
+        strings.ui.homeLastRunLabel +
         ": " +
         sign +
         formatSubstrate(last.net, { compact: false });
