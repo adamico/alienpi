@@ -25,7 +25,7 @@ import { system, loadSettings, GAME_STATES } from "./src/config.js";
 import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
 import { loadHighScore } from "./src/score.js";
 import { loadEconomy } from "./src/economy.js";
-import { soundTitleMusic, updateSoundVolumes } from "./src/sounds.js";
+
 import { input } from "./src/input.js";
 import { drawPlayField, drawMarquee } from "./src/scene.js";
 import {
@@ -40,12 +40,9 @@ import { SceneContext } from "./src/scenes/sceneContext.js";
 import { SceneManager } from "./src/scenes/sceneManager.js";
 import { SCENE_TRANSITIONS } from "./src/scenes/transitionPolicy.js";
 import { createSceneActionCollector } from "./src/scenes/sceneActions.js";
+import { setDesiredMusic, updateAudio } from "./src/soundManager.js";
 import { createGameScenes } from "./src/scenes/gameScenes.js";
-import { getGameTime, getCurrentBoss } from "./src/world.js";
 
-let activeMusicSound = null;
-let activeMusicInstance = null;
-let desiredMusicSound = soundTitleMusic;
 let gameState = GAME_STATES.TITLE;
 let gameWon = false;
 let lastRunDebrief = null;
@@ -67,7 +64,7 @@ sceneManager.subscribe(({ to, context }) => {
   gameState = to;
   gameWon = context.gameWon;
   lastRunDebrief = context.lastRunDebrief;
-  desiredMusicSound = scenes.get(to)?.getMusic(context) ?? desiredMusicSound;
+  setDesiredMusic(scenes.get(to)?.getMusic(context));
 });
 
 const collectSceneActions = createSceneActionCollector({ vec2 });
@@ -152,8 +149,7 @@ function gameUpdatePost() {
   });
   sceneManager.updateFrame({ actions, dt: timeDelta, runtime: { gameState } });
 
-  updateMusic();
-  updateSoundVolumes();
+  updateAudio();
   updateUI();
 }
 
@@ -161,23 +157,6 @@ function updateDPSLog() {
   const enemies = engineObjects.filter((o) => o.isEnemy);
   setEnemyCount(enemies.length);
   tickDPSLog();
-}
-
-function updateMusic() {
-  const desired = desiredMusicSound;
-  if (desired !== activeMusicSound) {
-    if (activeMusicInstance) {
-      activeMusicInstance.stop();
-      activeMusicInstance = null;
-    }
-    activeMusicSound = desired;
-    if (desired && desired.isLoaded()) {
-      activeMusicInstance = desired.playMusic(1.0, true);
-    }
-  } else if (!activeMusicInstance && desired && desired.isLoaded()) {
-    // Track was selected before its file finished loading; start now.
-    activeMusicInstance = desired.playMusic(1.0, true);
-  }
 }
 
 function gameRender() {
