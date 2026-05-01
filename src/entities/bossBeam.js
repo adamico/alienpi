@@ -10,7 +10,8 @@ import {
 } from "../engine.js";
 import { beam as beamCfg } from "../config/index.js";
 import { player } from "./player.js";
-import { soundBossBeam, soundBossBeamCharge } from "../sounds.js";
+import { soundBossBeam, soundBossBeamCharge } from "../audio/sounds.js";
+import { playSfx } from "../audio/soundManager.js";
 
 /**
  * Rotating beam hazard.
@@ -33,7 +34,7 @@ export class BossBeam extends EngineObject {
     this.lifeTimer = new Timer(); // will be set when active
     this.endTimer = new Timer(); // will be set when ending
     this.soundTimer = 0; // retriggers soundBossBeam while active
-    soundBossBeamCharge.play(vec2(), 0.25);
+    playSfx(soundBossBeamCharge, vec2(), 0.25);
   }
 
   update() {
@@ -105,7 +106,7 @@ export class BossBeam extends EngineObject {
       return;
     }
     if (this.soundTimer <= 0) {
-      soundBossBeam.play(vec2(), 0.2);
+      playSfx(soundBossBeam, vec2(), 0.2);
       // Retrigger spaced so the long release tail overlaps into a continuous
       // hum rather than re-attacking each cycle.
       this.soundTimer = 36;

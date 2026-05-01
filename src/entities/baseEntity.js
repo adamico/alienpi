@@ -1,8 +1,9 @@
 import { vec2, EngineObject, drawTile, Timer } from "../engine.js";
 import { engine } from "../config/index.js";
-import { sprites } from "../sprites.js";
-import { soundExplosion1, soundExplosion2 } from "../sounds.js";
-import * as gameEffects from "../gameEffects.js";
+import { sprites } from "../visuals/sprites.js";
+import { soundExplosion1, soundExplosion2 } from "../audio/sounds.js";
+import { playSfx } from "../audio/soundManager.js";
+import * as gameEffects from "../visuals/gameEffects.js";
 
 /**
  * Base class for game objects that need visual size distinct from hitbox size.
@@ -55,7 +56,7 @@ export class BaseEntity extends EngineObject {
 
   /**
    * Adds a visual effect to this entity
-   * @param {import('../gameEffects.js').EntityEffect} effect
+    * @param {import('../visuals/gameEffects.js').EntityEffect} effect
    */
   applyEffect(effect) {
     this.effects.push(effect);
@@ -85,8 +86,8 @@ export class BaseEntity extends EngineObject {
 
   destroy(immediate = false) {
     if (this.explodeOnDestroy) {
-      soundExplosion2.play();
-      soundExplosion1.play();
+      playSfx(soundExplosion2);
+      playSfx(soundExplosion1);
       gameEffects.explode(this.pos, this.visualSize.x);
     }
     super.destroy(immediate);

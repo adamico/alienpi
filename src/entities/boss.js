@@ -16,11 +16,12 @@ import {
 } from "../config/index.js";
 import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
-import { sprites } from "../sprites.js";
-import { soundExplosion1 } from "../sounds.js";
-import * as gameEffects from "../gameEffects.js";
-import { vibrate } from "../gamepad.js";
-import { addScoreAt, SCORE } from "../score.js";
+import { sprites } from "../visuals/sprites.js";
+import { soundExplosion1 } from "../audio/sounds.js";
+import { playSfx } from "../audio/soundManager.js";
+import * as gameEffects from "../visuals/gameEffects.js";
+import { vibrate } from "../input/gamepad.js";
+import { addScoreAt, SCORE } from "../game/score.js";
 
 import { BossOrbiter } from "./bossOrbiter.js";
 import { BossMissile } from "./bossMissile.js";
@@ -487,7 +488,7 @@ export class Boss extends BaseEntity {
       this.applyEffect(new gameEffects.ShakeEffect(0.05, 0.1));
       if (this.hp <= 0) {
         addScoreAt(this.pos, SCORE.boss);
-        soundExplosion1.play();
+        playSfx(soundExplosion1);
         vibrate(600, 1.0, 1.0);
         this.destroy();
       }

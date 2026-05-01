@@ -1,17 +1,23 @@
 import { GAME_STATES, system } from "../config/index.js";
-import { engineObjects, engineObjectsDestroy, setPaused, timeReal } from "../engine.js";
-import { tickDPSLog, setEnemyCount } from "../dpsTracker.js";
-import { resetScore, commitHighScore } from "../score.js";
-import { beginRun, commitRun } from "../economy.js";
-import { vibrate } from "../gamepad.js";
-import { setupBoundaries } from "../scene.js";
+import {
+  engineObjects,
+  engineObjectsDestroy,
+  setPaused,
+  timeReal,
+} from "../engine.js";
+import { tickDPSLog, setEnemyCount } from "../game/dpsTracker.js";
+import { resetScore, commitHighScore } from "../game/score.js";
+import { beginRun, commitRun } from "../game/economy.js";
+import { vibrate } from "../input/gamepad.js";
+import { setupBoundaries } from "../game/scene.js";
 import {
   soundTitleMusic,
   soundBossMusic,
   soundVictoryMusic,
   soundGameOverMusic,
   soundGameOverJingle,
-} from "../sounds.js";
+} from "../audio/sounds.js";
+import { playSfx } from "../audio/soundManager.js";
 import {
   getPlayer,
   getCurrentBoss,
@@ -19,8 +25,8 @@ import {
   spawnBoss,
   tickGameTime,
   resetGameTime,
-} from "../world.js";
-import { titleMenu, pauseMenu, settingsMenu } from "../menus.js";
+} from "../game/world.js";
+import { titleMenu, pauseMenu, settingsMenu } from "../ui/menus.js";
 import { BaseScene } from "./baseScene.js";
 
 import {
@@ -252,7 +258,7 @@ class PostRunScene extends BaseScene {
 
   enter({ context }) {
     this.gameOverTime = context.gameOverTime;
-    soundGameOverJingle.play();
+    playSfx(soundGameOverJingle);
     destroyPlayfield();
     setPaused(true);
   }

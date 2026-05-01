@@ -2,9 +2,10 @@ import { vec2, WHITE, rgb } from "../engine.js";
 import { loot as lootCfg, player as playerCfg } from "../config/index.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
-import { soundLootCollect } from "../sounds.js";
-import { PulseEffect } from "../gameEffects.js";
-import { drawLootCell } from "../lootIcon.js";
+import { soundLootCollect } from "../audio/sounds.js";
+import { playSfx } from "../audio/soundManager.js";
+import { PulseEffect } from "../visuals/gameEffects.js";
+import { drawLootCell } from "../visuals/lootIcon.js";
 
 export class Loot extends BaseEntity {
   constructor(pos, typeKey) {
@@ -73,7 +74,7 @@ export class Loot extends BaseEntity {
   }
 
   collect() {
-    soundLootCollect.play();
+    playSfx(soundLootCollect);
     // Placeholder callback for future effects
     this.onCollect();
     this.destroy();

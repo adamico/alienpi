@@ -26,21 +26,21 @@ import {
   soundWeaponUpgrade,
   soundWeaponMax,
   weaponNameSounds,
-  playSequenced,
-} from "../sounds.js";
+} from "../audio/sounds.js";
+import { playSequenced, playSfx } from "../audio/soundManager.js";
 import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
-import { sprites } from "../sprites.js";
+import { sprites } from "../visuals/sprites.js";
 import { LatchBeam } from "./latchBeam.js";
-import { input } from "../input.js";
+import { input } from "../input/input.js";
 import {
   FlashEffect,
   spawnMuzzleFlash,
   applyScreenShake,
   spawnFloatingText,
-} from "../gameEffects.js";
-import { vibrate } from "../gamepad.js";
-import { recordHpLost } from "../economy.js";
+} from "../visuals/gameEffects.js";
+import { vibrate } from "../input/gamepad.js";
+import { recordHpLost } from "../game/economy.js";
 
 export let player = null;
 
@@ -181,7 +181,7 @@ export class Player extends BaseEntity {
         }
       }
 
-      soundWeaponSwitch.play();
+      playSfx(soundWeaponSwitch);
       this.updateWeaponSprite();
 
       // Cycling away from latch breaks any active tethers.
@@ -491,7 +491,7 @@ export class Player extends BaseEntity {
     const level = this.weaponLevels.vulcan;
     const cfg = weaponsCfg.vulcan;
     const bulletSpeed = cfg.bullet.speed[level - 1];
-    soundShoot.play(this.pos);
+    playSfx(soundShoot, this.pos);
     const offsets = cfg.cannonOffsets[level - 1];
 
     const volleyState = { decremented: false };
@@ -528,7 +528,7 @@ export class Player extends BaseEntity {
     // 4th arg is per-play random pitch delta — the `randomness` field inside
     // the ZZFX array is baked into the sample at construction so it doesn't
     // vary between shots on its own.
-    soundShotgun.play(this.pos);
+    playSfx(soundShotgun, this.pos);
     const cfg = weaponsCfg.shotgun;
     const level = this.weaponLevels.shotgun;
     const yInput = input.moveDir.y;
@@ -589,11 +589,11 @@ export class Player extends BaseEntity {
 
     const count = cfg.count[level - 1];
     if (!this.latchWasFiring) {
-      soundLatchCharge.play();
+      playSfx(soundLatchCharge);
       this.latchWasFiring = true;
     }
     if (this.latchSoundTimer <= 0) {
-      soundLatch.play();
+      playSfx(soundLatch);
       // Decoupled from cfg.cooldown (damage tick rate). Sized so the long
       // release tail overlaps into a continuous hum instead of pulsing.
       this.latchSoundTimer = 36;
@@ -717,7 +717,7 @@ export class Player extends BaseEntity {
   takeDamage(amount = 1) {
     if (this.invulnerable || this.destroyed) return false;
 
-    soundPlayerHit.play();
+    playSfx(soundPlayerHit);
     this.hp -= amount;
     recordHpLost(amount);
     this.applyEffect(new FlashEffect(new Color(1, 0, 0), 0.1));

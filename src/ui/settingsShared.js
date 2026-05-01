@@ -7,10 +7,11 @@ import {
   isFullscreen,
   mouseWasReleased,
 } from "../engine.js";
-import { soundShoot } from "../sounds.js";
+import { soundShoot } from "../audio/sounds.js";
+import { playSfx } from "../audio/soundManager.js";
 import { settings, strings } from "../config/index.js";
-import { saveSettings } from "../settings.js";
-import { adjustSetting } from "../menuNav.js";
+import { saveSettings } from "../persistence.js";
+import { adjustSetting } from "./menuNav.js";
 import { updateMenuInteraction, paintMenu } from "./menuView.js";
 
 export const FOCUS_COLOR = rgb(1, 0.9, 0.3);
@@ -85,7 +86,7 @@ export function buildSharedSettingsItems({
       adjust: (dir) => {
         adjustSetting(settings, "sfxVolume", dir);
         sfxSlider.value = settings.sfxVolume;
-        soundShoot.play();
+        playSfx(soundShoot);
         saveSettings();
       },
     },
@@ -127,7 +128,7 @@ export function updateSharedSliderInput(musicSlider, sfxSlider) {
     sfxSlider.value = 0;
   } else if (sfxSlider.value !== settings.sfxVolume) {
     settings.sfxVolume = sfxSlider.value;
-    soundShoot.play();
+    playSfx(soundShoot);
   }
 }
 
