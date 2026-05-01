@@ -2,106 +2,40 @@
 
 ## Menus
 
-- ~~M1: add flash effects toggle in the settings. Priority: high~~ DONE
-- ~~M2: add screen shake effect toggle in the settings. Priority: high~~ DONE
-- ~~M3: add credits. Priority: low~~ DONE (placeholder credits screen reachable from title menu)
-- ~~M4: add main menu image. Priority: medium~~ DONE (stylish title with neon glow stack, decorative ship/boss sprites, thinned overlay so the starfield reads through)
-- ~~M5: add keyboard navigation to the menus. Priority: high~~ DONE
-- ~~M6: add keyboard navigation to the pause menu. Priority: high~~ DONE
-- ~~M7: improve pause menu display — extract shared settings panel component reused by both pause and settings screens. Priority: low~~ DONE (sliders, rows, and item list now built by shared `buildSharedSettings*` helpers; pause uses the same dark-overlay layout as settings)
-- ~~M8: improve main menu display. Priority: low~~DONE (replaced the placeholder "Start Game" text with the same styled title as the title screen, plus a "Settings" option below it; also added a decorative boss sprite floating in the background)
-- ~~M9: add social links to main menu. Priority: high.~~ DONE (placeholder URLs)
-- ~~M10: add link to feedback/discord in main menu. Priority: high~~ DONE (placeholder URL)
 - M11: wire social links. Priority: medium
-- ~~M12: add flash/shake settings to the pause menu. Priority: low~~ DONE (toggles surfaced; M7 still tracks the shared-panel refactor)
-- ~~M13: when the music/sfx off are checked, make the volume sliders go to 0. Priority: medium~~ DONE
 - M14: add gamepad controller images to the menus. Priority: low
 - M15: add control remapping. Priority: low
 
 ## HUD
 
-- ~~H1: improve the player health display. Priority: medium~~ DONE (depleted hearts now dim instead of disappearing)
-- ~~H2: improve the weapon display. Priority: high~~ DONE
-- ~~H3: remove littlejs debug info. Priority: low~~ DONE
-
 ## Gameplay
 
-- ~~G1: implement score system. Priority: high~~ DONE
 - G2: add weapon tutorials. Priority: medium
 - G3: add difficulty levels. Priority: low
 - G4: add attract mode. Priority: low
-- ~~G5: add introductory lore dialog. Priority: medium~~ DONE
-- ~~G6: add victory dialog. Priority: medium.~~ DONE (victory/game-over screen handled in `updateUI` via `gameWon` flag — distinct title, color, and prompt)
-- ~~G7: add gamepad vibration. Priority: medium~~ DONE (`src/gamepad.js` wraps the dual-rumble actuator; fires on player hit, boss death, win/lose)
 
 ## Sounds
 
-- ~~S1: add loot collection sound effect. Priority: high~~ DONE
-- ~~S2: add "<weapon> unlocked" sound effect. Priority: high~~ DONE
-- ~~S3: add "<weapon> upgrade" sound effect. Priority: high~~ DONE
-- ~~S4: add "<weapon> max" sound effect. Priority: high~~ DONE
-- ~~S5: add title music. Priority: high~~ DONE
-- ~~S6: add game over music. Priority: high~~ DONE (`soundGameOverMusic` + `soundVictoryMusic` both wired to game state)
-- ~~S7: improve boss beam sound effect. Priority: high~~ DONE (sustained low drone with longer release + one-shot charge-up sting on telegraph; retrigger interval slowed so the tail overlaps instead of pulsing)
-- ~~S8: add boss death sound effect. Priority: medium~~ N/A (victory screen covers this)
-- ~~S9: add weapon change sound effect. Priority: medium~~ DONE
-
 ## Visuals
 
-- ~~V1: replace bullet sprites with animated versions. Priority: high~~ DONE
-- ~~V2: add banking effect to the player sprite. Priority: medium~~ DONE
-- V3: add small sprites for each weapon. Priority: low
-- ~~V4: Improve the boss movement visuals with particles or exhaust effects. Priority: low~~ DONE (twin smoke/fire exhaust plumes streaming out the back of the hull, additive, render-order behind the sprite)
-- ~~V5: recolor boss sprite. green -> red. Priority: high~~ DONE
-- ~~V6: recolor boss orbiter sprite. green -> red. Priority: high.~~ DONE
-- ~~V7: readd orbiters life line. Priority: high.~~ DONE
-- ~~V8: improve orbiter respawn telegraph. Priority: medium.~~ DONE
-- ~~V9: replace or improve boss missile sprite. Priority: medium.~~ DONE (new missile sprite with 2-frame squish animation to fake Y-axis spin, plus a fan spread for the volley)
-- ~~V10: add glow effects (player, orbiters, bullets, etc). Priority: medium~~ DONE
-- ~~V11: add weapon change animations. Priority: medium.~~ DONE
-- ~~V12: add font to the game. Priority: high.~~ DONE
-- ~~V13: make loot entity sprites be rendered on top of the explosion particles. Priority: medium.~~ DONE
-- ~~V14: add floating text system (game effects) like "1000!", "Vulcan Upgraded!" Priority: high.~~ DONE (`FloatingText` EngineObject + `spawnFloatingText` in gameEffects.js; score popups via `addScoreAt` tier-tinted by amount; weapon upgrade/unlock/max stings spawned from `Player.upgradeWeapon`)
-- ~~V15: post run screen "SPACE: CONTINUE" prompt should be at the bottom of the screen instead of being below the final score. Priority: medium.~~ DONE (continue prompt now anchors near the bottom edge in POST_RUN and keeps its blink cadence)
 - V16: the beam attack boss telegraph should be more visible. Priority: medium.
 
 ## Accessibility
 
-- ~~A1: add touch controls. Priority: high~~ DONE
-- ~~A2: add gamepad controls. Priority: medium~~ DONE
-- ~~A3: add a fullscreen button. Priority: high~~ DONE
-
 ## Testing
-
-- ~~T1: improve the test lab reusing elements from the actual game. Priority: high~~ DONE (extracted `drawPlayField`, `drawMarquee`, `setupBoundaries` to `src/scene.js`; test.js now uses the shared scene helpers, runs the same input pipeline as the game, and keeps the player inside boundaries)
-- ~~T2: add a button to clear the spawned entities. Priority: medium~~ DONE (Clear Spawned Entities button wipes Enemy/Boss/Orbiter/Missile/Loot/Bullet, keeps player + boundaries)
-- ~~T3: when the player collects a spawned loot, update the weapon level in the ui. Priority: medium~~ DONE (test.js mirrors `player.weaponLevels` into the HTML inputs each frame, skipping the focused field)
 
 ## Publishing
 
-- ~~P1: finish the itch.io page. Priority: high~~ DONE
-- ~~P1.5: publish game on itch.io. Priority: high~~ DONE
-- ~~P2: test html loading, especially images/sounds/fonts. Priority: high~~ DONE
-- ~~P3: add build script. Priority: medium~~ DONE
-- ~~P3.5: change the build script to make littlejs in release mode. Priority: high~~ DONE (build.sh swaps engine.js to import littlejs.esm.min.js — debug/ASSERT stripped — and restores via trap on exit)
+- P3: add itch.io pipeline. Priority: medium
 - P4: add analytics. Priority: low
 - P5: add feedback form. Priority: medium
 - P6: add post-launch updates. Priority: low
 
 ## bugs & performance
 
-- ~~B1: player engine exhaust are not removed on player death. they persist at game restart. Priority: high.~~ DONE (`BaseEntity.destroy` now forwards `immediate` flag so `engineObjectsDestroy(true)` terminates emitters instantly)
-- ~~B2: when enemies are killed by beams, they don't trigger the score popup. Priority: high.~~ DONE (`LatchBeam` now reads `scoreOnKill` from each target and calls `addScoreAt` before destroying)
-- ~~B3: post run screen has a 10 fps drop. a static screen with some text and buttons should be very cheap to render, so this is likely a bug. Priority: high.~~ DONE (POST_RUN now skips animated starfield draws; debrief screen renders as a static lightweight backdrop)
-- ~~B4: orbiter return logic can get stuck, the orbiter returns to its position and starts orbiting but stays untangible and doesn't trigger the "returning" state. Priority: high.~~ DONE
-
 ## balance
 
-- ~~BA1: the initial debt is too high, reduce it to 5000. Priority: high.~~ DONE (`economy.startingLoan` 50000 → 5000; lore uplink line updated to match)
-- ~~BA2: boss progressive difficulty curve is too steep, reduce the damage scaling and/or add more health scaling. Priority: high.~~ DONE (boss HP 500 → 650; per-stage scaling softened: moveScale `0.125 → 0.08`, rateScale `0.25 → 0.15`, missileSpeed `0.2 → 0.12`, missile lifetime drop `1.0 → 0.6`, missile count `4..8 → 4..6`)
 - BA3: the boss nova attack should alternate patterns to make it more hard to avoid. Priority: medium.
-- ~~BA4: One more boss attack to make the shotgun weapon useful. something like the diving drones, with low hp but in huge numbers. Maybe turn the missile attack into a swarm attackPriority: high~~ DONE (missiles now spawn in volleys of 3 with a fan spread, and the missile count is increased at higher weapon levels)
-- ~~BA5: Add boss health bar when he appears. Priority: medium~~ DONE
 
 ## game feel
 
