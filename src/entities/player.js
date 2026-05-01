@@ -2,7 +2,6 @@ import {
   vec2,
   Color,
   WHITE,
-  ParticleEmitter,
   PI,
   rgb,
   lerp,
@@ -35,6 +34,8 @@ import { LatchBeam } from "./latchBeam.js";
 import { input } from "../input/input.js";
 import {
   FlashEffect,
+  createPersistentExhaustEmitter,
+  createPersistentMuzzleEmitter,
   spawnMuzzleFlash,
   applyScreenShake,
   spawnFloatingText,
@@ -226,42 +227,24 @@ export class Player extends BaseEntity {
     const muzzles = cfg.muzzleOffsets[Math.max(1, level) - 1];
 
     for (const localOffset of muzzles) {
-      const offset = this.muzzleLocalOffset(localOffset);
-      const color = cfg.muzzleColor.copy();
-      color.a *= cfg.muzzleAlpha;
-      const emitter = new ParticleEmitter(
-        this.pos,
-        0, // angle
-        0, // emitSize
-        0, // emitTime (0 = loop)
-        0, // emitRate (start at 0, only emit when firing)
-        0, // emitConeAngle
-        sprites.get(cfg.muzzleSprite, system.particleSheetName),
-        color,
-        color,
-        rgb(1, 0.2, 0, 0),
-        rgb(1, 0, 0, 0),
-        cfg.muzzleDuration, // particleTime
-        3.5 * cfg.muzzleSize, // sizeStart
-        0.2 * cfg.muzzleSize, // sizeEnd
-        0, // speed
-        0, // angleSpeed
-        0, // damping
-        0, // angleDamping
-        0, // gravityScale
-        0, // particleConeAngle
-        0.1, // fadeRate
-        0.1, // randomness
-        false, // collideTiles
-        true, // additive
-        true, // randomColorLinear
-        1, // renderOrder (above ship)
-        true, // localSpace
-      );
-      emitter.baseLocalPos = localOffset.copy();
-      this.addChild(emitter, offset);
-      this.muzzleEmitters.push(emitter);
+      this.addLatchMuzzleEmitter(localOffset, cfg);
     }
+  }
+
+  addLatchMuzzleEmitter(localOffset, cfg) {
+    const offset = this.muzzleLocalOffset(localOffset);
+    const color = cfg.muzzleColor.copy();
+    color.a *= cfg.muzzleAlpha;
+    const emitter = createPersistentMuzzleEmitter(this.pos, {
+      spriteName: cfg.muzzleSprite,
+      color,
+      sizeScale: cfg.muzzleSize,
+      duration: cfg.muzzleDuration,
+      renderOrder: 1,
+    });
+    emitter.baseLocalPos = localOffset.copy();
+    this.addChild(emitter, offset);
+    this.muzzleEmitters.push(emitter);
   }
 
   updateLatchBeamPositions() {
@@ -299,35 +282,13 @@ export class Player extends BaseEntity {
 
     for (const pixelOffset of cfg.exhaustOffsets) {
       const worldOffset = this.muzzleLocalOffset(pixelOffset);
-      const emitter = new ParticleEmitter(
-        this.pos,
-        0, // angle
-        0.1, // emitSize
-        0, // emitTime (0 = loop)
-        playerCfg.exhaust.emitRateBase, // emitRate
-        0.3, // emitConeAngle
-        sprites.get("muzzle_02.png", system.particleSheetName),
-        colorStart,
+      const emitter = createPersistentExhaustEmitter(this.pos, {
         colorStart,
         colorEnd,
-        colorEnd,
-        0.15, // particleTime
-        playerCfg.exhaust.sizeStart, // sizeStart
-        0, // sizeEnd
-        0.05, // speed
-        0, // angleSpeed
-        0.8, // damping
-        0, // angleDamping
-        0, // gravityScale
-        0, // particleConeAngle
-        0.1, // fadeRate
-        0.05, // randomness
-        false, // collideTiles
-        true, // additive
-        true, // randomColorLinear
-        -2, // renderOrder
-        true, // localSpace
-      );
+        emitRate: playerCfg.exhaust.emitRateBase,
+        sizeStart: playerCfg.exhaust.sizeStart,
+        renderOrder: -2,
+      });
       emitter.baseLocalPos = pixelOffset.copy();
       this.addChild(emitter, worldOffset, PI);
       this.exhaustEmitters.push(emitter);

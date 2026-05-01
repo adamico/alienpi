@@ -752,6 +752,109 @@ export function spawnMuzzleFlash(
 }
 
 /**
+ * Creates a looping local-space muzzle emitter that can be parented to an
+ * entity and toggled by changing `emitRate`.
+ *
+ * @param {import('./engine.js').Vector2} pos
+ * @param {object} opts
+ * @param {string} opts.spriteName
+ * @param {import('./engine.js').Color} opts.color
+ * @param {number} opts.sizeScale
+ * @param {number} opts.duration
+ * @param {number} [opts.renderOrder=1]
+ */
+export function createPersistentMuzzleEmitter(pos, opts) {
+  const {
+    spriteName,
+    color,
+    sizeScale,
+    duration,
+    renderOrder = 1,
+  } = opts;
+
+  return new ParticleEmitter(
+    pos,
+    0, // angle
+    0, // emitSize
+    0, // emitTime (0 = loop)
+    0, // emitRate (start at 0, only emit when firing)
+    0, // emitConeAngle
+    sprites.get(spriteName, system.particleSheetName),
+    color,
+    color,
+    rgb(1, 0.2, 0, 0),
+    rgb(1, 0, 0, 0),
+    duration, // particleTime
+    3.5 * sizeScale, // sizeStart
+    0.2 * sizeScale, // sizeEnd
+    0, // speed
+    0, // angleSpeed
+    0, // damping
+    0, // angleDamping
+    0, // gravityScale
+    0, // particleConeAngle
+    0.1, // fadeRate
+    0.1, // randomness
+    false, // collideTiles
+    true, // additive
+    true, // randomColorLinear
+    renderOrder, // renderOrder
+    true, // localSpace
+  );
+}
+
+/**
+ * Creates a looping local-space exhaust emitter used by the player thrusters.
+ *
+ * @param {import('./engine.js').Vector2} pos
+ * @param {object} opts
+ * @param {import('./engine.js').Color} opts.colorStart
+ * @param {import('./engine.js').Color} opts.colorEnd
+ * @param {number} opts.emitRate
+ * @param {number} opts.sizeStart
+ * @param {number} [opts.renderOrder=-2]
+ */
+export function createPersistentExhaustEmitter(pos, opts) {
+  const {
+    colorStart,
+    colorEnd,
+    emitRate,
+    sizeStart,
+    renderOrder = -2,
+  } = opts;
+
+  return new ParticleEmitter(
+    pos,
+    0, // angle
+    0.1, // emitSize
+    0, // emitTime (0 = loop)
+    emitRate,
+    0.3, // emitConeAngle
+    sprites.get("muzzle_02.png", system.particleSheetName),
+    colorStart,
+    colorStart,
+    colorEnd,
+    colorEnd,
+    0.15, // particleTime
+    sizeStart,
+    0, // sizeEnd
+    0.05, // speed
+    0, // angleSpeed
+    0.8, // damping
+    0, // angleDamping
+    0, // gravityScale
+    0, // particleConeAngle
+    0.1, // fadeRate
+    0.05, // randomness
+    false, // collideTiles
+    true, // additive
+    true, // randomColorLinear
+    renderOrder,
+    true, // localSpace
+  );
+}
+
+/**
  * Expanding concentric shockwave rings.
  * Standalone EngineObject to allow for global renderOrder control (e.g. rendering behind orbiters).
  */
