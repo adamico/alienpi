@@ -6,6 +6,8 @@ import {
   setObjectMaxSpeed,
   setDebugKey,
   PostProcessPlugin,
+  UISystemPlugin,
+  uiSystem,
 } from "./engine.js";
 import { system, engine, settings } from "./config.js";
 import { loadSprites, loadDynamicSpritesheet } from "./sprites.js";
@@ -20,6 +22,9 @@ export async function initializeGameAssets() {
   setTileDefaultSize(vec2(1));
   setObjectMaxSpeed(engine.objectMaxSpeed);
   setDebugKey(settings.debugKey);
+
+  new UISystemPlugin();
+  uiSystem.nativeHeight = 0;
 
   setupSharpenShader();
 
