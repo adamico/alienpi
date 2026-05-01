@@ -6,7 +6,7 @@ import {
   getGameWon,
   getCurrentBoss,
   getLastRunDebrief,
-} from "./world.js";
+} from "./game/world.js";
 
 import { createCreditsScreen } from "./ui/creditsScreen.js";
 import { createEconomyScreens } from "./ui/economyScreens.js";
@@ -15,7 +15,7 @@ import { createLoreScreen } from "./ui/storyScreen.js";
 import { createPauseScreen } from "./ui/pauseScreen.js";
 import { createSettingsScreen } from "./ui/settingsScreen.js";
 import { createTitleScreen } from "./ui/titleScreen.js";
-import { titleMenu, pauseMenu, settingsMenu } from "./menus.js";
+import { titleMenu, pauseMenu, settingsMenu } from "./ui/menus.js";
 
 let creditsView;
 let economyScreens;
@@ -26,7 +26,7 @@ let settingsView;
 let titleView;
 let uiRoot;
 
-export { titleMenu, pauseMenu, settingsMenu } from "./menus.js";
+export { titleMenu, pauseMenu, settingsMenu } from "./ui/menus.js";
 
 export function initUI({ handlers = {} } = {}) {
   uiRoot = new UIObject(mainCanvasSize.scale(0.5).floor(), mainCanvasSize);

@@ -5,7 +5,7 @@ import {
   drawText,
   drawTextScreen,
   Color,
-} from "./engine.js";
+} from "../engine.js";
 import { FONT_HUD } from "./fonts.js";
 
 // Shared renderer for the hex "power cell" used by both the in-world Loot

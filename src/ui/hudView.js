@@ -12,7 +12,7 @@ import {
 } from "../engine.js";
 
 import { player } from "../entities/player.js";
-import { sprites } from "../sprites.js";
+import { sprites } from "../visuals/sprites.js";
 import {
   GAME_STATES,
   player as playerCfg,
@@ -21,8 +21,8 @@ import {
   system,
   strings,
 } from "../config/index.js";
-import { drawLootCell } from "../lootIcon.js";
-import { getSubstrate, getDebt, formatSubstrate } from "../economy.js";
+import { drawLootCell } from "../visuals/lootIcon.js";
+import { getSubstrate, getDebt, formatSubstrate } from "../game/economy.js";
 
 const BOSS_BAR = {
   padding: 40,

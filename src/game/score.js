@@ -1,5 +1,5 @@
 import { rgb } from "./engine.js";
-import { spawnFloatingText } from "./gameEffects.js";
+import { spawnFloatingText } from "../visuals/gameEffects.js";
 import { addEarnings } from "./economy.js";
 
 // Score values per kill. Tunable here.

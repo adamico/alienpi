@@ -8,11 +8,11 @@ import {
   drawCircle,
   time,
 } from "../engine.js";
-import * as gameEffects from "../gameEffects.js";
+import * as gameEffects from "../visuals/gameEffects.js";
 import { system, missile as missileCfg } from "../config/index.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
-import { addScoreAt, SCORE } from "../score.js";
+import { addScoreAt, SCORE } from "../game/score.js";
 
 /**
  * Homing missile fired by the boss — destroyable by player bullets

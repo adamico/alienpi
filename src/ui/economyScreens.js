@@ -1,6 +1,6 @@
 import { vec2, rgb, mainCanvasSize, Color, timeReal } from "../engine.js";
 import { GAME_STATES, strings } from "../config/index.js";
-import { formatHighScore } from "../score.js";
+import { formatHighScore } from "../game/score.js";
 import { makePanel } from "./panel.js";
 import { makeCenterTitle, makeCenterLine } from "./uiText.js";
 import {
@@ -8,7 +8,7 @@ import {
   getDebt,
   getLastRun,
   formatSubstrate,
-} from "../economy.js";
+} from "../game/economy.js";
 
 const COLOR_HOME_PANEL_BG = new Color(0.04, 0.06, 0.12, 0.85);
 const COLOR_HOME_TITLE = rgb(0.4, 0.9, 1);

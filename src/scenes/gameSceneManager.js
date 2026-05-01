@@ -1,13 +1,13 @@
 import { vec2 } from "../engine.js";
 import { GAME_STATES } from "../config/index.js";
-import { setDesiredMusic } from "../soundManager.js";
+import { setDesiredMusic } from "../audio/soundManager.js";
 import {
   setGameState,
   setGameWon,
   setLastRunDebrief,
   getGameWon,
   getLastRunDebrief,
-} from "../world.js";
+} from "../game/world.js";
 import { SceneContext } from "./sceneContext.js";
 import { SceneManager } from "./sceneManager.js";
 import { SCENE_TRANSITIONS } from "./transitionPolicy.js";

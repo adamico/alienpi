@@ -16,9 +16,9 @@ import {
   vec2,
   WHITE,
   BLACK,
-} from "./engine.js";
+} from "../engine.js";
 import { sprites } from "./sprites.js";
-import { system, settings } from "./config/index.js";
+import { system, settings } from "../config/index.js";
 import { FONT_MENU } from "./fonts.js";
 
 /**

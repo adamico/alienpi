@@ -6,7 +6,7 @@ import {
   mouseWasPressed,
   mouseWasReleased,
 } from "../engine.js";
-import { FONT_MENU } from "../fonts.js";
+import { FONT_MENU } from "../visuals/fonts.js";
 
 const measureCanvas = document.createElement("canvas");
 const measureCtx = measureCanvas.getContext("2d");

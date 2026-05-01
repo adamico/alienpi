@@ -8,7 +8,7 @@ import {
   drawLine,
   time,
 } from "../engine.js";
-import * as gameEffects from "../gameEffects.js";
+import * as gameEffects from "../visuals/gameEffects.js";
 import {
   orbiter as orbCfg,
   orbiterLooter as orbLootCfg,
@@ -16,7 +16,7 @@ import {
 } from "../config/index.js";
 import { BaseEntity } from "./baseEntity.js";
 import { Loot } from "./loot.js";
-import { addScoreAt, SCORE } from "../score.js";
+import { addScoreAt, SCORE } from "../game/score.js";
 
 /**
  * Defensive pods that orbit the boss

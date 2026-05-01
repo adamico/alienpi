@@ -10,10 +10,10 @@ import {
   Color,
   mouseWasReleased,
 } from "../engine.js";
-import { sprites } from "../sprites.js";
+import { sprites } from "../visuals/sprites.js";
 import { GAME_STATES, strings } from "../config/index.js";
-import { FONT_MENU } from "../fonts.js";
-import { formatHighScore } from "../score.js";
+import { FONT_MENU } from "../visuals/fonts.js";
+import { formatHighScore } from "../game/score.js";
 import { makeMenuRow, paintMenu, updateMenuInteraction } from "./menuView.js";
 import { makePanel } from "./panel.js";
 import { makeText } from "./uiText.js";

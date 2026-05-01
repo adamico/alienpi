@@ -3,9 +3,9 @@ import { system, enemy as enemyCfg } from "../config/index.js";
 import { Bullet } from "./bullet.js";
 import { player } from "./player.js";
 import { BaseEntity } from "./baseEntity.js";
-import { soundExplosion1 } from "../sounds.js";
-import * as gameEffects from "../gameEffects.js";
-import { addScoreAt, SCORE } from "../score.js";
+import { soundExplosion1 } from "../audio/sounds.js";
+import * as gameEffects from "../visuals/gameEffects.js";
+import { addScoreAt, SCORE } from "../game/score.js";
 
 export class Enemy extends BaseEntity {
   constructor(pos, typeKey, waveIndex = 0) {

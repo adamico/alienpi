@@ -10,7 +10,7 @@ import {
   uiSystem,
 } from "./engine.js";
 import { system, engine, settings } from "./config/index.js";
-import { loadSprites, loadDynamicSpritesheet } from "./sprites.js";
+import { loadSprites, loadDynamicSpritesheet } from "./visuals/sprites.js";
 import { spawnPlayer } from "./entities/player.js";
 
 /**

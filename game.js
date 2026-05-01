@@ -11,21 +11,21 @@ import {
   setTouchGamepadEnable,
   setTouchGamepadSize,
 } from "./src/engine.js";
-import { FONT_HUD, preloadFonts } from "./src/fonts.js";
+import { FONT_HUD, preloadFonts } from "./src/visuals/fonts.js";
 
 import { system } from "./src/config/index.js";
-import { loadSettings } from "./src/settings.js";
+import { loadSettings } from "./src/persistence.js";
 import { initializeGameAssets } from "./src/commonSetup.js";
-import { loadHighScore } from "./src/score.js";
-import { loadEconomy } from "./src/economy.js";
-import { input } from "./src/input.js";
-import { renderBackground, renderPostBackground } from "./src/scene.js";
+import { loadHighScore } from "./src/game/score.js";
+import { loadEconomy } from "./src/game/economy.js";
+import { input } from "./src/input/input.js";
+import { renderBackground, renderPostBackground } from "./src/game/scene.js";
 import { updateUI } from "./src/ui.js";
 import {
   updateSceneFrame,
   initUIHandlers,
 } from "./src/scenes/gameSceneManager.js";
-import { updateAudio } from "./src/soundManager.js";
+import { updateAudio } from "./src/audio/soundManager.js";
 
 async function gameInit() {
   loadSettings();

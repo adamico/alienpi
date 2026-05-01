@@ -1,5 +1,5 @@
 import { UIText, vec2 } from "../engine.js";
-import { FONT_MENU } from "../fonts.js";
+import { FONT_MENU } from "../visuals/fonts.js";
 
 /**
  * Creates a UIText node styled with FONT_MENU, appends it to parent,

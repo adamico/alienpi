@@ -1,7 +1,7 @@
 import { vec2, rgb, drawRect, timeReal } from "./engine.js";
 import { system, starfield as starCfg, GAME_STATES } from "./config/index.js";
 import { Boundary } from "./entities/boundary.js";
-import { getGameState } from "./world.js";
+import { getGameState } from "./game/world.js";
 
 const MARQUEE_COLOR = rgb(0.05, 0.05, 0.1);
 const PLAYFIELD_COLOR = rgb(0.01, 0.01, 0.02);

@@ -5,7 +5,7 @@ import {
   time,
 } from "../engine.js";
 import { boss as bossCfg, shield as shieldCfg } from "../config/index.js";
-import { sprites } from "../sprites.js";
+import { sprites } from "../visuals/sprites.js";
 import { player } from "./player.js";
 
 /**

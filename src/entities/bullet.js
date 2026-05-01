@@ -7,9 +7,9 @@ import {
   system,
 } from "../config/index.js";
 import { BaseEntity } from "./baseEntity.js";
-import { sprites } from "../sprites.js";
-import { recordDamage } from "../dpsTracker.js";
-import { TrailEffect, spawnPierceEffect } from "../gameEffects.js";
+import { sprites } from "../visuals/sprites.js";
+import { recordDamage } from "../game/dpsTracker.js";
+import { TrailEffect, spawnPierceEffect } from "../visuals/gameEffects.js";
 
 export class Bullet extends BaseEntity {
   constructor(pos, vel, type = "player", cfg = null, damage = 1) {
