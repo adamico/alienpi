@@ -22,7 +22,7 @@ import {
 } from "./config.js";
 import { Menu } from "./menuNav.js";
 import { FONT_MENU } from "./fonts.js";
-import { formatScore, formatHighScore } from "./score.js";
+import { formatHighScore } from "./score.js";
 import { resetEconomy } from "./economy.js";
 import {
   makeMenuRow,
@@ -64,8 +64,7 @@ let settingsTitle,
   settingsMusicSlider,
   settingsSfxSlider,
   settingsMenuRows = [];
-let retryText, gameOverTitleText, backToTitleText, finalScoreText;
-let gameOverHighScoreText, titleHighScoreText;
+let titleHighScoreText;
 let socialIcons = [];
 
 const measureCanvas = document.createElement("canvas");
@@ -134,7 +133,6 @@ export function initUI({ getUIState }) {
 
   setupTitleScreen();
   setupPauseScreen();
-  setupGameOverScreen();
   setupSettingsScreen();
   setupCreditsScreen();
   setupLoreScreen();
@@ -369,65 +367,6 @@ function setupPauseScreen() {
   pauseSfxSlider = sliders.sfx;
 
   pauseMenuRows = buildSharedSettingsRows(pauseGroup, makeRow);
-}
-
-function setupGameOverScreen() {
-  gameOverGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  gameOverGroup.color = new Color(0, 0, 0, 0);
-  gameOverGroup.lineWidth = 0;
-  uiRoot.addChild(gameOverGroup);
-
-  gameOverTitleText = new UIText(
-    vec2(0, -90),
-    vec2(800, 100),
-    strings.ui.gameOverTitle,
-  );
-  gameOverTitleText.textHeight = 80;
-  gameOverTitleText.font = FONT_MENU;
-  gameOverTitleText.textColor = rgb(1, 0.2, 0.2);
-  gameOverTitleText.fontShadow = false;
-  gameOverGroup.addChild(gameOverTitleText);
-
-  retryText = new UIText(vec2(0, 60), vec2(800, 50), strings.ui.retryPrompt);
-  retryText.textHeight = 24;
-  retryText.font = FONT_MENU;
-  retryText.textColor = WHITE.copy();
-  retryText.fontShadow = false;
-
-  // Hidden after the HOME hub took over the post-run exit; kept for layout
-  // continuity but rendered invisible to avoid a stray "ESC: TITLE" prompt
-  // on the debrief screen.
-  backToTitleText = new UIText(vec2(0, 100), vec2(800, 40), "");
-  backToTitleText.textHeight = 18;
-  backToTitleText.font = FONT_MENU;
-  backToTitleText.textColor = new Color(0.7, 0.7, 0.7, 1);
-  backToTitleText.fontShadow = false;
-  backToTitleText.visible = false;
-
-  finalScoreText = new UIText(
-    vec2(0, 0),
-    vec2(800, 100),
-    strings.ui.finalScorePrefix + formatScore(),
-  );
-  finalScoreText.textHeight = 60;
-  finalScoreText.font = FONT_MENU;
-  finalScoreText.textColor = rgb(1, 1, 1);
-  finalScoreText.fontShadow = false;
-
-  gameOverHighScoreText = new UIText(
-    vec2(0, 35),
-    vec2(800, 40),
-    strings.ui.highScorePrefix + formatHighScore(),
-  );
-  gameOverHighScoreText.textHeight = 26;
-  gameOverHighScoreText.font = FONT_MENU;
-  gameOverHighScoreText.textColor = rgb(1, 0.85, 0.3);
-  gameOverHighScoreText.fontShadow = false;
-
-  gameOverGroup.addChild(finalScoreText);
-  gameOverGroup.addChild(gameOverHighScoreText);
-  gameOverGroup.addChild(retryText);
-  gameOverGroup.addChild(backToTitleText);
 }
 
 function setupSettingsScreen() {
