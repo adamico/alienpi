@@ -14,7 +14,6 @@ import {
   missile as missileCfg,
   beam as beamCfg,
 } from "../config/index.js";
-import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../visuals/sprites.js";
 import { soundExplosion1 } from "../audio/sounds.js";
@@ -27,6 +26,7 @@ import { BossOrbiter } from "./bossOrbiter.js";
 import { BossMissile } from "./bossMissile.js";
 import { BossBeam } from "./bossBeam.js";
 import { BossShield } from "./bossShield.js";
+import { NovaBullet } from "./novaBullet.js";
 /**
  * Boss with dynamic movement, fire emitters, and pulse attacks
  */
@@ -416,7 +416,7 @@ export class Boss extends BaseEntity {
   novaPulse() {
     this.fireNovaSalve(0);
     setTimeout(() => {
-      if (!this.destroyed) this.fireNovaSalve(0.5 / 24);
+      if (!this.destroyed) this.fireNovaSalve(1);
     }, 200);
   }
 
@@ -443,13 +443,14 @@ export class Boss extends BaseEntity {
     }
   }
 
-  fireNovaSalve(offsetFactor) {
-    const pulseCount = 24;
-    const offset = offsetFactor * PI * 2;
-    for (let i = 0; i < pulseCount; i++) {
-      const angle = (i / pulseCount) * PI * 2 + offset;
+  fireNovaSalve(stepOffset) {
+    const pulseSlots = 48;
+    const bulletsPerSalve = 24;
+    for (let i = 0; i < bulletsPerSalve; i++) {
+      const slot = i * 2 + stepOffset;
+      const angle = (slot / pulseSlots) * PI * 2;
       const bulletVel = vec2(Math.cos(angle), Math.sin(angle)).scale(0.2);
-      const b = new Bullet(this.pos.copy(), bulletVel, "boss");
+      const b = new NovaBullet(this.pos.copy(), bulletVel);
       b.color = rgb(1, 0.4, 0);
       b.applyEffect(new gameEffects.RotationEffect(0.1));
       b.applyEffect(new gameEffects.TrailEffect(5));

@@ -1,4 +1,11 @@
-import { WHITE, ParticleEmitter, TileInfo, rgb, vec2, time } from "../engine.js";
+import {
+  WHITE,
+  ParticleEmitter,
+  TileInfo,
+  rgb,
+  vec2,
+  time,
+} from "../engine.js";
 import {
   engine,
   weapons,
@@ -46,6 +53,7 @@ export class Bullet extends BaseEntity {
     this.damage = damage;
     this.weaponKey = null;
     this.spawnTime = time;
+    this.renderCfg = finalCfg.render || null;
 
     // Ensure small bullets are still easy to hit
     this.collisionRadius = Math.max(
@@ -177,7 +185,10 @@ export class Bullet extends BaseEntity {
             const targetInterval = cfg.closeRangeCooldown[level - 1];
             const extraDelay = Math.max(0, targetInterval - lifeFrames);
 
-            this.player.shootTimer = Math.max(this.player.shootTimer, extraDelay);
+            this.player.shootTimer = Math.max(
+              this.player.shootTimer,
+              extraDelay,
+            );
           }
 
           this.player.updateShooting(); // Check for immediate fire
@@ -185,6 +196,7 @@ export class Bullet extends BaseEntity {
         this.player = null; // Prevent double decrement
       }
 
+      // TODO: move to gameEffects
       new ParticleEmitter(
         this.pos,
         0, // angle

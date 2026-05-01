@@ -17,8 +17,6 @@
 
 ## Visuals
 
-- ~~V16: the beam attack boss telegraph should be more visible. Priority: medium.~~ ✓ DONE
-
 ## Accessibility
 
 ## Testing
