@@ -108,7 +108,14 @@ export class BossOrbiter extends BaseEntity {
       this.updateReturn();
     }
 
-    if (this.parent) {
+    // Freeze the orbital angle while the orbiter is detached from the ring —
+    // otherwise the target position drifts faster than the return speed at
+    // higher boss stages and the orbiter gets stuck chasing forever.
+    if (
+      this.parent &&
+      this.state !== "diving" &&
+      this.state !== "returning"
+    ) {
       const speedScale = 1 + this.parent.stage * 0.25;
       this.angleOffset += this.cfg.speed * speedScale;
     }
