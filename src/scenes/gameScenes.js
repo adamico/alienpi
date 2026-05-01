@@ -20,7 +20,7 @@ import {
   tickGameTime,
   resetGameTime,
 } from "../world.js";
-import { titleMenu, pauseMenu, settingsMenu } from "../ui.js";
+import { titleMenu, pauseMenu, settingsMenu } from "../menus.js";
 import { BaseScene } from "./baseScene.js";
 
 import {
