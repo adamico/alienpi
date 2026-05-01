@@ -5,7 +5,7 @@ import {
   enemyBullet as enemyBulletCfg,
   bossBullet as bossBulletCfg,
   system,
-} from "../config.js";
+} from "../config/index.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";
 import { recordDamage } from "../dpsTracker.js";

@@ -5,7 +5,8 @@ import {
   mouseWasReleased,
   timeReal,
 } from "../engine.js";
-import { GAME_STATES, settings, saveSettings, strings } from "../config.js";
+import { GAME_STATES, settings, strings } from "../config/index.js";
+import { saveSettings } from "../settings.js";
 import { resetEconomy } from "../economy.js";
 import { makeMenuRow, updateMenuInteraction, paintMenu } from "./menuView.js";
 import { makePanel } from "./panel.js";

@@ -4,7 +4,7 @@ import {
   EngineObject,
   time,
 } from "../engine.js";
-import { boss as bossCfg, shield as shieldCfg } from "../config.js";
+import { boss as bossCfg, shield as shieldCfg } from "../config/index.js";
 import { sprites } from "../sprites.js";
 import { player } from "./player.js";
 

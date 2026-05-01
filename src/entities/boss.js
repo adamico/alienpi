@@ -13,7 +13,7 @@ import {
   orbiter as orbCfg,
   missile as missileCfg,
   beam as beamCfg,
-} from "../config.js";
+} from "../config/index.js";
 import { Bullet } from "./bullet.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../sprites.js";

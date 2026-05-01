@@ -1,5 +1,5 @@
 import { vec2, WHITE, rgb } from "../engine.js";
-import { loot as lootCfg, player as playerCfg } from "../config.js";
+import { loot as lootCfg, player as playerCfg } from "../config/index.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
 import { soundLootCollect } from "../sounds.js";

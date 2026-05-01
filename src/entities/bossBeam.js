@@ -8,7 +8,7 @@ import {
   drawRect,
   lerp,
 } from "../engine.js";
-import { beam as beamCfg } from "../config.js";
+import { beam as beamCfg } from "../config/index.js";
 import { player } from "./player.js";
 import { soundBossBeam, soundBossBeamCharge } from "../sounds.js";
 

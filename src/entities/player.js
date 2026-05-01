@@ -14,7 +14,7 @@ import {
   engine,
   player as playerCfg,
   weapons as weaponsCfg,
-} from "../config.js";
+} from "../config/index.js";
 import {
   soundShoot,
   soundShotgun,

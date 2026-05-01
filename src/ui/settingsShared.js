@@ -6,7 +6,8 @@ import {
   isFullscreen,
 } from "../engine.js";
 import { soundShoot } from "../sounds.js";
-import { settings, saveSettings, strings } from "../config.js";
+import { settings, strings } from "../config/index.js";
+import { saveSettings } from "../settings.js";
 import { adjustSetting } from "../menuNav.js";
 
 const SETTINGS_ROW_YS = [-180, -150, -80, -50, 30, 80, 130, 180];

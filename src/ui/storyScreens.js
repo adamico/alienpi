@@ -4,7 +4,7 @@ import {
   WHITE,
   Color,
 } from "../engine.js";
-import { GAME_STATES, strings } from "../config.js";
+import { GAME_STATES, strings } from "../config/index.js";
 import { makePanel } from "./panel.js";
 import { makeText, makeCenterTitle, makeCenterLine } from "./uiText.js";
 

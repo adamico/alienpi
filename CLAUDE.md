@@ -23,32 +23,51 @@ There is no test suite.
 [game.js](game.js) is the entry point / composition root — it imports from `src/`, defines the lifecycle callbacks, and wires them up at the bottom via `engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, system.spriteSheet)`. It owns `gameRender` (background) and `drawUI` (debug text).
 
 **File layout.**
+
 ```
 game.js                   # entry: lifecycle callbacks + engineInit
 src/
-  config.js               # system / engine / player / bullet / enemy / ui config namespaces
+  config/                 # domain-split tuning constants (barrel: config/index.js)
+    index.js              # re-exports all public config symbols
+    constants.js          # GAME_STATES, sprite-sheet names/paths, starfield
+    system.js             # system object (canvas, camera, input keys, asset lists)
+    engine.js             # engine physics tunables
+    economy.js            # economy namespace (loan/payout/repair)
+    settings.js           # settings object + loadSettings() + saveSettings()
+    strings.js            # all UI strings
+    ui.js                 # debug UI layout constants
+    entities/
+      player.js           # player config
+      weapons.js          # weapons object (vulcan / shotgun / latch) + bullet configs
+      projectiles.js      # enemyBullet, bossBullet configs
+      enemies.js          # enemy swarm/flocking/formation config + missile
+      boss.js             # boss, beam, orbiter, orbiterLooter, shield configs
+      loot.js             # loot config
   sprites.js              # sprites Map + loadSprites()
-  sounds.js               # SoundGenerator class + sound definitions (soundShoot)
+  sounds.js               # SoundGenerator class + sound definitions
   entities/
     bullet.js             # Bullet
     enemy.js              # Enemy
     player.js             # Player + `spawnPlayer()` + exported `player` ref
 ```
 
-Dependency direction is one-way: entities import from `config.js` / `sprites.js` / `sounds.js`; those never import from entities (avoids circular imports). `enemy.js` imports `bullet.js` for the collision `instanceof` check.
+Dependency direction is one-way: entities import from `config/` / `sprites.js` / `sounds.js`; those never import from entities (avoids circular imports). `enemy.js` imports `bullet.js` for the collision `instanceof` check.
+
+Config module rules: always import from `./config/index.js` (or `../config/index.js` from entity subdirs). Domain files under `config/entities/` import from `../../engine.js` and `../constants.js` only — never from sibling entity source files. Never import `config/index.js` from inside `config/` submodules to avoid circular refs.
 
 **Coordinate system.** World space is Y-up; `cameraScale` is the LittleJS default of 32 (no `setCameraScale` call), so the 1280×720 canvas maps to a 40×22.5 world-unit viewport. Camera is parked at `LEVEL_SIZE.scale(0.5)` = `(10, 10)`. `LEVEL_SIZE` (20×20) is just the inner dark rect drawn in `gameRender`; the player can roam the full viewport. Sprites are sized from atlas pixel dimensions multiplied by `WORLD_SCALE` (0.02) to convert pixel art to world units.
 
 **Sprite pipeline.** Assets live in [public/assets/](public/assets/) as a Kenney-style atlas: `sheet.png` + `sheet.xml` (SubTexture entries). `loadSprites()` in [src/sprites.js](src/sprites.js) parses the XML (called from `gameInit`) and registers each sub-rect into the module-level `sprites` Map keyed by filename. `setTileDefaultSize(vec2(1))` is set in `gameInit` so `TileInfo` pos/size are treated as raw pixel coordinates into `textureInfos[0]`. When adding a new sprite, look it up via `sprites.get('<name>.png')` and scale with `tile.size.scale(WORLD_SCALE)`.
 
 **Entities.** Each game object extends `EngineObject`:
+
 - `Player` ([src/entities/player.js](src/entities/player.js)) — reads `keyDirection()` each frame, applies `player.accel` to velocity, clamps length to `engine.objectMaxSpeed` (scaled by `player.focusSpeedScale` while `system.focusKey` is held for focus mode), and relies on `damping` for friction. `keyIsDown(system.shootKey)` spawns two `Bullet`s from the hull on a `player.shootCooldown` frame timer. The exported `player` binding (the runtime instance, not the config) is assigned inside `spawnPlayer()`.
 - `Bullet` ([src/entities/bullet.js](src/entities/bullet.js)) — self-destroys once `pos.length() < BULLET_DESPAWN_RADIUS` (i.e. near world origin).
 - `Enemy` ([src/entities/enemy.js](src/entities/enemy.js)) — handles bullet collisions in `collideWithObject`, returning `false` for non-solid collision.
 
 `collisionRadius` is clamped by `MIN_COLLISION_RADIUS` because sprites scaled by `WORLD_SCALE` are very small.
 
-**Tuning constants** live in [src/config.js](src/config.js) split into six exported namespaces: `system` (canvas/level/camera/sprite-sheet/input keys), `engine` (global physics + render scalars like `objectMaxSpeed`, `worldScale`, `minCollisionRadius`), `player` / `bullet` / `enemy` (per-entity sprite + tuning), and `ui` (debug-text layout). Entity modules import only the namespaces they need (e.g. bullet.js imports `engine` + `bullet as bulletCfg`). Prefer editing/extending these over inlining magic numbers.
+**Tuning constants** live in [src/config/](src/config/) split into domain modules. All public symbols are re-exported by [src/config/index.js](src/config/index.js): `system` (canvas/level/camera/sprite-sheet/input keys), `engine` (global physics + render scalars like `objectMaxSpeed`, `worldScale`, `minCollisionRadius`), `player` / `weapons` / `enemy` / `boss` (per-entity sprite + tuning), `economy`, `settings`, `strings`, and `ui` (debug-text layout). Entity modules import only the namespaces they need (e.g. bullet.js imports `engine` + `weapons` + `enemyBullet as enemyBulletCfg`). Prefer editing/extending these over inlining magic numbers.
 
 **Physics defaults** are set once in `gameInit` via `setObjectMaxSpeed(engine.objectMaxSpeed)`. LittleJS's `EngineObject.update()` then clamps each entity's velocity per-axis to that cap. Player overrides its own cap via length-clamp before `super.update()` to implement focus mode.
 

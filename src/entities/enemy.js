@@ -1,5 +1,5 @@
 import { vec2, engineObjects, Color } from "../engine.js";
-import { system, enemy as enemyCfg } from "../config.js";
+import { system, enemy as enemyCfg } from "../config/index.js";
 import { Bullet } from "./bullet.js";
 import { player } from "./player.js";
 import { BaseEntity } from "./baseEntity.js";

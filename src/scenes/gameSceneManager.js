@@ -1,5 +1,5 @@
 import { vec2 } from "../engine.js";
-import { GAME_STATES } from "../config.js";
+import { GAME_STATES } from "../config/index.js";
 import { setDesiredMusic } from "../soundManager.js";
 import {
   setGameState,

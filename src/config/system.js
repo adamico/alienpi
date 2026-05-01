@@ -1,0 +1,83 @@
+import { vec2 } from "../engine.js";
+import { SPRITE_SHEET_PATHS } from "./constants.js";
+
+const ASSET_PATH = "public/assets/";
+
+const CANVAS_SIZE = vec2(1280, 720);
+const LEVEL_SIZE = vec2(22, 22);
+
+export const system = {
+  canvasSize: CANVAS_SIZE,
+  levelSize: LEVEL_SIZE,
+  cameraPos: LEVEL_SIZE.scale(0.5),
+  enableSharpenShader: true,
+  isResetting: false,
+  spriteSheetLists: SPRITE_SHEET_PATHS.map((p) => `${p}.png`),
+  particleSheetName: "particles",
+  particleLists: [
+    "fire_01.png",
+    "fire_02.png",
+    "muzzle_01.png",
+    "muzzle_02.png",
+    "muzzle_03.png",
+    "muzzle_04.png",
+    "muzzle_05.png",
+    "scorch_01.png",
+    "scorch_02.png",
+    "scorch_03.png",
+    "smoke_01.png",
+    "smoke_02.png",
+    "smoke_03.png",
+    "smoke_04.png",
+    "smoke_05.png",
+    "smoke_06.png",
+    "smoke_07.png",
+    "smoke_08.png",
+    "smoke_09.png",
+    "smoke_10.png",
+    "circle_01.png",
+    "circle_05.png",
+    "light_02.png",
+    "spark_01.png",
+    "spark_02.png",
+    "spark_03.png",
+    "spark_04.png",
+    "spark_05.png",
+    "spark_06.png",
+    "spark_07.png",
+    "star_01.png",
+    "star_02.png",
+    "star_05.png",
+    "star_09.png",
+    "trace_01.png",
+    "trace_02.png",
+    "trace_03.png",
+    "trace_04.png",
+    "trace_05.png",
+    "trace_06.png",
+    "trace_07.png",
+    "crosshair017.png",
+    "crosshair133.png",
+  ].map((p) => {
+    if (p.startsWith("crosshair")) return `public/assets/crosshairs/${p}`;
+    return `public/assets/particles/${p}`;
+  }),
+  standaloneSprites: [
+    "boss2.png",
+    "drone.png",
+    "drone-looter.png",
+    "homing2.png",
+    "shipA3.png",
+    "shipB2.png",
+    "shipC3.png",
+    "shipA_bullets.png",
+    "shipB_bullets.png",
+    "social/discord.png",
+    "social/github.png",
+    "social/itchio.png",
+    "social/bluesky.png",
+  ].map((p) => `${ASSET_PATH}${p}`),
+  shootKey: "Space",
+  focusKey: "ShiftLeft",
+  switchKey: "KeyQ",
+};

@@ -13,7 +13,8 @@ import {
 } from "./src/engine.js";
 import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 
-import { system, loadSettings } from "./src/config.js";
+import { system } from "./src/config/index.js";
+import { loadSettings } from "./src/settings.js";
 import { initializeGameAssets } from "./src/commonSetup.js";
 import { loadHighScore } from "./src/score.js";
 import { loadEconomy } from "./src/economy.js";

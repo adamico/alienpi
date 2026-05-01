@@ -1,4 +1,4 @@
-import { GAME_STATES, system } from "../config.js";
+import { GAME_STATES, system } from "../config/index.js";
 import { engineObjects, engineObjectsDestroy, setPaused, timeReal } from "../engine.js";
 import { tickDPSLog, setEnemyCount } from "../dpsTracker.js";
 import { resetScore, commitHighScore } from "../score.js";

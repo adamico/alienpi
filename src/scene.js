@@ -1,5 +1,5 @@
 import { vec2, rgb, drawRect, timeReal } from "./engine.js";
-import { system, starfield as starCfg, GAME_STATES } from "./config.js";
+import { system, starfield as starCfg, GAME_STATES } from "./config/index.js";
 import { Boundary } from "./entities/boundary.js";
 import { getGameState } from "./world.js";
 

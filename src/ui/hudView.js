@@ -20,7 +20,7 @@ import {
   weapons as weaponsCfg,
   system,
   strings,
-} from "../config.js";
+} from "../config/index.js";
 import { drawLootCell } from "../lootIcon.js";
 import { getSubstrate, getDebt, formatSubstrate } from "../economy.js";
 

@@ -1,4 +1,4 @@
-import { economy as economyCfg } from "./config.js";
+import { economy as economyCfg } from "./config/index.js";
 
 const STORAGE_KEY = "alienpi.economy.v1";
 

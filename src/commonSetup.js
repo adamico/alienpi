@@ -9,7 +9,7 @@ import {
   UISystemPlugin,
   uiSystem,
 } from "./engine.js";
-import { system, engine, settings } from "./config.js";
+import { system, engine, settings } from "./config/index.js";
 import { loadSprites, loadDynamicSpritesheet } from "./sprites.js";
 import { spawnPlayer } from "./entities/player.js";
 

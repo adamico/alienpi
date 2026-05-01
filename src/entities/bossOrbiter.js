@@ -13,7 +13,7 @@ import {
   orbiter as orbCfg,
   orbiterLooter as orbLootCfg,
   player as playerCfg,
-} from "../config.js";
+} from "../config/index.js";
 import { BaseEntity } from "./baseEntity.js";
 import { Loot } from "./loot.js";
 import { addScoreAt, SCORE } from "../score.js";

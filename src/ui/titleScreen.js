@@ -11,7 +11,7 @@ import {
   mouseWasReleased,
 } from "../engine.js";
 import { sprites } from "../sprites.js";
-import { GAME_STATES, strings } from "../config.js";
+import { GAME_STATES, strings } from "../config/index.js";
 import { FONT_MENU } from "../fonts.js";
 import { formatHighScore } from "../score.js";
 import { makeMenuRow, paintMenu, updateMenuInteraction } from "./menuView.js";

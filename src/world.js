@@ -1,5 +1,5 @@
 import { vec2 } from "./engine.js";
-import { system, GAME_STATES } from "./config.js";
+import { system, GAME_STATES } from "./config/index.js";
 import { spawnPlayer } from "./entities/player.js";
 import { Boss } from "./entities/boss.js";
 

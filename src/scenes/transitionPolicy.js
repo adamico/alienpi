@@ -1,4 +1,4 @@
-import { GAME_STATES } from "../config.js";
+import { GAME_STATES } from "../config/index.js";
 
 const { TITLE, LORE, HOME, PLAYING, PAUSE, POST_RUN, SETTINGS, CREDITS } =
   GAME_STATES;

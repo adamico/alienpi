@@ -12,7 +12,7 @@ import {
   mousePos,
   uiSystem,
 } from "./engine.js";
-import { system } from "./config.js";
+import { system } from "./config/index.js";
 
 /**
  * Aggregates Keyboard, Gamepad, and Touch/Mouse input into a unified API.

@@ -1,5 +1,5 @@
 import { vec2, rgb, mainCanvasSize, Color, timeReal } from "../engine.js";
-import { GAME_STATES, strings } from "../config.js";
+import { GAME_STATES, strings } from "../config/index.js";
 import { formatHighScore } from "../score.js";
 import { makePanel } from "./panel.js";
 import { makeCenterTitle, makeCenterLine } from "./uiText.js";

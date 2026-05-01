@@ -1,5 +1,5 @@
 import { Sound, SoundInstance, timeReal } from "./engine.js";
-import { settings, system } from "./config.js";
+import { settings, system } from "./config/index.js";
 
 // Keep track of which sounds are music to apply different volume settings
 const musicSounds = new Set();

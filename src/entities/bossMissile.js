@@ -9,7 +9,7 @@ import {
   time,
 } from "../engine.js";
 import * as gameEffects from "../gameEffects.js";
-import { system, missile as missileCfg } from "../config.js";
+import { system, missile as missileCfg } from "../config/index.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
 import { addScoreAt, SCORE } from "../score.js";

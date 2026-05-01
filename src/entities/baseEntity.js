@@ -1,5 +1,5 @@
 import { vec2, EngineObject, drawTile, Timer } from "../engine.js";
-import { engine } from "../config.js";
+import { engine } from "../config/index.js";
 import { sprites } from "../sprites.js";
 import { soundExplosion1, soundExplosion2 } from "../sounds.js";
 import * as gameEffects from "../gameEffects.js";

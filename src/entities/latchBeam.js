@@ -8,7 +8,7 @@ import {
   rand,
   rgb,
 } from "../engine.js";
-import { system, weapons } from "../config.js";
+import { system, weapons } from "../config/index.js";
 import { sprites } from "../sprites.js";
 import { soundExplosion1 } from "../sounds.js";
 import { addScoreAt } from "../score.js";
