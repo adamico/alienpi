@@ -1,7 +1,8 @@
-import { vec2, rgb, WHITE, UIObject, UIText, Color } from "../engine.js";
+import { vec2, rgb, WHITE, UIObject, UIText, Color, mainCanvasSize } from "../engine.js";
 import { FONT_MENU } from "../fonts.js";
+import { strings } from "../config.js";
 
-export function createLoreScreen({ uiRoot, mainCanvasSize, strings }) {
+export function createLoreScreen(uiRoot) {
   const loreGroup = new UIObject(vec2(0, 0), mainCanvasSize);
   loreGroup.color = new Color(0.02, 0.02, 0.08, 0.85);
   loreGroup.lineWidth = 0;
@@ -40,10 +41,15 @@ export function createLoreScreen({ uiRoot, mainCanvasSize, strings }) {
   loreStartText.fontShadow = true;
   loreGroup.addChild(loreStartText);
 
-  return { loreGroup, loreTitleText, loreBodyText, loreStartText };
+  return {
+    root: loreGroup,
+    setVisible(v) {
+      loreGroup.visible = v;
+    },
+  };
 }
 
-export function createCreditsScreen({ uiRoot, mainCanvasSize, strings }) {
+export function createCreditsScreen(uiRoot) {
   const creditsGroup = new UIObject(vec2(0, 0), mainCanvasSize);
   creditsGroup.color = new Color(0.02, 0.02, 0.08, 0.85);
   creditsGroup.lineWidth = 0;
@@ -82,5 +88,10 @@ export function createCreditsScreen({ uiRoot, mainCanvasSize, strings }) {
   creditsBackText.fontShadow = true;
   creditsGroup.addChild(creditsBackText);
 
-  return { creditsGroup, creditsTitleText, creditsBodyText, creditsBackText };
+  return {
+    root: creditsGroup,
+    setVisible(v) {
+      creditsGroup.visible = v;
+    },
+  };
 }
