@@ -110,17 +110,9 @@ sceneManager.subscribe(({ to, context }) => {
   );
 });
 
-function transitionTo(nextState, payload = {}, reason = "transition") {
-  return sceneManager.transitionTo(nextState, payload, reason);
-}
-
-function pushState(nextState, payload = {}, reason = "push") {
-  return sceneManager.pushState(nextState, payload, reason);
-}
-
-function popState(payload = {}, reason = "pop") {
-  return sceneManager.popState(payload, reason);
-}
+const transitionTo = sceneManager.transitionTo.bind(sceneManager);
+const pushState = sceneManager.pushState.bind(sceneManager);
+const popState = sceneManager.popState.bind(sceneManager);
 
 const scenes = createGameScenes({
   transitionTo,
@@ -145,12 +137,24 @@ const scenes = createGameScenes({
   commitHighScore,
   commitRun,
   vibrate,
-  onTick: (dt) => { gameTime += dt; },
-  onDPSTick: () => { if (system.enableDPSLog) updateDPSLog(); },
-  initializePlayer: () => { player = initializePlayer(); },
-  spawnBoss: () => { currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4)); },
+  onTick: (dt) => {
+    gameTime += dt;
+  },
+  onDPSTick: () => {
+    if (system.enableDPSLog) updateDPSLog();
+  },
+  initializePlayer: () => {
+    player = initializePlayer();
+  },
+  spawnBoss: () => {
+    currentBoss = new Boss(
+      vec2(system.levelSize.x / 2, system.levelSize.y - 4),
+    );
+  },
   setupBoundaries,
-  resetGameTime: () => { gameTime = 0; },
+  resetGameTime: () => {
+    gameTime = 0;
+  },
   resetScore,
   beginRun,
 });
@@ -181,8 +185,10 @@ async function gameInit() {
     handlers: {
       title: {
         start: () => transitionTo(GAME_STATES.LORE, {}, "title:start"),
-        openSettings: () => pushState(GAME_STATES.SETTINGS, {}, "title:open-settings"),
-        openCredits: () => transitionTo(GAME_STATES.CREDITS, {}, "title:open-credits"),
+        openSettings: () =>
+          pushState(GAME_STATES.SETTINGS, {}, "title:open-settings"),
+        openCredits: () =>
+          transitionTo(GAME_STATES.CREDITS, {}, "title:open-credits"),
       },
       pause: {
         resume: () => transitionTo(GAME_STATES.PLAYING, {}, "pause:resume"),
