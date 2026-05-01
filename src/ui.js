@@ -11,16 +11,11 @@ import {
   mainCanvasSize,
   cameraScale,
   Color,
-  UISlider,
-  mouseWasPressed,
   mouseWasReleased,
-  toggleFullscreen,
-  isFullscreen,
 } from "./engine.js";
 
 import { player } from "./entities/player.js";
 import { sprites } from "./sprites.js";
-import { soundShoot } from "./sounds.js";
 import {
   player as playerCfg,
   loot as lootCfg,
@@ -32,7 +27,7 @@ import {
   strings,
 } from "./config.js";
 import { gameState, gameTime, gameWon, currentBoss } from "../game.js";
-import { Menu, adjustSetting } from "./menuNav.js";
+import { Menu } from "./menuNav.js";
 import { drawLootCell } from "./lootIcon.js";
 import { FONT_MENU } from "./fonts.js";
 import { formatScore, formatHighScore } from "./score.js";
@@ -44,6 +39,18 @@ import {
   resetEconomy,
 } from "./economy.js";
 import { lastRunDebrief } from "../game.js";
+import {
+  makeMenuRow,
+  updateMenuInteraction,
+  paintMenu,
+} from "./ui/menuView.js";
+import {
+  buildSharedSettingsSliders,
+  buildSharedSettingsRows,
+  buildSharedSettingsItems,
+  updateSharedSliderInput,
+} from "./ui/settingsShared.js";
+import { createLoreScreen, createCreditsScreen } from "./ui/storyScreens.js";
 
 let uiRoot;
 let scoreText, timeText;
@@ -71,8 +78,6 @@ let postRunEarningsText,
 let titleBossDecor;
 let titleInitialTexts = [];
 let controlGroup, controlsTitle, controlsBody;
-let creditsTitleText, creditsBodyText, creditsBackText;
-let loreTitleText, loreBodyText, loreStartText;
 let bossHealthGroup, bossHealthBg, bossHealthFg;
 let titleMenuRows = [];
 let pauseTitleText,
@@ -159,21 +164,7 @@ export function setMenuHandlers({
 }
 
 function makeRow(parent, y, h = 40) {
-  const row = new UIObject(vec2(0, y), vec2(800, h));
-  row.color = new Color(0, 0, 0, 0);
-  row.lineWidth = 0;
-  parent.addChild(row);
-  const text = new UIText(vec2(0, 0), vec2(800, h), "");
-  text.textHeight = 30;
-  text.fontShadow = true;
-  text.font = FONT_MENU;
-  row.addChild(text);
-  const cursor = new UIText(vec2(-260, 0), vec2(40, h), "");
-  cursor.textHeight = 30;
-  cursor.fontShadow = true;
-  cursor.font = FONT_MENU;
-  row.addChild(cursor);
-  return { row, text, cursor };
+  return makeMenuRow(parent, y, h);
 }
 
 export function initUI() {
@@ -447,193 +438,15 @@ function setupSocialIcons() {
 }
 
 function setupLoreScreen() {
-  loreGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  loreGroup.color = new Color(0.02, 0.02, 0.08, 0.85);
-  loreGroup.lineWidth = 0;
-  uiRoot.addChild(loreGroup);
-
-  loreTitleText = new UIText(
-    vec2(0, -270),
-    vec2(800, 100),
-    strings.ui.loreTitle,
-  );
-  loreTitleText.textHeight = 70;
-  loreTitleText.font = FONT_MENU;
-  loreTitleText.fontShadow = true;
-  loreTitleText.textColor = rgb(1, 0.8, 0.2);
-  loreGroup.addChild(loreTitleText);
-
-  loreBodyText = new UIText(vec2(0, 0), vec2(900, 420), strings.ui.loreBody);
-  loreBodyText.textHeight = 22;
-  loreBodyText.font = FONT_MENU;
-  loreBodyText.textColor = WHITE.copy();
-  loreBodyText.fontShadow = true;
-  loreGroup.addChild(loreBodyText);
-
-  loreStartText = new UIText(
-    vec2(0, 280),
-    vec2(800, 40),
-    strings.ui.loreStartPrompt,
-  );
-  loreStartText.textHeight = 20;
-  loreStartText.font = FONT_MENU;
-  loreStartText.textColor = WHITE.copy();
-  loreStartText.fontShadow = true;
-  loreGroup.addChild(loreStartText);
+  loreGroup = createLoreScreen({ uiRoot, mainCanvasSize, strings }).loreGroup;
 }
 
 function setupCreditsScreen() {
-  creditsGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  creditsGroup.color = new Color(0.02, 0.02, 0.08, 0.85);
-  creditsGroup.lineWidth = 0;
-  uiRoot.addChild(creditsGroup);
-
-  creditsTitleText = new UIText(
-    vec2(0, -260),
-    vec2(800, 100),
-    strings.ui.creditsTitle,
-  );
-  creditsTitleText.textHeight = 70;
-  creditsTitleText.font = FONT_MENU;
-  creditsTitleText.fontShadow = true;
-  creditsTitleText.textColor = rgb(1, 0.8, 0.2);
-  creditsGroup.addChild(creditsTitleText);
-
-  creditsBodyText = new UIText(
-    vec2(0, 0),
-    vec2(900, 420),
-    strings.ui.creditsBody,
-  );
-  creditsBodyText.textHeight = 22;
-  creditsBodyText.font = FONT_MENU;
-  creditsBodyText.textColor = WHITE.copy();
-  creditsBodyText.fontShadow = true;
-  creditsGroup.addChild(creditsBodyText);
-
-  creditsBackText = new UIText(
-    vec2(0, 280),
-    vec2(800, 40),
-    strings.ui.creditsBackPrompt,
-  );
-  creditsBackText.textHeight = 20;
-  creditsBackText.font = FONT_MENU;
-  creditsBackText.textColor = rgb(0.6, 0.9, 1);
-  creditsBackText.fontShadow = true;
-  creditsGroup.addChild(creditsBackText);
-}
-
-// Shared layout constants for the audio/video settings block reused by both
-// the pause and settings screens. Row Y positions are relative to the
-// container; sliders sit just above the corresponding "VOLUME" row.
-const SETTINGS_ROW_YS = [-180, -150, -80, -50, 30, 80, 130, 180];
-const SETTINGS_MUSIC_SLIDER_Y = -120;
-const SETTINGS_SFX_SLIDER_Y = -20;
-
-function buildSharedSettingsSliders(parent) {
-  const music = new UISlider(
-    vec2(0, SETTINGS_MUSIC_SLIDER_Y),
-    vec2(380, 18),
-    settings.musicVolume,
-  );
-  music.color = rgb(0.4, 0.7, 1);
-  parent.addChild(music);
-  const sfx = new UISlider(
-    vec2(0, SETTINGS_SFX_SLIDER_Y),
-    vec2(380, 18),
-    settings.sfxVolume,
-  );
-  sfx.color = rgb(0.2, 1, 0.2);
-  parent.addChild(sfx);
-  return { music, sfx };
-}
-
-function buildSharedSettingsRows(parent) {
-  return SETTINGS_ROW_YS.map((y) => makeRow(parent, y));
-}
-
-// Returns the 7 shared audio/video items used by both menus. The local sliders
-// are passed in so keyboard adjusts can update the matching screen's visual.
-function buildSharedSettingsItems({ musicSlider, sfxSlider }) {
-  return [
-    {
-      kind: "toggle",
-      label: () =>
-        `MUSIC: ${settings.musicEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.musicEnabled = !settings.musicEnabled;
-        syncVolumeSliders();
-        saveSettings();
-      },
-    },
-    {
-      kind: "slider",
-      label: () => `MUSIC VOLUME: ${Math.round(settings.musicVolume * 100)}%`,
-      adjust: (dir) => {
-        adjustSetting(settings, "musicVolume", dir);
-        musicSlider.value = settings.musicVolume;
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `SFX: ${settings.soundEffectsEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.soundEffectsEnabled = !settings.soundEffectsEnabled;
-        syncVolumeSliders();
-        saveSettings();
-      },
-    },
-    {
-      kind: "slider",
-      label: () => `SFX VOLUME: ${Math.round(settings.sfxVolume * 100)}%`,
-      adjust: (dir) => {
-        adjustSetting(settings, "sfxVolume", dir);
-        sfxSlider.value = settings.sfxVolume;
-        soundShoot.play();
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `FLASH EFFECTS: ${settings.flashEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.flashEnabled = !settings.flashEnabled;
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `SCREEN SHAKE: ${settings.shakeEnabled ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => {
-        settings.shakeEnabled = !settings.shakeEnabled;
-        saveSettings();
-      },
-    },
-    {
-      kind: "toggle",
-      label: () =>
-        `FULLSCREEN: ${isFullscreen() ? strings.ui.onLabel : strings.ui.offLabel}`,
-      toggle: () => toggleFullscreen(),
-    },
-  ];
-}
-
-// Mouse-drag → settings sync (and 0-pin while disabled) for either screen.
-function updateSharedSliderInput(musicSlider, sfxSlider) {
-  if (!settings.musicEnabled) {
-    musicSlider.value = 0;
-  } else if (musicSlider.value !== settings.musicVolume) {
-    settings.musicVolume = musicSlider.value;
-  }
-  if (!settings.soundEffectsEnabled) {
-    sfxSlider.value = 0;
-  } else if (sfxSlider.value !== settings.sfxVolume) {
-    settings.sfxVolume = sfxSlider.value;
-    soundShoot.play();
-  }
+  creditsGroup = createCreditsScreen({
+    uiRoot,
+    mainCanvasSize,
+    strings,
+  }).creditsGroup;
 }
 
 function setupPauseScreen() {
@@ -659,7 +472,7 @@ function setupPauseScreen() {
   pauseMusicSlider = sliders.music;
   pauseSfxSlider = sliders.sfx;
 
-  pauseMenuRows = buildSharedSettingsRows(pauseGroup);
+  pauseMenuRows = buildSharedSettingsRows(pauseGroup, makeRow);
 }
 
 function setupGameOverScreen() {
@@ -838,7 +651,7 @@ function setupSettingsScreen() {
   settingsMusicSlider = sliders.music;
   settingsSfxSlider = sliders.sfx;
 
-  settingsMenuRows = buildSharedSettingsRows(settingsGroup);
+  settingsMenuRows = buildSharedSettingsRows(settingsGroup, makeRow);
   // Extra row for the "RESET PROGRESS" item — only the settings menu uses it.
   settingsMenuRows.push(makeRow(settingsGroup, 220));
 }
@@ -903,6 +716,7 @@ function rebuildMenus() {
   const pauseSharedItems = buildSharedSettingsItems({
     musicSlider: pauseMusicSlider,
     sfxSlider: pauseSfxSlider,
+    syncVolumeSliders,
   });
   pauseMenu.setItems([
     ...pauseSharedItems,
@@ -916,6 +730,7 @@ function rebuildMenus() {
   const settingsSharedItems = buildSharedSettingsItems({
     musicSlider: settingsMusicSlider,
     sfxSlider: settingsSfxSlider,
+    syncVolumeSliders,
   });
   // Two-step "Reset Progress" — first press arms, second confirms within 3s.
   let resetArmedUntil = 0;
@@ -942,37 +757,6 @@ function rebuildMenus() {
       activate: () => settingsHandlers.back(),
     },
   ]);
-}
-
-/**
- * Processes mouse/touch interaction for a Menu and its corresponding UI rows.
- * @param {Menu} menu
- * @param {Array} rows - Objects with {row: UIObject}
- */
-function updateMenuInteraction(menu, rows) {
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row.row.visible) continue;
-
-    // Use overlapping check which is more reliable for touch than top-most hover
-    if (row.row.isMouseOverlapping()) {
-      if (menu.focusedIndex !== i) {
-        menu.focusedIndex = i;
-      }
-
-      // Check for both press and release to catch touch events reliably
-      if (mouseWasPressed(0) || mouseWasReleased(0)) {
-        const item = menu.items[i];
-        if (item) {
-          if (item.kind === "action") item.activate?.();
-          else if (item.kind === "toggle") item.toggle?.();
-          // Slider kind: focus is enough, they use UISlider for actual dragging
-          return true;
-        }
-      }
-    }
-  }
-  return false;
 }
 
 function updateBossHealthBar(uiCenterY, hudScale) {
@@ -1019,35 +803,6 @@ function updateBossHealthBar(uiCenterY, hudScale) {
   bossHealthBg.color = new Color(0.2 + 0.8 * flash, flash, flash, 0.7);
   bossHealthBg.lineColor = new Color(1, flash, flash);
   bossHealthFg.color = new Color(1, 0.2 + 0.8 * flash, 0.2 + 0.8 * flash);
-}
-
-function paintMenu(menu, rows, focusColor, idleColor) {
-  for (let i = 0; i < rows.length; i++) {
-    const item = menu.items[i];
-    const row = rows[i];
-    if (!item) {
-      row.text.text = "";
-      row.cursor.text = "";
-      row.row.visible = false;
-      continue;
-    }
-    row.row.visible = true;
-    const focused = menu.focusedIndex === i;
-    const label = item.label();
-    row.text.text = label;
-    row.text.textColor = focused ? focusColor.copy() : idleColor.copy();
-    row.cursor.text = focused ? ">" : "";
-    row.cursor.textColor = focusColor.copy();
-    if (focused) {
-      const labelWidth = measureTextWidth(
-        label,
-        row.text.textHeight,
-        row.text.font,
-      );
-      const gap = row.text.textHeight * 0.4;
-      row.cursor.localPos = vec2(-labelWidth / 2 - gap, 0);
-    }
-  }
 }
 
 function setupHealthUI() {
@@ -1157,7 +912,6 @@ export function updateUI() {
   }
 
   if (titleGroup.visible) {
-    updateMenuInteraction(titleMenu, titleMenuRows);
     paintMenu(titleMenu, titleMenuRows, FOCUS_COLOR, IDLE_COLOR);
 
     // Pulse the highlighted initial letters so the title feels alive.
@@ -1170,27 +924,12 @@ export function updateUI() {
 
   if (settingsGroup.visible) {
     updateSharedSliderInput(settingsMusicSlider, settingsSfxSlider);
-    updateMenuInteraction(settingsMenu, settingsMenuRows);
     paintMenu(settingsMenu, settingsMenuRows, FOCUS_COLOR, IDLE_COLOR);
-
-    if (mouseWasReleased(0)) {
-      if (
-        settingsMusicSlider.isHoverObject() ||
-        settingsSfxSlider.isHoverObject()
-      )
-        saveSettings();
-    }
   }
 
   if (pauseGroup.visible) {
     updateSharedSliderInput(pauseMusicSlider, pauseSfxSlider);
-    updateMenuInteraction(pauseMenu, pauseMenuRows);
     paintMenu(pauseMenu, pauseMenuRows, FOCUS_COLOR, IDLE_COLOR);
-
-    if (mouseWasReleased(0)) {
-      if (pauseMusicSlider.isHoverObject() || pauseSfxSlider.isHoverObject())
-        saveSettings();
-    }
   }
 
   if (preRunGroup.visible) {
@@ -1422,5 +1161,33 @@ export function updateUI() {
     const minutes = Math.floor(gameTime / 60);
     const seconds = Math.floor(gameTime % 60);
     timeText.text = `${strings.ui.timePrefix}${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }
+}
+
+export function processMenuPointerInput() {
+  if (!uiRoot) return;
+
+  if (gameState === GAME_STATES.TITLE) {
+    updateMenuInteraction(titleMenu, titleMenuRows);
+  }
+
+  if (gameState === GAME_STATES.SETTINGS) {
+    updateMenuInteraction(settingsMenu, settingsMenuRows);
+    if (
+      mouseWasReleased(0) &&
+      (settingsMusicSlider.isHoverObject() || settingsSfxSlider.isHoverObject())
+    ) {
+      saveSettings();
+    }
+  }
+
+  if (gameState === GAME_STATES.PAUSE) {
+    updateMenuInteraction(pauseMenu, pauseMenuRows);
+    if (
+      mouseWasReleased(0) &&
+      (pauseMusicSlider.isHoverObject() || pauseSfxSlider.isHoverObject())
+    ) {
+      saveSettings();
+    }
   }
 }

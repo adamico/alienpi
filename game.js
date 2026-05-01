@@ -42,6 +42,7 @@ import { drawPlayField, drawMarquee, setupBoundaries } from "./src/scene.js";
 import {
   initUI,
   updateUI,
+  processMenuPointerInput,
   titleMenu,
   pauseMenu,
   settingsMenu,
@@ -228,6 +229,8 @@ function enterPostRun(outcome) {
 let lastGamepadStick = vec2(0);
 
 function gameUpdatePost() {
+  processMenuPointerInput();
+
   const frameActions = collectSceneActions({
     keyWasPressed,
     gamepadWasReleased,
