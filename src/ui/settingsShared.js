@@ -1,14 +1,20 @@
 import {
   vec2,
   rgb,
+  WHITE,
   UISlider,
   toggleFullscreen,
   isFullscreen,
+  mouseWasReleased,
 } from "../engine.js";
 import { soundShoot } from "../sounds.js";
 import { settings, strings } from "../config/index.js";
 import { saveSettings } from "../settings.js";
 import { adjustSetting } from "../menuNav.js";
+import { updateMenuInteraction, paintMenu } from "./menuView.js";
+
+export const FOCUS_COLOR = rgb(1, 0.9, 0.3);
+export const IDLE_COLOR = WHITE;
 
 const SETTINGS_ROW_YS = [-180, -150, -80, -50, 30, 80, 130, 180];
 const SETTINGS_MUSIC_SLIDER_Y = -120;
@@ -122,5 +128,28 @@ export function updateSharedSliderInput(musicSlider, sfxSlider) {
   } else if (sfxSlider.value !== settings.sfxVolume) {
     settings.sfxVolume = sfxSlider.value;
     soundShoot.play();
+  }
+}
+
+export function makeSyncVolumeSliders(musicSlider, sfxSlider) {
+  return function syncVolumeSliders() {
+    const music = settings.musicEnabled ? settings.musicVolume : 0;
+    const sfx = settings.soundEffectsEnabled ? settings.sfxVolume : 0;
+    if (musicSlider) musicSlider.value = music;
+    if (sfxSlider) sfxSlider.value = sfx;
+  };
+}
+
+export function tickSettingsPanel(group, isVisible, menu, menuRows, musicSlider, sfxSlider) {
+  group.visible = isVisible;
+  if (!isVisible) return;
+  updateSharedSliderInput(musicSlider, sfxSlider);
+  paintMenu(menu, menuRows, FOCUS_COLOR, IDLE_COLOR);
+  updateMenuInteraction(menu, menuRows);
+  if (
+    mouseWasReleased(0) &&
+    (musicSlider.isHoverObject() || sfxSlider.isHoverObject())
+  ) {
+    saveSettings();
   }
 }

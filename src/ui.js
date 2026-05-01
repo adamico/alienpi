@@ -7,20 +7,24 @@ import {
   getCurrentBoss,
   getLastRunDebrief,
 } from "./world.js";
-import { titleMenu, pauseMenu, settingsMenu } from "./menus.js";
-import { createPauseSettingsScreens } from "./ui/pauseSettingsScreens.js";
-import { createLoreScreen, createCreditsScreen } from "./ui/storyScreens.js";
-import { createHudView } from "./ui/hudView.js";
-import { createEconomyScreens } from "./ui/economyScreens.js";
-import { createTitleScreen } from "./ui/titleScreen.js";
 
-let uiRoot;
-let hudView;
-let economyScreens;
-let titleView;
-let pauseSettingsView;
-let loreView;
+import { createCreditsScreen } from "./ui/creditsScreen.js";
+import { createEconomyScreens } from "./ui/economyScreens.js";
+import { createHudView } from "./ui/hudView.js";
+import { createLoreScreen } from "./ui/storyScreen.js";
+import { createPauseScreen } from "./ui/pauseScreen.js";
+import { createSettingsScreen } from "./ui/settingsScreen.js";
+import { createTitleScreen } from "./ui/titleScreen.js";
+import { titleMenu, pauseMenu, settingsMenu } from "./menus.js";
+
 let creditsView;
+let economyScreens;
+let hudView;
+let loreView;
+let pauseView;
+let settingsView;
+let titleView;
+let uiRoot;
 
 export { titleMenu, pauseMenu, settingsMenu } from "./menus.js";
 
@@ -31,15 +35,12 @@ export function initUI({ handlers = {} } = {}) {
 
   hudView = createHudView(uiRoot);
   titleView = createTitleScreen(uiRoot, titleMenu, handlers.title ?? {});
-  pauseSettingsView = createPauseSettingsScreens(
-    uiRoot,
-    pauseMenu,
-    settingsMenu,
-    {
-      resume: handlers.pause?.resume,
-      back: handlers.settings?.back,
-    },
-  );
+  pauseView = createPauseScreen(uiRoot, pauseMenu, {
+    resume: handlers.pause?.resume,
+  });
+  settingsView = createSettingsScreen(uiRoot, settingsMenu, {
+    back: handlers.settings?.back,
+  });
   creditsView = createCreditsScreen(uiRoot);
   loreView = createLoreScreen(uiRoot);
   economyScreens = createEconomyScreens(uiRoot);
@@ -59,7 +60,8 @@ export function updateUI() {
   titleView.tick(gameState);
   loreView.tick(gameState);
   creditsView.tick(gameState);
-  pauseSettingsView.tick(gameState);
+  pauseView.tick(gameState);
+  settingsView.tick(gameState);
   economyScreens.tick(gameState, {
     gameWon: getGameWon(),
     lastRunDebrief: getLastRunDebrief(),
