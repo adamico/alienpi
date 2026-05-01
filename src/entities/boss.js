@@ -281,7 +281,7 @@ export class Boss extends BaseEntity {
       return;
     }
 
-    const moveScale = 1 + this.stage * 0.125; // Gradual: 1.0, 1.125, 1.25, 1.375, 1.5
+    const moveScale = 1 + this.stage * 0.08; // Gradual: 1.0, 1.08, 1.16, 1.24, 1.32
 
     this.moveTimer -= moveScale;
 
@@ -303,7 +303,7 @@ export class Boss extends BaseEntity {
   }
 
   updateAttacks() {
-    const rateScale = 1 + this.stage * 0.25; // Gradual: 1.0, 1.25, 1.5, 1.75, 2.0
+    const rateScale = 1 + this.stage * 0.15; // Gradual: 1.0, 1.15, 1.3, 1.45, 1.6
     const activeOrbiters = this.orbiters.filter((o) => !o.destroyed);
 
     if (activeOrbiters.length > 0) {
@@ -421,11 +421,11 @@ export class Boss extends BaseEntity {
 
   fireMissiles() {
     const stage = this.stage;
-    const missileLifetime = missileCfg.lifetime - stage * 1.0;
-    const missileSpeed = missileCfg.speed * (1 + stage * 0.2);
+    const missileLifetime = missileCfg.lifetime - stage * 0.6;
+    const missileSpeed = missileCfg.speed * (1 + stage * 0.12);
 
-    // 4..8 missiles, all launched from the back of the boss in a downward fan.
-    const count = 4 + stage;
+    // 4..6 missiles, all launched from the back of the boss in a downward fan.
+    const count = 4 + Math.floor(stage * 0.5);
     const kickSpeed = 0.2;
     const fanHalfAngle =
       missileCfg.fanHalfAngleBase + stage * missileCfg.fanHalfAngleStageBonus;

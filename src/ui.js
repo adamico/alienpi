@@ -35,17 +35,13 @@ import { gameState, gameTime, gameWon, currentBoss } from "../game.js";
 import { Menu, adjustSetting } from "./menuNav.js";
 import { drawLootCell } from "./lootIcon.js";
 import { FONT_MENU } from "./fonts.js";
-import {
-  formatScore,
-  formatHighScore,
-  getScore,
-  getHighScore,
-} from "./score.js";
+import { formatScore, formatHighScore } from "./score.js";
 import {
   getSubstrate,
   getDebt,
   getLastRun,
   formatSubstrate,
+  resetEconomy,
 } from "./economy.js";
 import { lastRunDebrief } from "../game.js";
 
@@ -839,6 +835,8 @@ function setupSettingsScreen() {
   settingsSfxSlider = sliders.sfx;
 
   settingsMenuRows = buildSharedSettingsRows(settingsGroup);
+  // Extra row for the "RESET PROGRESS" item — only the settings menu uses it.
+  settingsMenuRows.push(makeRow(settingsGroup, 220));
 }
 
 function openLink(url) {
@@ -915,8 +913,25 @@ function rebuildMenus() {
     musicSlider: settingsMusicSlider,
     sfxSlider: settingsSfxSlider,
   });
+  // Two-step "Reset Progress" — first press arms, second confirms within 3s.
+  let resetArmedUntil = 0;
   settingsMenu.setItems([
     ...settingsSharedItems,
+    {
+      kind: "action",
+      label: () =>
+        timeReal < resetArmedUntil
+          ? "PRESS AGAIN TO CONFIRM"
+          : "RESET PROGRESS",
+      activate: () => {
+        if (timeReal < resetArmedUntil) {
+          resetEconomy();
+          resetArmedUntil = 0;
+        } else {
+          resetArmedUntil = timeReal + 3;
+        }
+      },
+    },
     {
       kind: "action",
       label: () => "BACK",
@@ -1208,16 +1223,16 @@ export function updateUI() {
     }
     retryText.visible = (timeReal * 2) % 2 < 1.2;
 
-    // Repurpose the old finalScore/highScore lines as a Score+High summary band
-    // above the new debrief breakdown.
-    finalScoreText.text = strings.ui.finalScorePrefix + formatScore();
-    const isNewHigh = getScore() >= getHighScore() && getScore() > 0;
-    gameOverHighScoreText.text = isNewHigh
-      ? strings.ui.newHighScoreLabel
-      : strings.ui.highScorePrefix + formatHighScore();
-    gameOverHighScoreText.textColor = isNewHigh
-      ? rgb(0.4, 1, 0.6)
-      : rgb(1, 0.85, 0.3);
+    // Headline is the post-run Substrate balance — the score row is gone in
+    // favor of the economy framing.
+    const balanceForHeadline = lastRunDebrief
+      ? lastRunDebrief.balance
+      : getSubstrate();
+    finalScoreText.text =
+      strings.ui.postRunSubstratePrefix +
+      formatSubstrate(balanceForHeadline, { compact: false });
+    finalScoreText.textColor = rgb(0.4, 1, 0.7);
+    gameOverHighScoreText.visible = false;
 
     const d = lastRunDebrief;
     const showBreakdown = !!d;
@@ -1371,5 +1386,4 @@ export function updateUI() {
   const minutes = Math.floor(gameTime / 60);
   const seconds = Math.floor(gameTime % 60);
   timeText.text = `${strings.ui.timePrefix}${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-  scoreText.text = strings.ui.scorePrefix + formatScore();
 }

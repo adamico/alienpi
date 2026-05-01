@@ -17,7 +17,7 @@ export const GAME_STATES = {
 export const economy = {
   payoutRatio: 1.0,        // score points → substrate
   repairCostPerHp: 200,    // substrate cost per HP lost
-  startingLoan: 50000,     // initial debt (Gaia Advance, lore figure)
+  startingLoan: 5000,      // initial debt (Gaia Advance)
   bossClearBonus: 5000,    // flat bonus for boss kill
   deathPenaltyRatio: 0.0,  // forgiving by design (Phase 1)
 };
@@ -401,7 +401,7 @@ export const enemy = {
 
 export const boss = {
   sprite: "boss2.png",
-  hp: 500,
+  hp: 650,
   speed: 0.05,
   size: vec2(8),
   color: rgb(1, 1, 1),
@@ -591,7 +591,7 @@ the fiery stone. The rot is spreading. The Substrate bleeds into the void.
 GAIA UPLINK ESTABLISHED
 In reclaiming what is taken, you sustain what remains.
 
-Substrate advance issued: 50,000 units.
+Substrate advance issued: 5,000 units.
 Your vessel is attuned. Your weapons are charged.
 Replenish what you spend. Recover what was taken.
 Chosen One: Will you fall, or will you rise?`,
@@ -608,6 +608,7 @@ Chosen One: Will you fall, or will you rise?`,
     homeLastRunLabel: "LAST RUN NET",
     homeLaunchPrompt: "SPACE: LAUNCH MISSION",
     homeExitPrompt: "ESC: TITLE",
+    postRunSubstratePrefix: "SUBSTRATE: ",
     postRunVictoryTitle: "VICTORY",
     postRunDefeatTitle: "WRECKED",
     postRunEarningsLabel: "EARNINGS",
