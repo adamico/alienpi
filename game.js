@@ -25,6 +25,7 @@ import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 import { system, loadSettings, GAME_STATES } from "./src/config.js";
 import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
 import { resetScore, loadHighScore, commitHighScore } from "./src/score.js";
+import { loadEconomy, beginRun, commitRun } from "./src/economy.js";
 import { initializeGameAssets, initializePlayer } from "./src/commonSetup.js";
 import { Boss } from "./src/entities/boss.js";
 import {
@@ -57,10 +58,12 @@ let previousState = GAME_STATES.TITLE;
 let gameOverTime = 0;
 export let gameTime = 0;
 export let gameWon = false;
+export let lastRunDebrief = null;
 
 async function gameInit() {
   loadSettings();
   loadHighScore();
+  loadEconomy();
   await preloadFonts();
   setFontDefault(FONT_HUD);
   await initializeGameAssets();
@@ -100,8 +103,7 @@ async function gameInit() {
     },
     lore: {
       start: () => {
-        resetGame();
-        setPaused(false);
+        gameState = GAME_STATES.PRE_RUN;
       },
     },
   });
@@ -120,6 +122,7 @@ export function resetGame() {
   gameTime = 0;
   gameWon = false;
   resetScore();
+  beginRun();
   gameState = GAME_STATES.PLAYING;
 }
 
@@ -133,22 +136,20 @@ function gameUpdate() {
   gameTime += timeDelta;
 
   if (player && player.hp <= 0) {
-    gameState = GAME_STATES.GAMEOVER;
-    enterGameOver();
+    enterPostRun("defeat");
     vibrate(800, 1.0, 1.0);
   } else if (currentBoss && currentBoss.destroyed) {
     gameWon = true;
-    gameState = GAME_STATES.GAMEOVER;
-    enterGameOver();
+    enterPostRun("victory");
     vibrate(400, 0.6, 0.4);
   }
 }
 
-// Wipe the playfield on game over: pause halts updates but particles and
+// Wipe the playfield on run end: pause halts updates but particles and
 // child emitters that were live in the last frame stay resident and pile up
 // across replays. Destroying everything lets GC reclaim them and keeps the
-// game-over overlay rendering over a clean field.
-function enterGameOver() {
+// debrief overlay rendering over a clean field.
+function enterPostRun(outcome) {
   soundGameOverJingle.play();
   system.isResetting = true;
   engineObjectsDestroy();
@@ -156,6 +157,8 @@ function enterGameOver() {
   setPaused(true);
   gameOverTime = timeReal;
   commitHighScore();
+  lastRunDebrief = commitRun(outcome);
+  gameState = GAME_STATES.POST_RUN;
 }
 
 const MENU_KEYS = [
@@ -223,8 +226,15 @@ function gameUpdatePost() {
     dispatchMenu(titleMenu);
   } else if (gameState === GAME_STATES.LORE) {
     if (inputActions.confirm() || mouseWasReleased(0)) {
+      gameState = GAME_STATES.PRE_RUN;
+    }
+  } else if (gameState === GAME_STATES.PRE_RUN) {
+    if (inputActions.confirm() || mouseWasReleased(0)) {
       resetGame();
       setPaused(false);
+    } else if (inputActions.cancel()) {
+      gameState = GAME_STATES.TITLE;
+      setPaused(true);
     }
   } else if (gameState === GAME_STATES.PLAYING) {
     if (inputActions.pause()) {
@@ -252,11 +262,10 @@ function gameUpdatePost() {
     ) {
       gameState = GAME_STATES.TITLE;
     }
-  } else if (gameState === GAME_STATES.GAMEOVER) {
+  } else if (gameState === GAME_STATES.POST_RUN) {
     if (timeReal - gameOverTime > 1.0) {
       if (inputActions.confirm() || mouseWasReleased(0)) {
-        resetGame();
-        setPaused(false);
+        gameState = GAME_STATES.PRE_RUN;
       } else if (inputActions.cancel()) {
         gameState = GAME_STATES.TITLE;
         setPaused(true);
@@ -281,11 +290,12 @@ function desiredMusic() {
     case GAME_STATES.CREDITS:
       return soundTitleMusic; // Placeholder, could be a separate track for credits
     case GAME_STATES.LORE:
-      return soundTitleMusic; // Placeholder, could be a separate track for lore
+    case GAME_STATES.PRE_RUN:
+      return soundTitleMusic; // Placeholder, could be a separate track for lore/pre-run
     case GAME_STATES.PLAYING:
     case GAME_STATES.PAUSE:
       return soundBossMusic;
-    case GAME_STATES.GAMEOVER:
+    case GAME_STATES.POST_RUN:
       return gameWon ? soundVictoryMusic : soundGameOverMusic;
     case GAME_STATES.SETTINGS:
       // Keep whatever was playing when the user opened settings.

@@ -41,6 +41,13 @@ import {
   getScore,
   getHighScore,
 } from "./score.js";
+import {
+  getSubstrate,
+  getDebt,
+  getLastRun,
+  formatSubstrate,
+} from "./economy.js";
+import { lastRunDebrief } from "../game.js";
 
 let uiRoot;
 let scoreText, timeText;
@@ -50,9 +57,21 @@ let hudGroup,
   titleGroup,
   pauseGroup,
   gameOverGroup,
+  preRunGroup,
   settingsGroup,
   creditsGroup,
   loreGroup;
+let preRunTitleText,
+  preRunBalanceText,
+  preRunDebtText,
+  preRunLastRunText,
+  preRunLaunchText;
+let postRunEarningsText,
+  postRunBossBonusText,
+  postRunRepairText,
+  postRunNetText,
+  postRunBalanceText,
+  postRunDebtText;
 let titleBossDecor;
 let titleInitialTexts = [];
 let controlGroup, controlsTitle, controlsBody;
@@ -170,9 +189,9 @@ export function initUI() {
   scoreText = new UIText(
     vec2(0, 0),
     vec2(300, 30),
-    strings.ui.scorePrefix + "000000",
+    strings.ui.substratePrefix + "0",
   );
-  scoreText.textColor = WHITE.copy();
+  scoreText.textColor = rgb(0.4, 1, 0.7);
   scoreText.textAlign = "left";
   scoreText.fontShadow = true;
   hudGroup.addChild(scoreText);
@@ -180,9 +199,9 @@ export function initUI() {
   hudHighScoreText = new UIText(
     vec2(0, 0),
     vec2(300, 24),
-    strings.ui.highScorePrefix + "000000",
+    strings.ui.debtPrefix + "0",
   );
-  hudHighScoreText.textColor = new Color(1, 0.85, 0.3, 0.8);
+  hudHighScoreText.textColor = new Color(1, 0.5, 0.3, 0.85);
   hudHighScoreText.textAlign = "left";
   hudHighScoreText.fontShadow = true;
   hudGroup.addChild(hudHighScoreText);
@@ -229,6 +248,8 @@ export function initUI() {
   setupSettingsScreen();
   setupCreditsScreen();
   setupLoreScreen();
+  setupPreRunScreen();
+  extendPostRunScreen();
   rebuildMenus();
 }
 
@@ -696,6 +717,95 @@ function setupGameOverScreen() {
   gameOverGroup.addChild(backToTitleText);
 }
 
+function makeDebriefLine(parent, y, label, color = WHITE) {
+  const t = new UIText(vec2(0, y), vec2(800, 32), label);
+  t.textHeight = 24;
+  t.font = FONT_MENU;
+  t.textColor = color.copy();
+  t.fontShadow = true;
+  parent.addChild(t);
+  return t;
+}
+
+function setupPreRunScreen() {
+  preRunGroup = new UIObject(vec2(0, 0), mainCanvasSize);
+  preRunGroup.color = new Color(0.04, 0.06, 0.12, 0.85);
+  preRunGroup.lineWidth = 0;
+  uiRoot.addChild(preRunGroup);
+
+  preRunTitleText = new UIText(
+    vec2(0, -160),
+    vec2(800, 100),
+    strings.ui.preRunTitle,
+  );
+  preRunTitleText.textHeight = 70;
+  preRunTitleText.font = FONT_MENU;
+  preRunTitleText.textColor = rgb(0.4, 0.9, 1);
+  preRunTitleText.fontShadow = true;
+  preRunGroup.addChild(preRunTitleText);
+
+  preRunBalanceText = makeDebriefLine(
+    preRunGroup,
+    -40,
+    strings.ui.preRunBalanceLabel,
+    rgb(0.4, 1, 0.7),
+  );
+  preRunDebtText = makeDebriefLine(
+    preRunGroup,
+    0,
+    strings.ui.preRunDebtLabel,
+    rgb(1, 0.5, 0.3),
+  );
+  preRunLastRunText = makeDebriefLine(
+    preRunGroup,
+    40,
+    strings.ui.preRunLastRunLabel,
+    new Color(0.85, 0.85, 0.85, 1),
+  );
+
+  preRunLaunchText = new UIText(
+    vec2(0, 130),
+    vec2(800, 50),
+    strings.ui.preRunLaunchPrompt,
+  );
+  preRunLaunchText.textHeight = 28;
+  preRunLaunchText.font = FONT_MENU;
+  preRunLaunchText.textColor = WHITE.copy();
+  preRunLaunchText.fontShadow = true;
+  preRunGroup.addChild(preRunLaunchText);
+}
+
+// Adds debrief breakdown rows to the existing gameOverGroup (now POST_RUN).
+function extendPostRunScreen() {
+  postRunEarningsText = makeDebriefLine(gameOverGroup, 80, "");
+  postRunBossBonusText = makeDebriefLine(
+    gameOverGroup,
+    110,
+    "",
+    rgb(1, 0.85, 0.3),
+  );
+  postRunRepairText = makeDebriefLine(
+    gameOverGroup,
+    140,
+    "",
+    rgb(1, 0.5, 0.3),
+  );
+  postRunNetText = makeDebriefLine(gameOverGroup, 175, "", rgb(0.4, 1, 0.7));
+  postRunNetText.textHeight = 28;
+  postRunBalanceText = makeDebriefLine(
+    gameOverGroup,
+    215,
+    "",
+    rgb(0.4, 1, 0.7),
+  );
+  postRunDebtText = makeDebriefLine(
+    gameOverGroup,
+    245,
+    "",
+    rgb(1, 0.5, 0.3),
+  );
+}
+
 function setupSettingsScreen() {
   settingsGroup = new UIObject(vec2(0, 0), mainCanvasSize);
   settingsGroup.color = new Color(0.05, 0.05, 0.1, 0.9);
@@ -991,6 +1101,7 @@ export function updateUI() {
   loreGroup.size = mainCanvasSize;
   pauseGroup.size = mainCanvasSize;
   gameOverGroup.size = mainCanvasSize;
+  preRunGroup.size = mainCanvasSize;
   settingsGroup.size = mainCanvasSize;
   creditsGroup.size = mainCanvasSize;
 
@@ -998,11 +1109,13 @@ export function updateUI() {
     gameState !== GAME_STATES.TITLE &&
     gameState !== GAME_STATES.SETTINGS &&
     gameState !== GAME_STATES.CREDITS &&
-    gameState !== GAME_STATES.LORE;
+    gameState !== GAME_STATES.LORE &&
+    gameState !== GAME_STATES.PRE_RUN;
   titleGroup.visible = gameState === GAME_STATES.TITLE;
   pauseGroup.visible = gameState === GAME_STATES.PAUSE;
   loreGroup.visible = gameState === GAME_STATES.LORE;
-  gameOverGroup.visible = gameState === GAME_STATES.GAMEOVER;
+  preRunGroup.visible = gameState === GAME_STATES.PRE_RUN;
+  gameOverGroup.visible = gameState === GAME_STATES.POST_RUN;
   settingsGroup.visible = gameState === GAME_STATES.SETTINGS;
   creditsGroup.visible = gameState === GAME_STATES.CREDITS;
 
@@ -1043,19 +1156,49 @@ export function updateUI() {
     }
   }
 
+  if (preRunGroup.visible) {
+    preRunBalanceText.text =
+      strings.ui.preRunBalanceLabel +
+      ": " +
+      formatSubstrate(getSubstrate(), { compact: false });
+    preRunDebtText.text =
+      strings.ui.preRunDebtLabel +
+      ": " +
+      formatSubstrate(getDebt(), { compact: false });
+    preRunDebtText.visible = getDebt() > 0;
+    const last = getLastRun();
+    preRunLastRunText.visible = !!last;
+    if (last) {
+      const sign = last.net >= 0 ? "+" : "";
+      preRunLastRunText.text =
+        strings.ui.preRunLastRunLabel +
+        ": " +
+        sign +
+        formatSubstrate(last.net, { compact: false });
+      preRunLastRunText.textColor =
+        last.net >= 0
+          ? new Color(0.4, 1, 0.7, 1)
+          : new Color(1, 0.5, 0.3, 1);
+    }
+    preRunLaunchText.visible = (timeReal * 2) % 2 < 1.2;
+  }
+
   if (gameOverGroup.visible) {
     if (gameWon) {
-      gameOverTitleText.text = strings.ui.victoryTitle;
+      gameOverTitleText.text = strings.ui.postRunVictoryTitle;
       gameOverTitleText.textColor = rgb(0.4, 1, 0.4);
       gameOverGroup.color = new Color(0, 0.15, 0, 0.6);
-      retryText.text = strings.ui.victoryPrompt;
+      retryText.text = strings.ui.postRunContinuePrompt;
     } else {
-      gameOverTitleText.text = strings.ui.gameOverTitle;
+      gameOverTitleText.text = strings.ui.postRunDefeatTitle;
       gameOverTitleText.textColor = rgb(1, 0.2, 0.2);
       gameOverGroup.color = new Color(0.2, 0, 0, 0.6);
-      retryText.text = strings.ui.retryPrompt;
+      retryText.text = strings.ui.postRunContinuePrompt;
     }
     retryText.visible = (timeReal * 2) % 2 < 1.2;
+
+    // Repurpose the old finalScore/highScore lines as a Score+High summary band
+    // above the new debrief breakdown.
     finalScoreText.text = strings.ui.finalScorePrefix + formatScore();
     const isNewHigh = getScore() >= getHighScore() && getScore() > 0;
     gameOverHighScoreText.text = isNewHigh
@@ -1064,6 +1207,45 @@ export function updateUI() {
     gameOverHighScoreText.textColor = isNewHigh
       ? rgb(0.4, 1, 0.6)
       : rgb(1, 0.85, 0.3);
+
+    const d = lastRunDebrief;
+    const showBreakdown = !!d;
+    postRunEarningsText.visible = showBreakdown;
+    postRunBossBonusText.visible = showBreakdown && d && d.bossBonus > 0;
+    postRunRepairText.visible = showBreakdown;
+    postRunNetText.visible = showBreakdown;
+    postRunBalanceText.visible = showBreakdown;
+    postRunDebtText.visible = showBreakdown && d && d.debt > 0;
+    if (d) {
+      postRunEarningsText.text =
+        strings.ui.postRunEarningsLabel +
+        ": +" +
+        formatSubstrate(d.earnings, { compact: false });
+      postRunBossBonusText.text =
+        strings.ui.postRunBossBonusLabel +
+        ": +" +
+        formatSubstrate(d.bossBonus, { compact: false });
+      postRunRepairText.text =
+        strings.ui.postRunRepairLabel +
+        ": -" +
+        formatSubstrate(d.repair, { compact: false });
+      const netSign = d.net >= 0 ? "+" : "";
+      postRunNetText.text =
+        strings.ui.postRunNetLabel +
+        ": " +
+        netSign +
+        formatSubstrate(d.net, { compact: false });
+      postRunNetText.textColor =
+        d.net >= 0 ? rgb(0.4, 1, 0.7) : rgb(1, 0.5, 0.3);
+      postRunBalanceText.text =
+        strings.ui.postRunBalanceLabel +
+        ": " +
+        formatSubstrate(d.balance, { compact: false });
+      postRunDebtText.text =
+        strings.ui.postRunDebtLabel +
+        ": " +
+        formatSubstrate(d.debt, { compact: false });
+    }
   }
 
   if (titleGroup.visible) {
@@ -1094,19 +1276,14 @@ export function updateUI() {
   scoreText.localPos = vec2(uiAnchor.x, uiAnchor.y);
   scoreText.size = vec2(300, 40).scale(hudScale);
   scoreText.textHeight = 30 * hudScale;
+  scoreText.text = strings.ui.substratePrefix + formatSubstrate(getSubstrate());
 
   hudHighScoreText.localPos = vec2(uiAnchor.x, uiAnchor.y + 28 * hudScale);
   hudHighScoreText.size = vec2(300, 24).scale(hudScale);
   hudHighScoreText.textHeight = 18 * hudScale;
-  const liveScore = getScore();
-  const liveHigh = getHighScore();
-  const beatingHigh = liveScore > liveHigh && liveHigh > 0;
-  hudHighScoreText.text =
-    strings.ui.highScorePrefix +
-    (beatingHigh ? formatScore() : formatHighScore());
-  hudHighScoreText.textColor = beatingHigh
-    ? new Color(0.4, 1, 0.6, 0.95)
-    : new Color(1, 0.85, 0.3, 0.8);
+  const debt = getDebt();
+  hudHighScoreText.visible = debt > 0;
+  hudHighScoreText.text = strings.ui.debtPrefix + formatSubstrate(debt);
 
   timeText.localPos = vec2(-uiAnchor.x, uiAnchor.y);
   timeText.size = vec2(300, 40).scale(hudScale);

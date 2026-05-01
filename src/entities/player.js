@@ -40,6 +40,7 @@ import {
   spawnFloatingText,
 } from "../gameEffects.js";
 import { vibrate } from "../gamepad.js";
+import { recordHpLost } from "../economy.js";
 
 export let player = null;
 
@@ -718,6 +719,7 @@ export class Player extends BaseEntity {
 
     soundPlayerHit.play();
     this.hp -= amount;
+    recordHpLost(amount);
     this.applyEffect(new FlashEffect(new Color(1, 0, 0), 0.1));
     applyScreenShake(0.3, 0.1);
     vibrate(180, 0.7, 0.9);

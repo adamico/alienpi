@@ -3,11 +3,23 @@ import { vec2, rgb, PI } from "./engine.js";
 export const GAME_STATES = {
   TITLE: "TITLE",
   LORE: "LORE",
+  PRE_RUN: "PRE_RUN",
   PLAYING: "PLAYING",
   PAUSE: "PAUSE",
+  POST_RUN: "POST_RUN",
+  // GAMEOVER kept temporarily for backwards-compat with any unmigrated callers.
   GAMEOVER: "GAMEOVER",
   SETTINGS: "SETTINGS",
   CREDITS: "CREDITS",
+};
+
+// Phase 1 economy MVP — Loan → Fight → Repair (see docs/plan.html).
+export const economy = {
+  payoutRatio: 1.0,        // score points → substrate
+  repairCostPerHp: 200,    // substrate cost per HP lost
+  startingLoan: 50000,     // initial debt (Gaia Advance, lore figure)
+  bossClearBonus: 5000,    // flat bonus for boss kill
+  deathPenaltyRatio: 0.0,  // forgiving by design (Phase 1)
 };
 
 const ASSET_PATH = "public/assets/";
@@ -587,7 +599,23 @@ Chosen One: Will you fall, or will you rise?`,
     settingsPrompt: "PRESS [S] FOR SETTINGS",
     backPrompt: "PRESS [ESC] TO GO BACK",
     scorePrefix: "SCORE: ",
+    substratePrefix: "SUB: ",
+    debtPrefix: "DEBT: ",
     timePrefix: "TIME: ",
+    preRunTitle: "BRIEFING",
+    preRunBalanceLabel: "BALANCE",
+    preRunDebtLabel: "OUTSTANDING DEBT",
+    preRunLastRunLabel: "LAST RUN NET",
+    preRunLaunchPrompt: "SPACE: LAUNCH",
+    postRunVictoryTitle: "VICTORY",
+    postRunDefeatTitle: "WRECKED",
+    postRunEarningsLabel: "EARNINGS",
+    postRunBossBonusLabel: "BOSS BONUS",
+    postRunRepairLabel: "REPAIRS",
+    postRunNetLabel: "NET",
+    postRunBalanceLabel: "BALANCE",
+    postRunDebtLabel: "DEBT",
+    postRunContinuePrompt: "SPACE: CONTINUE",
     levelPrefix: "LVL ",
     lockedLabel: "LOCKED",
     sfxLabel: "SFX: ",
