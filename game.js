@@ -46,7 +46,6 @@ import {
   titleMenu,
   pauseMenu,
   settingsMenu,
-  setMenuHandlers,
 } from "./src/ui.js";
 import { SceneContext } from "./src/scenes/sceneContext.js";
 import { SceneManager } from "./src/scenes/sceneManager.js";
@@ -127,7 +126,6 @@ const scenes = createGameScenes({
   transitionTo,
   pushState,
   popState,
-  resetGame: () => resetGame(),
   setPaused,
   getTimeReal: () => timeReal,
   getGameOverTime: () => gameOverTime,
@@ -142,6 +140,19 @@ const scenes = createGameScenes({
     pauseMenu,
     settingsMenu,
   },
+  getPlayer: () => player,
+  getCurrentBoss: () => currentBoss,
+  commitHighScore,
+  commitRun,
+  vibrate,
+  onTick: (dt) => { gameTime += dt; },
+  onDPSTick: () => { if (system.enableDPSLog) updateDPSLog(); },
+  initializePlayer: () => { player = initializePlayer(); },
+  spawnBoss: () => { currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4)); },
+  setupBoundaries,
+  resetGameTime: () => { gameTime = 0; },
+  resetScore,
+  beginRun,
 });
 
 for (const scene of scenes.values()) {
@@ -167,95 +178,25 @@ async function gameInit() {
       currentBoss,
       lastRunDebrief,
     }),
-  });
-  setMenuHandlers({
-    title: {
-      start: () => {
-        transitionTo(GAME_STATES.LORE, {}, "title:start");
+    handlers: {
+      title: {
+        start: () => transitionTo(GAME_STATES.LORE, {}, "title:start"),
+        openSettings: () => pushState(GAME_STATES.SETTINGS, {}, "title:open-settings"),
+        openCredits: () => transitionTo(GAME_STATES.CREDITS, {}, "title:open-credits"),
       },
-      openSettings: () => {
-        pushState(GAME_STATES.SETTINGS, {}, "title:open-settings");
+      pause: {
+        resume: () => transitionTo(GAME_STATES.PLAYING, {}, "pause:resume"),
       },
-      openCredits: () => {
-        transitionTo(GAME_STATES.CREDITS, {}, "title:open-credits");
-      },
-    },
-    pause: {
-      resume: () => {
-        transitionTo(GAME_STATES.PLAYING, {}, "pause:resume");
-      },
-    },
-    settings: {
-      back: () => {
-        popState({}, "settings:back");
-      },
-    },
-    credits: {
-      back: () => {
-        transitionTo(GAME_STATES.TITLE, {}, "credits:back");
-      },
-    },
-    lore: {
-      start: () => {
-        transitionTo(GAME_STATES.HOME, {}, "lore:start");
+      settings: {
+        back: () => popState({}, "settings:back"),
       },
     },
   });
-}
-
-export function resetGame() {
-  system.isResetting = true;
-  engineObjectsDestroy();
-  system.isResetting = false;
-  player = initializePlayer();
-
-  // Straight to boss level
-  currentBoss = new Boss(vec2(system.levelSize.x / 2, system.levelSize.y - 4));
-
-  setupBoundaries();
-  gameTime = 0;
-  gameWon = false;
-  resetScore();
-  beginRun();
-  transitionTo(
-    GAME_STATES.PLAYING,
-    { gameWon, lastRunDebrief, gameOverTime },
-    "run:start",
-  );
 }
 
 function gameUpdate() {
   input.reset();
   input.update();
-  if (gameState !== GAME_STATES.PLAYING) return;
-
-  if (system.enableDPSLog) updateDPSLog();
-
-  gameTime += timeDelta;
-
-  if (player && player.hp <= 0) {
-    enterPostRun("defeat");
-    vibrate(800, 1.0, 1.0);
-  } else if (currentBoss && currentBoss.destroyed) {
-    gameWon = true;
-    enterPostRun("victory");
-    vibrate(400, 0.6, 0.4);
-  }
-}
-
-// Wipe the playfield on run end: pause halts updates but particles and
-// child emitters that were live in the last frame stay resident and pile up
-// across replays. Destroying everything lets GC reclaim them and keeps the
-// debrief overlay rendering over a clean field.
-function enterPostRun(outcome) {
-  gameOverTime = timeReal;
-  commitHighScore();
-  lastRunDebrief = commitRun(outcome);
-  transitionTo(
-    GAME_STATES.POST_RUN,
-    { gameWon, lastRunDebrief, gameOverTime, outcome },
-    "run:post",
-  );
 }
 
 let lastGamepadStick = vec2(0);

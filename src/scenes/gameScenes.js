@@ -46,11 +46,17 @@ class LoreScene extends BaseScene {
 }
 
 class HomeScene extends BaseScene {
-  constructor({ transitionTo, resetGame, setPaused }) {
+  constructor({ transitionTo, setPaused, destroyPlayfield, initializePlayer, spawnBoss, setupBoundaries, resetGameTime, resetScore, beginRun }) {
     super(GAME_STATES.HOME);
     this.transitionTo = transitionTo;
-    this.resetGame = resetGame;
     this.setPaused = setPaused;
+    this.destroyPlayfield = destroyPlayfield;
+    this.initializePlayer = initializePlayer;
+    this.spawnBoss = spawnBoss;
+    this.setupBoundaries = setupBoundaries;
+    this.resetGameTime = resetGameTime;
+    this.resetScore = resetScore;
+    this.beginRun = beginRun;
   }
 
   enter() {
@@ -62,7 +68,14 @@ class HomeScene extends BaseScene {
       hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
       hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
     ) {
-      this.resetGame();
+      this.destroyPlayfield();
+      this.initializePlayer();
+      this.spawnBoss();
+      this.setupBoundaries();
+      this.resetGameTime();
+      this.resetScore();
+      this.beginRun();
+      this.transitionTo(GAME_STATES.PLAYING, { gameWon: false }, "run:start");
       return true;
     }
 
@@ -76,14 +89,53 @@ class HomeScene extends BaseScene {
 }
 
 class PlayingScene extends BaseScene {
-  constructor({ transitionTo, setPaused }) {
+  constructor({ transitionTo, setPaused, getPlayer, getCurrentBoss, getTimeReal, commitHighScore, commitRun, vibrate, onTick, onDPSTick }) {
     super(GAME_STATES.PLAYING);
     this.transitionTo = transitionTo;
     this.setPaused = setPaused;
+    this.getPlayer = getPlayer;
+    this.getCurrentBoss = getCurrentBoss;
+    this.getTimeReal = getTimeReal;
+    this.commitHighScore = commitHighScore;
+    this.commitRun = commitRun;
+    this.vibrate = vibrate;
+    this.onTick = onTick;
+    this.onDPSTick = onDPSTick;
   }
 
   enter() {
     this.setPaused(false);
+  }
+
+  update(dt) {
+    this.onTick(dt);
+    if (this.onDPSTick) this.onDPSTick();
+
+    const player = this.getPlayer();
+    const boss = this.getCurrentBoss();
+    if (player && player.hp <= 0) {
+      this._postRun("defeat");
+      this.vibrate(800, 1.0, 1.0);
+    } else if (boss && boss.destroyed) {
+      this._postRun("victory");
+      this.vibrate(400, 0.6, 0.4);
+    }
+  }
+
+  // Wipe the playfield on run end: pause halts updates but particles and
+  // child emitters that were live in the last frame stay resident and pile up
+  // across replays. Destroying everything lets GC reclaim them and keeps the
+  // debrief overlay rendering over a clean field.
+  _postRun(outcome) {
+    const gameWon = outcome === "victory";
+    const gameOverTime = this.getTimeReal();
+    this.commitHighScore();
+    const lastRunDebrief = this.commitRun(outcome);
+    this.transitionTo(
+      GAME_STATES.POST_RUN,
+      { gameWon, lastRunDebrief, gameOverTime, outcome },
+      "run:post",
+    );
   }
 
   handleFrame(actions) {

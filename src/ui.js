@@ -34,40 +34,7 @@ export const titleMenu = new Menu();
 export const pauseMenu = new Menu();
 export const settingsMenu = new Menu();
 
-// Menu action callbacks are wired in by game.js so ui.js stays free of state mutation.
-let titleHandlers = {
-  start: () => {},
-  openSettings: () => {},
-  openCredits: () => {},
-};
-let creditsHandlers = {
-  back: () => {},
-};
-let pauseHandlers = {
-  resume: () => {},
-};
-let settingsHandlers = {
-  back: () => {},
-};
-let loreHandlers = {
-  start: () => {},
-};
-
-export function setMenuHandlers({
-  title,
-  pause,
-  settings: settingsH,
-  credits,
-  lore,
-}) {
-  if (title) titleHandlers = { ...titleHandlers, ...title };
-  if (pause) pauseHandlers = { ...pauseHandlers, ...pause };
-  if (settingsH) settingsHandlers = { ...settingsHandlers, ...settingsH };
-  if (credits) creditsHandlers = { ...creditsHandlers, ...credits };
-  if (lore) loreHandlers = { ...loreHandlers, ...lore };
-}
-
-export function initUI({ getUIState }) {
+export function initUI({ getUIState, handlers = {} }) {
   uiStateProvider = getUIState;
   new UISystemPlugin();
   uiSystem.nativeHeight = 0;
@@ -81,9 +48,9 @@ export function initUI({ getUIState }) {
   hudGroup = hudView.root;
 
   titleView = createTitleScreen(uiRoot, titleMenu, {
-    start: () => titleHandlers.start(),
-    openSettings: () => titleHandlers.openSettings(),
-    openCredits: () => titleHandlers.openCredits(),
+    start: () => handlers.title?.start?.(),
+    openSettings: () => handlers.title?.openSettings?.(),
+    openCredits: () => handlers.title?.openCredits?.(),
   });
   titleGroup = titleView.root;
   pauseSettingsView = createPauseSettingsScreens(
@@ -91,8 +58,8 @@ export function initUI({ getUIState }) {
     pauseMenu,
     settingsMenu,
     {
-      resume: () => pauseHandlers.resume(),
-      back: () => settingsHandlers.back(),
+      resume: () => handlers.pause?.resume?.(),
+      back: () => handlers.settings?.back?.(),
     },
   );
   pauseGroup = pauseSettingsView.pauseGroup;
