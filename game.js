@@ -61,11 +61,32 @@ let player = null;
 
 let activeMusicSound = null;
 let activeMusicInstance = null;
+let desiredMusicSound = soundTitleMusic;
 export let gameState = GAME_STATES.TITLE;
 let gameOverTime = 0;
 export let gameTime = 0;
 export let gameWon = false;
 export let lastRunDebrief = null;
+
+function getDesiredMusicForTransition(nextState, context, currentDesired) {
+  switch (nextState) {
+    case GAME_STATES.TITLE:
+    case GAME_STATES.CREDITS:
+    case GAME_STATES.LORE:
+    case GAME_STATES.HOME:
+      return soundTitleMusic;
+    case GAME_STATES.PLAYING:
+    case GAME_STATES.PAUSE:
+      return soundBossMusic;
+    case GAME_STATES.POST_RUN:
+      return context.gameWon ? soundVictoryMusic : soundGameOverMusic;
+    case GAME_STATES.SETTINGS:
+      // Keep whatever was already selected before entering settings.
+      return currentDesired;
+    default:
+      return null;
+  }
+}
 
 const sceneContext = new SceneContext({
   gameWon,
@@ -85,6 +106,7 @@ sceneManager.subscribe(({ to, context }) => {
   gameWon = context.gameWon;
   lastRunDebrief = context.lastRunDebrief;
   gameOverTime = context.gameOverTime;
+  desiredMusicSound = getDesiredMusicForTransition(to, context, desiredMusicSound);
 });
 
 function transitionTo(nextState, payload = {}, reason = "transition") {
@@ -253,29 +275,8 @@ function updateDPSLog() {
   tickDPSLog();
 }
 
-function desiredMusic() {
-  switch (gameState) {
-    case GAME_STATES.TITLE:
-    case GAME_STATES.CREDITS:
-      return soundTitleMusic; // Placeholder, could be a separate track for credits
-    case GAME_STATES.LORE:
-    case GAME_STATES.HOME:
-      return soundTitleMusic; // Placeholder, could be a separate track for lore/pre-run
-    case GAME_STATES.PLAYING:
-    case GAME_STATES.PAUSE:
-      return soundBossMusic;
-    case GAME_STATES.POST_RUN:
-      return gameWon ? soundVictoryMusic : soundGameOverMusic;
-    case GAME_STATES.SETTINGS:
-      // Keep whatever was playing when the user opened settings.
-      return activeMusicSound;
-    default:
-      return null;
-  }
-}
-
 function updateMusic() {
-  const desired = desiredMusic();
+  const desired = desiredMusicSound;
   if (desired !== activeMusicSound) {
     if (activeMusicInstance) {
       activeMusicInstance.stop();
