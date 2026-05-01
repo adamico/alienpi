@@ -23,6 +23,7 @@ import { FONT_HUD, preloadFonts } from "./src/fonts.js";
 
 import { system, loadSettings, GAME_STATES } from "./src/config.js";
 import { tickDPSLog, setEnemyCount } from "./src/dpsTracker.js";
+import { initializeGameAssets } from "./src/commonSetup.js";
 import { loadHighScore } from "./src/score.js";
 import { loadEconomy } from "./src/economy.js";
 
@@ -42,6 +43,7 @@ import { SCENE_TRANSITIONS } from "./src/scenes/transitionPolicy.js";
 import { createSceneActionCollector } from "./src/scenes/sceneActions.js";
 import { setDesiredMusic, updateAudio } from "./src/soundManager.js";
 import { createGameScenes } from "./src/scenes/gameScenes.js";
+import { getGameTime, getCurrentBoss } from "./src/world.js";
 
 let gameState = GAME_STATES.TITLE;
 let gameWon = false;
