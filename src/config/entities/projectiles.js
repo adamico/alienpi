@@ -15,7 +15,7 @@ export const bossBullet = {
   hitboxScale: 0.5,
   sheet: SPRITE_SHEET2_NAME,
   size: vec2(1.05),
-  speed: 0.2,
+  speed: 0.1,
   sprite: "laserRed08.png",
   render: {
     corePulse: {

@@ -10,6 +10,7 @@ import {
 import {
   system,
   boss as bossCfg,
+  bossBullet as bossBulletCfg,
   orbiter as orbCfg,
   missile as missileCfg,
   beam as beamCfg,
@@ -77,6 +78,7 @@ export class Boss extends BaseEntity {
 
     this.telegraphTimer = new Timer();
     this.telegraphAction = null;
+    this.novaLockTimer = new Timer();
   }
 
   initFireEmitters() {
@@ -282,6 +284,14 @@ export class Boss extends BaseEntity {
       return;
     }
 
+    if (this.novaLockTimer.isSet()) {
+      if (this.novaLockTimer.elapsed()) this.novaLockTimer.unset();
+      else {
+        this.velocity = vec2(0);
+        return;
+      }
+    }
+
     const moveScale = 1 + this.stage * 0.08; // Gradual: 1.0, 1.08, 1.16, 1.24, 1.32
 
     this.moveTimer -= moveScale;
@@ -414,10 +424,25 @@ export class Boss extends BaseEntity {
   }
 
   novaPulse() {
-    this.fireNovaSalve(0);
-    setTimeout(() => {
-      if (!this.destroyed) this.fireNovaSalve(1);
-    }, 200);
+    const currentNovaSpeed = this.getNovaBulletSpeed();
+    const salveDelayMs =
+      bossCfg.novaSalveDelayBySpeed / Math.max(0.001, currentNovaSpeed);
+    const salveCount = Math.max(1, Math.floor(bossCfg.novaSalveCount ?? 2));
+    const totalSalveWindowMs = Math.max(0, (salveCount - 1) * salveDelayMs);
+    this.novaLockTimer.set(totalSalveWindowMs / 1000 + 0.05);
+
+    for (let i = 0; i < salveCount; i++) {
+      const delayMs = i * salveDelayMs;
+      const stepOffset = i % 2;
+      setTimeout(() => {
+        if (!this.destroyed) this.fireNovaSalve(stepOffset);
+      }, delayMs);
+    }
+  }
+
+  getNovaBulletSpeed() {
+    const speedScale = 1 + this.stage * (bossCfg.novaSpeedScalePerStage ?? 0);
+    return bossBulletCfg.speed * speedScale;
   }
 
   fireMissiles() {
@@ -446,10 +471,11 @@ export class Boss extends BaseEntity {
   fireNovaSalve(stepOffset) {
     const pulseSlots = 48;
     const bulletsPerSalve = 24;
+    const novaSpeed = this.getNovaBulletSpeed();
     for (let i = 0; i < bulletsPerSalve; i++) {
       const slot = i * 2 + stepOffset;
       const angle = (slot / pulseSlots) * PI * 2;
-      const bulletVel = vec2(Math.cos(angle), Math.sin(angle)).scale(0.2);
+      const bulletVel = vec2(Math.cos(angle), Math.sin(angle)).scale(novaSpeed);
       const b = new NovaBullet(this.pos.copy(), bulletVel);
       b.color = rgb(1, 0.4, 0);
       b.applyEffect(new gameEffects.RotationEffect(0.1));

@@ -7,6 +7,11 @@ export const boss = {
   hp: 650,
   mirrorY: true,
   novaRate: 180,
+  // Delay between the two salves in a nova pulse is computed as:
+  // delayMs = novaSalveDelayBySpeed / currentNovaBulletSpeed.
+  novaSalveDelayBySpeed: 40,
+  novaSalveCount: 3,
+  novaSpeedScalePerStage: 0.12,
   regen: {
     baseTime: 20,
     timeStep: 2,
