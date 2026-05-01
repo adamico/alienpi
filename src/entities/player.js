@@ -1,33 +1,12 @@
-import {
-  vec2,
-  Color,
-  WHITE,
-  PI,
-  rgb,
-  lerp,
-  rand,
-  engineObjects,
-} from "../engine.js";
+import { vec2, Color, PI } from "../engine.js";
 import {
   system,
   engine,
   player as playerCfg,
   weapons as weaponsCfg,
 } from "../config/index.js";
-import {
-  soundShoot,
-  soundShotgun,
-  soundLatch,
-  soundLatchCharge,
-  soundPlayerHit,
-  soundWeaponSwitch,
-  soundWeaponUnlock,
-  soundWeaponUpgrade,
-  soundWeaponMax,
-  weaponNameSounds,
-} from "../audio/sounds.js";
-import { playSequenced, playSfx } from "../audio/soundManager.js";
-import { Bullet } from "./bullet.js";
+import { soundPlayerHit } from "../audio/sounds.js";
+import { playSfx } from "../audio/soundManager.js";
 import { BaseEntity } from "./baseEntity.js";
 import { sprites } from "../visuals/sprites.js";
 import { LatchBeam } from "./latchBeam.js";
@@ -36,22 +15,19 @@ import {
   FlashEffect,
   createPersistentExhaustEmitter,
   createPersistentMuzzleEmitter,
-  spawnMuzzleFlash,
   applyScreenShake,
-  spawnFloatingText,
 } from "../visuals/gameEffects.js";
 import { vibrate } from "../input/gamepad.js";
 import { recordHpLost } from "../game/economy.js";
+import { WeaponSystem } from "./playerWeapons.js";
 
 export let player = null;
-
-const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 
 export class Player extends BaseEntity {
   constructor(maxHp) {
     super(
       vec2(system.levelSize.x / 2, 1),
-      weaponsCfg[WEAPON_ORDER[0]].playerSprite || playerCfg.sprite,
+      weaponsCfg.vulcan.playerSprite || playerCfg.sprite,
       playerCfg.sheet,
       playerCfg.hitboxScale,
       playerCfg.size,
@@ -60,35 +36,24 @@ export class Player extends BaseEntity {
     );
 
     this.hp = maxHp || playerCfg.hp;
-    this.shootTimer = 0;
-    this.minShootTimer = 0;
-    this.activeVulcanBullets = 0;
     this.setCollision(true, true);
     this.isPlayer = true;
     this.mass = 1;
     this.extraScale = 1;
     this.damping = playerCfg.damping;
 
-    const { startLevels, maxLevel } = playerCfg.weaponSystem;
-    this.weaponLevels = { ...startLevels };
-    this.maxLevel = maxLevel;
-
-    // Start with the first available (level > 0) weapon index
-    this.weaponIndex = WEAPON_ORDER.findIndex(
-      (key) => this.weaponLevels[key] > 0,
-    );
-    if (this.weaponIndex === -1) this.weaponIndex = 0;
-
-    // Pre-allocate max possible latch beams
+    // Pre-allocate max possible latch beams (scene-graph children stay on Player)
     const maxLatchBeams = Math.max(...weaponsCfg.latch.count);
     this.latchBeams = Array.from(
       { length: maxLatchBeams },
       () => new LatchBeam(),
     );
 
+    // WeaponSystem must be created before updateLatchBeamPositions() (which reads weaponLevels)
+    this.weapons = new WeaponSystem(this);
+
     this.updateLatchBeamPositions();
     for (const beam of this.latchBeams) this.addChild(beam);
-    this.latchSoundTimer = 0;
 
     this.exhaustEmitters = [];
     this.updateExhaustEmitters();
@@ -97,101 +62,72 @@ export class Player extends BaseEntity {
     this.updateWeaponSprite();
   }
 
+  // --- WeaponSystem pass-throughs ----------------------------------------
+  // These delegate to this.weapons so that external callers (bullet.js,
+  // loot.js, hudView.js) don't need to know about WeaponSystem.
+
   get currentWeaponKey() {
-    return WEAPON_ORDER[this.weaponIndex];
+    return this.weapons.currentWeaponKey;
   }
-
   get currentWeapon() {
-    return weaponsCfg[this.currentWeaponKey];
+    return this.weapons.currentWeapon;
   }
-
   get currentWeaponLevel() {
-    return this.weaponLevels[this.currentWeaponKey];
+    return this.weapons.currentWeaponLevel;
+  }
+  get weaponLevels() {
+    return this.weapons.weaponLevels;
+  }
+  get shootTimer() {
+    return this.weapons.shootTimer;
+  }
+  set shootTimer(v) {
+    this.weapons.shootTimer = v;
+  }
+  get activeVulcanBullets() {
+    return this.weapons.activeVulcanBullets;
+  }
+  set activeVulcanBullets(v) {
+    this.weapons.activeVulcanBullets = v;
   }
 
   upgradeWeapon(key) {
-    // Default to the current weapon if no key is provided (e.g., from a Star loot)
-    const targetKey = key || this.currentWeaponKey;
-    if (!targetKey || this.weaponLevels[targetKey] === undefined) return;
-
-    const wasLocked = this.weaponLevels[targetKey] === 0;
-    if (this.weaponLevels[targetKey] < this.maxLevel) {
-      this.weaponLevels[targetKey]++;
-
-      // Play the appropriate feedback sound.
-      // All cases say the weapon name first, then the action sting after
-      // the name finishes (duration-accurate gap via playSequenced).
-      const nameSound = weaponNameSounds[targetKey];
-      const label = (weaponsCfg[targetKey]?.label ?? targetKey).toUpperCase();
-      const textPos = this.pos.add(vec2(0, 1.5));
-      if (wasLocked) {
-        playSequenced(nameSound, soundWeaponUnlock);
-        spawnFloatingText(textPos, `${label} UNLOCKED!`, {
-          color: rgb(0.4, 1, 0.6),
-          size: 1.2,
-          duration: 1.6,
-          rise: 3.0,
-        });
-      } else if (this.weaponLevels[targetKey] === this.maxLevel) {
-        playSequenced(nameSound, soundWeaponMax);
-        spawnFloatingText(textPos, `${label} MAX!`, {
-          color: rgb(1, 0.85, 0.3),
-          size: 1.4,
-          duration: 1.8,
-          rise: 3.2,
-        });
-      } else {
-        playSequenced(nameSound, soundWeaponUpgrade);
-        spawnFloatingText(textPos, `${label} UPGRADED!`, {
-          color: rgb(0.4, 0.9, 1),
-          size: 1.1,
-          duration: 1.4,
-          rise: 2.6,
-        });
-      }
-
-      // If we just enabled a weapon that was level 0, or upgraded the current one, refresh visuals
-      if (targetKey === this.currentWeaponKey) {
-        this.updateWeaponSprite();
-      }
-    }
+    this.weapons.upgradeWeapon(key);
   }
+
+  /** Called by bullet.js to trigger an immediate fire check after a hit. */
+  updateShooting() {
+    this.weapons.updateShooting(this.weaponContext);
+  }
+
+  /** Called by WeaponSystem when the active weapon changes. */
+  onWeaponChanged() {
+    this.updateWeaponSprite();
+  }
+
+  /**
+   * Minimal interface passed into weapon modules so they never import Player.
+   * muzzleLocalOffset is intentionally a closure here — weapons get the
+   * banking-aware transform without knowing splitScale exists.
+   */
+  get weaponContext() {
+    return {
+      pos: this.pos,
+      entity: this,
+      latchBeams: this.latchBeams,
+      muzzleEmitters: this.muzzleEmitters,
+      isFiring: input.isFiring,
+      muzzleLocalOffset: (o) => this.muzzleLocalOffset(o),
+    };
+  }
+  // -------------------------------------------------------------------------
 
   update() {
     this.extraScale += (1 - this.extraScale) * 0.15;
-    this.updateWeaponSwitch();
     this.updateMoving();
-
-    if (this.shootTimer > 0) this.shootTimer--;
-    if (this.minShootTimer > 0) this.minShootTimer--;
-
-    this.updateShooting();
+    this.weapons.update(this.weaponContext);
     this.updateExhaust();
     super.update();
-  }
-
-  updateWeaponSwitch() {
-    if (input.switchWeapon) {
-      // Find the next weapon with level > 0
-      let nextIndex = this.weaponIndex;
-      for (let i = 0; i < WEAPON_ORDER.length; i++) {
-        nextIndex = (nextIndex + 1) % WEAPON_ORDER.length;
-        if (this.weaponLevels[WEAPON_ORDER[nextIndex]] > 0) {
-          this.weaponIndex = nextIndex;
-          break;
-        }
-      }
-
-      playSfx(soundWeaponSwitch);
-      this.updateWeaponSprite();
-
-      // Cycling away from latch breaks any active tethers.
-      if (this.currentWeaponKey !== "latch") this.clearLatchBeams();
-
-      // Weapon switch animation
-      this.extraScale = 1.3;
-      this.applyEffect(new FlashEffect(WHITE, 0.15));
-    }
   }
 
   updateWeaponSprite() {
@@ -293,10 +229,6 @@ export class Player extends BaseEntity {
       this.addChild(emitter, worldOffset, PI);
       this.exhaustEmitters.push(emitter);
     }
-  }
-
-  clearLatchBeams() {
-    for (const beam of this.latchBeams) beam.clear();
   }
 
   updateExhaust() {
@@ -403,38 +335,6 @@ export class Player extends BaseEntity {
     if (this.latchBeams) this.latchBeams.forEach(applyScale);
   }
 
-  updateShooting() {
-    const level = this.currentWeaponLevel;
-    if (level === 0) return; // Weapon disabled
-
-    const key = this.currentWeaponKey;
-    const cfg = weaponsCfg[key];
-    const firing = input.isFiring;
-
-    // Update persistent muzzle muzzles (for Latch)
-    if (this.muzzleEmitters.length > 0) {
-      for (const e of this.muzzleEmitters) {
-        e.emitRate = firing ? cfg.muzzleRate : 0;
-      }
-    }
-
-    if (key === "latch") {
-      this.updateLatchBeams(firing);
-      return;
-    }
-
-    if (!firing || this.minShootTimer > 0) return;
-
-    if (key === "vulcan") {
-      if (this.activeVulcanBullets > 0 || this.shootTimer > 0) return;
-      this.fireVulcan();
-    } else if (key === "shotgun") {
-      if (this.shootTimer > 0) return;
-      this.fireShotgun();
-      this.shootTimer = cfg.cooldown[level - 1];
-    }
-  }
-
   /**
    * Converts a sprite-space (Y-down pixel) offset to the ship's local
    * world-space (Y-up) offset used for parenting muzzle flashes and for
@@ -446,233 +346,6 @@ export class Player extends BaseEntity {
       if (offset.x > 0) return vec2(offset.x * this.splitScale.right, offset.y);
     }
     return offset.copy();
-  }
-
-  fireVulcan() {
-    const level = this.weaponLevels.vulcan;
-    const cfg = weaponsCfg.vulcan;
-    const bulletSpeed = cfg.bullet.speed[level - 1];
-    playSfx(soundShoot, this.pos);
-    const offsets = cfg.cannonOffsets[level - 1];
-
-    const volleyState = { decremented: false };
-    this.activeVulcanBullets++;
-
-    for (const muzzle of offsets) {
-      const offset = this.muzzleLocalOffset(muzzle);
-      const jitter = vec2(rand(-cfg.spawnJitterX, cfg.spawnJitterX), 0);
-      const velocity = vec2(0, bulletSpeed);
-      const b = new Bullet(
-        this.pos.add(offset).add(jitter).subtract(velocity),
-        velocity,
-        "player",
-        cfg.bullet,
-        cfg.damage[level - 1],
-      );
-      b.weaponKey = "vulcan";
-      b.player = this;
-      b.volleyState = volleyState;
-      spawnMuzzleFlash(
-        this,
-        offset,
-        1,
-        -1,
-        cfg.muzzleDuration,
-        cfg.muzzleAlpha,
-        cfg.muzzleSprite,
-        cfg.muzzleColor,
-      );
-    }
-  }
-
-  fireShotgun() {
-    // 4th arg is per-play random pitch delta — the `randomness` field inside
-    // the ZZFX array is baked into the sample at construction so it doesn't
-    // vary between shots on its own.
-    playSfx(soundShotgun, this.pos);
-    const cfg = weaponsCfg.shotgun;
-    const level = this.weaponLevels.shotgun;
-    const yInput = input.moveDir.y;
-    let cone = cfg.coneBase;
-    if (yInput > 0) cone = lerp(cfg.coneBase, cfg.coneMax, yInput);
-    else if (yInput < 0) cone = lerp(cfg.coneBase, cfg.coneMin, -yInput);
-
-    const muzzles = cfg.muzzleOffsets[level - 1];
-    const speed = cfg.bullet.speed;
-    const count = cfg.count[level - 1];
-    const damage = cfg.damage[level - 1];
-
-    for (const muzzle of muzzles) {
-      const offset = this.muzzleLocalOffset(muzzle);
-      const spawnPos = this.pos.add(offset);
-
-      for (let i = 0; i < count; i++) {
-        // Evenly distribute across [-cone/2, +cone/2]
-        const t = count === 1 ? 0.5 : i / (count - 1);
-        const angle = -cone / 2 + t * cone;
-        // Rotate the base upward velocity by `angle` around Z
-        const vel = vec2(Math.sin(angle) * speed, Math.cos(angle) * speed);
-        const b = new Bullet(
-          spawnPos.subtract(vel),
-          vel,
-          "player",
-          cfg.bullet,
-          damage,
-        );
-        b.weaponKey = "shotgun";
-        b.pierce = cfg.pierce;
-        b.angle = angle; // sprite leans with its direction
-      }
-
-      const flashScale = 1 + (count - 1) * 0.1;
-      spawnMuzzleFlash(
-        this,
-        offset,
-        flashScale,
-        1,
-        cfg.muzzleDuration,
-        cfg.muzzleAlpha,
-        cfg.muzzleSprite,
-        cfg.muzzleColor,
-      );
-    }
-  }
-
-  updateLatchBeams(firing) {
-    const level = this.weaponLevels.latch;
-    const cfg = weaponsCfg.latch;
-    if (!firing) {
-      this.clearLatchBeams();
-      this.latchSoundTimer = 0;
-      this.latchWasFiring = false;
-      return;
-    }
-
-    const count = cfg.count[level - 1];
-    if (!this.latchWasFiring) {
-      playSfx(soundLatchCharge);
-      this.latchWasFiring = true;
-    }
-    if (this.latchSoundTimer <= 0) {
-      playSfx(soundLatch);
-      // Decoupled from cfg.cooldown (damage tick rate). Sized so the long
-      // release tail overlaps into a continuous hum instead of pulsing.
-      this.latchSoundTimer = 36;
-    } else {
-      this.latchSoundTimer--;
-    }
-
-    this.acquireLatchTargets();
-
-    // Check if we have any active connections
-    const anyTarget = this.latchBeams.some((b) => b.target);
-
-    // Fixed fan distribution
-    const cone = cfg.fanCone;
-    for (let i = 0; i < count; i++) {
-      const beam = this.latchBeams[i];
-      // If any beam is connected, only show those with targets.
-      // If none are connected, show all in a fan pattern.
-      beam.isFiring = !anyTarget || !!beam.target;
-
-      const t = count === 1 ? 0.5 : i / (count - 1);
-      beam.fanAngle = -cone / 2 + t * cone;
-    }
-
-    this.assignLatchEndOffsets(this.pos);
-  }
-
-  /**
-   * When multiple beams share a target, spread their endpoints across the
-   * target along the axis perpendicular to the beam direction so each beam
-   * visually terminates at a distinct point. Spread magnitude scales with
-   * `target.size.x` so it naturally matches small vs large enemies.
-   */
-  assignLatchEndOffsets(origin) {
-    const groups = new Map();
-    for (const beam of this.latchBeams) {
-      beam.endOffset = null;
-      if (!beam.target) continue;
-      const list = groups.get(beam.target);
-      if (list) list.push(beam);
-      else groups.set(beam.target, [beam]);
-    }
-
-    for (const [target, beams] of groups) {
-      const n = beams.length;
-      if (n === 1) continue; // no offset needed
-
-      const dir = target.pos.subtract(origin);
-      const len = dir.length();
-      if (len < 0.001) continue;
-      const perp = vec2(-dir.y / len, dir.x / len);
-
-      const span = target.size.x * 0.4; // spread across 60% of target width
-      for (let i = 0; i < n; i++) {
-        const t = i / (n - 1) - 0.5; // evenly spaced in [-0.5, +0.5]
-        beams[i].endOffset = perp.scale(t * span);
-      }
-    }
-  }
-
-  /**
-   * Assigns up to `count` enemy targets to beams, preferring the nearest.
-   * Each beam keeps its current target if it's still alive + in range; idle
-   * beams pick the nearest available enemy that no other beam has claimed.
-   */
-  acquireLatchTargets() {
-    const cfg = weaponsCfg.latch;
-    const level = this.weaponLevels.latch;
-    const count = cfg.count[level - 1];
-    const range = cfg.range[level - 1];
-    const origin = this.pos;
-    const rangeSq = range * range;
-
-    // Drop targets that are gone, shielded, or out of range so the slot can
-    // pick another.
-    for (const beam of this.latchBeams) {
-      const t = beam.target;
-      if (!t || t.destroyed || t.hp <= 0) {
-        beam.target = null;
-      } else if (t.shield && !t.shield.destroyed) {
-        beam.target = null;
-      } else if (t.pos.distanceSquared(origin) > rangeSq) {
-        beam.target = null;
-      }
-    }
-
-    const candidates = [];
-    for (const o of engineObjects) {
-      if (!o || o.destroyed) continue;
-      if (typeof o.hp !== "number" || o.hp <= 0) continue;
-      if (!o.isEnemy) continue;
-      // Respect shield invulnerability — matches bullet-vs-boss behaviour.
-      if (o.shield && !o.shield.destroyed) continue;
-      const dSq = o.pos.distanceSquared(origin);
-      if (dSq > rangeSq) continue;
-      candidates.push({ o, dSq });
-    }
-    if (candidates.length === 0) return;
-    candidates.sort((a, b) => a.dSq - b.dSq);
-
-    // Pass 1: try to give each idle beam a unique target (closest first).
-    // We only use up to `count` beams.
-    const used = new Set(this.latchBeams.map((b) => b.target).filter(Boolean));
-    let ci = 0;
-    for (let i = 0; i < count; i++) {
-      const beam = this.latchBeams[i];
-      if (beam.target) continue;
-      while (ci < candidates.length && used.has(candidates[ci].o)) ci++;
-      if (ci >= candidates.length) break;
-      beam.setTarget(candidates[ci].o);
-      used.add(candidates[ci].o);
-      ci++;
-    }
-
-    // Ensure unused beams for this level are cleared
-    for (let i = count; i < this.latchBeams.length; i++) {
-      this.latchBeams[i].clear();
-    }
   }
 
   takeDamage(amount = 1) {
