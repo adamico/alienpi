@@ -1,4 +1,24 @@
 import { GAME_STATES } from "../config.js";
+import { setPaused, timeReal } from "../engine.js";
+import { resetScore, commitHighScore } from "../score.js";
+import { beginRun, commitRun } from "../economy.js";
+import { vibrate } from "../gamepad.js";
+import { setupBoundaries } from "../scene.js";
+import {
+  soundTitleMusic,
+  soundBossMusic,
+  soundVictoryMusic,
+  soundGameOverMusic,
+  soundGameOverJingle,
+} from "../sounds.js";
+import {
+  getPlayer,
+  getCurrentBoss,
+  initializePlayer,
+  spawnBoss,
+  tickGameTime,
+  resetGameTime,
+} from "../world.js";
 import { BaseScene } from "./baseScene.js";
 import {
   SCENE_ACTION,
@@ -7,14 +27,17 @@ import {
 } from "./sceneActions.js";
 
 class TitleScene extends BaseScene {
-  constructor({ menus, setPaused }) {
+  constructor({ menus }) {
     super(GAME_STATES.TITLE);
     this.menus = menus;
-    this.setPaused = setPaused;
   }
 
   enter() {
-    this.setPaused(true);
+    setPaused(true);
+  }
+
+  getMusic() {
+    return soundTitleMusic;
   }
 
   handleFrame(actions) {
@@ -23,14 +46,17 @@ class TitleScene extends BaseScene {
 }
 
 class LoreScene extends BaseScene {
-  constructor({ transitionTo, setPaused }) {
+  constructor({ transitionTo }) {
     super(GAME_STATES.LORE);
     this.transitionTo = transitionTo;
-    this.setPaused = setPaused;
   }
 
   enter() {
-    this.setPaused(true);
+    setPaused(true);
+  }
+
+  getMusic() {
+    return soundTitleMusic;
   }
 
   handleFrame(actions) {
@@ -46,21 +72,18 @@ class LoreScene extends BaseScene {
 }
 
 class HomeScene extends BaseScene {
-  constructor({ transitionTo, setPaused, destroyPlayfield, initializePlayer, spawnBoss, setupBoundaries, resetGameTime, resetScore, beginRun }) {
+  constructor({ transitionTo, destroyPlayfield }) {
     super(GAME_STATES.HOME);
     this.transitionTo = transitionTo;
-    this.setPaused = setPaused;
     this.destroyPlayfield = destroyPlayfield;
-    this.initializePlayer = initializePlayer;
-    this.spawnBoss = spawnBoss;
-    this.setupBoundaries = setupBoundaries;
-    this.resetGameTime = resetGameTime;
-    this.resetScore = resetScore;
-    this.beginRun = beginRun;
   }
 
   enter() {
-    this.setPaused(true);
+    setPaused(true);
+  }
+
+  getMusic() {
+    return soundTitleMusic;
   }
 
   handleFrame(actions) {
@@ -69,12 +92,12 @@ class HomeScene extends BaseScene {
       hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
     ) {
       this.destroyPlayfield();
-      this.initializePlayer();
-      this.spawnBoss();
-      this.setupBoundaries();
-      this.resetGameTime();
-      this.resetScore();
-      this.beginRun();
+      initializePlayer();
+      spawnBoss();
+      setupBoundaries();
+      resetGameTime();
+      resetScore();
+      beginRun();
       this.transitionTo(GAME_STATES.PLAYING, { gameWon: false }, "run:start");
       return true;
     }
@@ -89,36 +112,32 @@ class HomeScene extends BaseScene {
 }
 
 class PlayingScene extends BaseScene {
-  constructor({ transitionTo, setPaused, getPlayer, getCurrentBoss, getTimeReal, commitHighScore, commitRun, vibrate, onTick, onDPSTick }) {
+  constructor({ transitionTo, onDPSTick }) {
     super(GAME_STATES.PLAYING);
     this.transitionTo = transitionTo;
-    this.setPaused = setPaused;
-    this.getPlayer = getPlayer;
-    this.getCurrentBoss = getCurrentBoss;
-    this.getTimeReal = getTimeReal;
-    this.commitHighScore = commitHighScore;
-    this.commitRun = commitRun;
-    this.vibrate = vibrate;
-    this.onTick = onTick;
     this.onDPSTick = onDPSTick;
   }
 
   enter() {
-    this.setPaused(false);
+    setPaused(false);
+  }
+
+  getMusic() {
+    return soundBossMusic;
   }
 
   update(dt) {
-    this.onTick(dt);
+    tickGameTime(dt);
     if (this.onDPSTick) this.onDPSTick();
 
-    const player = this.getPlayer();
-    const boss = this.getCurrentBoss();
+    const player = getPlayer();
+    const boss = getCurrentBoss();
     if (player && player.hp <= 0) {
       this._postRun("defeat");
-      this.vibrate(800, 1.0, 1.0);
+      vibrate(800, 1.0, 1.0);
     } else if (boss && boss.destroyed) {
       this._postRun("victory");
-      this.vibrate(400, 0.6, 0.4);
+      vibrate(400, 0.6, 0.4);
     }
   }
 
@@ -128,9 +147,9 @@ class PlayingScene extends BaseScene {
   // debrief overlay rendering over a clean field.
   _postRun(outcome) {
     const gameWon = outcome === "victory";
-    const gameOverTime = this.getTimeReal();
-    this.commitHighScore();
-    const lastRunDebrief = this.commitRun(outcome);
+    const gameOverTime = timeReal;
+    commitHighScore();
+    const lastRunDebrief = commitRun(outcome);
     this.transitionTo(
       GAME_STATES.POST_RUN,
       { gameWon, lastRunDebrief, gameOverTime, outcome },
@@ -148,15 +167,18 @@ class PlayingScene extends BaseScene {
 }
 
 class PauseScene extends BaseScene {
-  constructor({ transitionTo, setPaused, menus }) {
+  constructor({ transitionTo, menus }) {
     super(GAME_STATES.PAUSE);
     this.transitionTo = transitionTo;
-    this.setPaused = setPaused;
     this.menus = menus;
   }
 
   enter() {
-    this.setPaused(true);
+    setPaused(true);
+  }
+
+  getMusic() {
+    return soundBossMusic;
   }
 
   handleFrame(actions) {
@@ -187,14 +209,17 @@ class SettingsScene extends BaseScene {
 }
 
 class CreditsScene extends BaseScene {
-  constructor({ transitionTo, setPaused }) {
+  constructor({ transitionTo }) {
     super(GAME_STATES.CREDITS);
     this.transitionTo = transitionTo;
-    this.setPaused = setPaused;
   }
 
   enter() {
-    this.setPaused(true);
+    setPaused(true);
+  }
+
+  getMusic() {
+    return soundTitleMusic;
   }
 
   handleFrame(actions) {
@@ -212,31 +237,26 @@ class CreditsScene extends BaseScene {
 }
 
 class PostRunScene extends BaseScene {
-  constructor({
-    transitionTo,
-    getTimeReal,
-    getGameOverTime,
-    soundGameOverJingle,
-    destroyPlayfield,
-    setPaused,
-  }) {
+  constructor({ transitionTo, destroyPlayfield }) {
     super(GAME_STATES.POST_RUN);
     this.transitionTo = transitionTo;
-    this.getTimeReal = getTimeReal;
-    this.getGameOverTime = getGameOverTime;
-    this.soundGameOverJingle = soundGameOverJingle;
     this.destroyPlayfield = destroyPlayfield;
-    this.setPaused = setPaused;
+    this.gameOverTime = 0;
   }
 
-  enter() {
-    this.soundGameOverJingle.play();
+  enter({ context }) {
+    this.gameOverTime = context.gameOverTime;
+    soundGameOverJingle.play();
     this.destroyPlayfield();
-    this.setPaused(true);
+    setPaused(true);
+  }
+
+  getMusic(context) {
+    return context.gameWon ? soundVictoryMusic : soundGameOverMusic;
   }
 
   handleFrame(actions) {
-    if (this.getTimeReal() - this.getGameOverTime() <= 1.0) return false;
+    if (timeReal - this.gameOverTime <= 1.0) return false;
 
     if (
       hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||

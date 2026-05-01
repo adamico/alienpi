@@ -18,4 +18,10 @@ export class BaseScene {
   handleFrame() {
     return false;
   }
+
+  // Override to return the music sound for this scene.
+  // Return null to inherit whatever is already playing.
+  getMusic(/* context */) {
+    return null;
+  }
 }

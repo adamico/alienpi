@@ -9,13 +9,15 @@ export const SCENE_ACTION = {
   POINTER_SELECT: "POINTER_SELECT",
 };
 
-export function collectSceneActions({
-  keyWasPressed,
-  gamepadWasReleased,
-  mouseWasReleased,
-  gamepadStick,
-  lastGamepadStick,
-}) {
+export function createSceneActionCollector({ vec2 }) {
+  let lastGamepadStick = vec2(0);
+
+  return function collectSceneActions({
+    keyWasPressed,
+    gamepadWasReleased,
+    mouseWasReleased,
+    gamepadStick,
+  }) {
   const actions = [];
   const seen = new Set();
   const push = (type, source) => {
@@ -66,7 +68,9 @@ export function collectSceneActions({
     push(SCENE_ACTION.NAV_RIGHT, "gamepad");
   }
 
-  return { actions, nextStick: stick };
+    lastGamepadStick = stick;
+    return { actions };
+  };
 }
 
 export function hasSceneAction(actions, actionType) {
