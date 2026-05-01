@@ -47,6 +47,15 @@ import {
   settingsMenu,
   setMenuHandlers,
 } from "./src/ui.js";
+import { SceneContext } from "./src/scenes/sceneContext.js";
+import { SceneManager } from "./src/scenes/sceneManager.js";
+import { SCENE_TRANSITIONS } from "./src/scenes/transitionPolicy.js";
+import {
+  SCENE_ACTION,
+  collectSceneActions,
+  hasSceneAction,
+  dispatchMenuFromSceneActions,
+} from "./src/scenes/sceneActions.js";
 
 export let currentBoss = null;
 let player = null;
@@ -54,11 +63,42 @@ let player = null;
 let activeMusicSound = null;
 let activeMusicInstance = null;
 export let gameState = GAME_STATES.TITLE;
-let previousState = GAME_STATES.TITLE;
 let gameOverTime = 0;
 export let gameTime = 0;
 export let gameWon = false;
 export let lastRunDebrief = null;
+
+const sceneContext = new SceneContext({
+  gameWon,
+  lastRunDebrief,
+  gameOverTime,
+  previousState: gameState,
+});
+
+const sceneManager = new SceneManager({
+  initialState: gameState,
+  transitionPolicy: SCENE_TRANSITIONS,
+  context: sceneContext,
+});
+
+sceneManager.subscribe(({ to, context }) => {
+  gameState = to;
+  gameWon = context.gameWon;
+  lastRunDebrief = context.lastRunDebrief;
+  gameOverTime = context.gameOverTime;
+});
+
+function transitionTo(nextState, payload = {}, reason = "transition") {
+  return sceneManager.transitionTo(nextState, payload, reason);
+}
+
+function pushState(nextState, payload = {}, reason = "push") {
+  return sceneManager.pushState(nextState, payload, reason);
+}
+
+function popState(payload = {}, reason = "pop") {
+  return sceneManager.popState(payload, reason);
+}
 
 async function gameInit() {
   loadSettings();
@@ -75,35 +115,34 @@ async function gameInit() {
   setMenuHandlers({
     title: {
       start: () => {
-        gameState = GAME_STATES.LORE;
+        transitionTo(GAME_STATES.LORE, {}, "title:start");
       },
       openSettings: () => {
-        previousState = gameState;
-        gameState = GAME_STATES.SETTINGS;
+        pushState(GAME_STATES.SETTINGS, {}, "title:open-settings");
       },
       openCredits: () => {
-        gameState = GAME_STATES.CREDITS;
+        transitionTo(GAME_STATES.CREDITS, {}, "title:open-credits");
       },
     },
     pause: {
       resume: () => {
-        gameState = GAME_STATES.PLAYING;
+        transitionTo(GAME_STATES.PLAYING, {}, "pause:resume");
         setPaused(false);
       },
     },
     settings: {
       back: () => {
-        gameState = previousState;
+        popState({}, "settings:back");
       },
     },
     credits: {
       back: () => {
-        gameState = GAME_STATES.TITLE;
+        transitionTo(GAME_STATES.TITLE, {}, "credits:back");
       },
     },
     lore: {
       start: () => {
-        gameState = GAME_STATES.HOME;
+        transitionTo(GAME_STATES.HOME, {}, "lore:start");
       },
     },
   });
@@ -123,7 +162,11 @@ export function resetGame() {
   gameWon = false;
   resetScore();
   beginRun();
-  gameState = GAME_STATES.PLAYING;
+  transitionTo(
+    GAME_STATES.PLAYING,
+    { gameWon, lastRunDebrief, gameOverTime },
+    "run:start",
+  );
 }
 
 function gameUpdate() {
@@ -158,118 +201,81 @@ function enterPostRun(outcome) {
   gameOverTime = timeReal;
   commitHighScore();
   lastRunDebrief = commitRun(outcome);
-  gameState = GAME_STATES.POST_RUN;
+  transitionTo(
+    GAME_STATES.POST_RUN,
+    { gameWon, lastRunDebrief, gameOverTime, outcome },
+    "run:post",
+  );
 }
-
-const MENU_KEYS = [
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "KeyW",
-  "KeyA",
-  "KeyD",
-  "Enter",
-  "Space",
-];
 
 let lastGamepadStick = vec2(0);
-const inputActions = {
-  confirm: () =>
-    keyWasPressed("Enter") || keyWasPressed("Space") || gamepadWasReleased(0),
-  cancel: () =>
-    keyWasPressed("Escape") || gamepadWasReleased(8) || gamepadWasReleased(1),
-  pause: () =>
-    keyWasPressed("Escape") || keyWasPressed("KeyP") || gamepadWasReleased(11),
-};
-
-function dispatchMenu(menu) {
-  // Keyboard navigation
-  for (const code of MENU_KEYS) {
-    if (keyWasPressed(code)) {
-      menu.handleKey(code);
-      return;
-    }
-  }
-  if (keyWasPressed("KeyS")) menu.handleKey("KeyS");
-
-  // Gamepad navigation
-  const gStick = gamepadStick(0);
-  const stickThreshold = 0.5;
-  const stickUp =
-    gStick.y > stickThreshold && lastGamepadStick.y <= stickThreshold;
-  const stickDown =
-    gStick.y < -stickThreshold && lastGamepadStick.y >= -stickThreshold;
-  const stickLeft =
-    gStick.x < -stickThreshold && lastGamepadStick.x >= -stickThreshold;
-  const stickRight =
-    gStick.x > stickThreshold && lastGamepadStick.x <= stickThreshold;
-  lastGamepadStick = gStick;
-
-  if (gamepadWasReleased(12) || stickUp) {
-    menu.handleKey("ArrowUp");
-  } else if (gamepadWasReleased(13) || stickDown) {
-    menu.handleKey("ArrowDown");
-  } else if (gamepadWasReleased(14) || stickLeft) {
-    menu.handleKey("ArrowLeft");
-  } else if (gamepadWasReleased(15) || stickRight) {
-    menu.handleKey("ArrowRight");
-  } else if (inputActions.confirm()) {
-    menu.handleKey("Enter");
-  } else if (inputActions.cancel()) {
-    menu.handleKey("Escape");
-  }
-}
 
 function gameUpdatePost() {
+  const frameActions = collectSceneActions({
+    keyWasPressed,
+    gamepadWasReleased,
+    mouseWasReleased,
+    gamepadStick,
+    lastGamepadStick,
+  });
+  const actions = frameActions.actions;
+  lastGamepadStick = frameActions.nextStick;
+  sceneManager.recordFrameActions(actions);
+
   if (gameState === GAME_STATES.TITLE) {
-    dispatchMenu(titleMenu);
+    dispatchMenuFromSceneActions(titleMenu, actions);
   } else if (gameState === GAME_STATES.LORE) {
-    if (inputActions.confirm() || mouseWasReleased(0)) {
-      gameState = GAME_STATES.HOME;
+    if (
+      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
+      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
+    ) {
+      transitionTo(GAME_STATES.HOME, {}, "lore:confirm");
     }
   } else if (gameState === GAME_STATES.HOME) {
-    if (inputActions.confirm() || mouseWasReleased(0)) {
+    if (
+      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
+      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
+    ) {
       resetGame();
       setPaused(false);
-    } else if (inputActions.cancel()) {
-      gameState = GAME_STATES.TITLE;
+    } else if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
+      transitionTo(GAME_STATES.TITLE, {}, "home:cancel");
       setPaused(true);
     }
   } else if (gameState === GAME_STATES.PLAYING) {
-    if (inputActions.pause()) {
-      gameState = GAME_STATES.PAUSE;
+    if (hasSceneAction(actions, SCENE_ACTION.PAUSE)) {
+      transitionTo(GAME_STATES.PAUSE, {}, "playing:pause");
       setPaused(true);
     }
   } else if (gameState === GAME_STATES.PAUSE) {
-    if (inputActions.pause()) {
-      gameState = GAME_STATES.PLAYING;
+    if (hasSceneAction(actions, SCENE_ACTION.PAUSE)) {
+      transitionTo(GAME_STATES.PLAYING, {}, "pause:resume-key");
       setPaused(false);
     } else {
-      dispatchMenu(pauseMenu);
+      dispatchMenuFromSceneActions(pauseMenu, actions);
     }
   } else if (gameState === GAME_STATES.SETTINGS) {
-    if (inputActions.cancel()) {
-      gameState = previousState;
+    if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
+      popState({}, "settings:cancel");
     } else {
-      dispatchMenu(settingsMenu);
+      dispatchMenuFromSceneActions(settingsMenu, actions);
     }
   } else if (gameState === GAME_STATES.CREDITS) {
     if (
-      inputActions.cancel() ||
-      inputActions.confirm() ||
-      mouseWasReleased(0)
+      hasSceneAction(actions, SCENE_ACTION.CANCEL) ||
+      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
+      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
     ) {
-      gameState = GAME_STATES.TITLE;
+      transitionTo(GAME_STATES.TITLE, {}, "credits:dismiss");
     }
   } else if (gameState === GAME_STATES.POST_RUN) {
     if (timeReal - gameOverTime > 1.0) {
       if (
-        inputActions.confirm() ||
-        inputActions.cancel() ||
-        mouseWasReleased(0)
+        hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
+        hasSceneAction(actions, SCENE_ACTION.CANCEL) ||
+        hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
       ) {
-        gameState = GAME_STATES.HOME;
+        transitionTo(GAME_STATES.HOME, {}, "post-run:advance");
       }
     }
   }
