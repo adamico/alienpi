@@ -31,8 +31,6 @@
 
 ## balance
 
-- BA3: the boss nova attack should alternate patterns to make it more hard to avoid. Priority: medium.
-
 ## game feel
 
 - GF1: add slow-motion effect on orbiter loot death. priority: medium.

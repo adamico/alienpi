@@ -21,13 +21,14 @@ import { playSfx } from "../audio/soundManager.js";
  * The beam is destroyed when the lifeTimer has elapsed.
  */
 export class BossBeam extends EngineObject {
-  constructor() {
+  constructor(rotationDirection = 1) {
     super(vec2(), vec2(beamCfg.length, beamCfg.width));
     this.setCollision(false, false);
     this.mass = 0;
     this.isEnemy = true;
     this.noDestroyOnImpact = true;
     this.renderOrder = -1;
+    this.rotationDirection = rotationDirection;
 
     this.state = "starting";
     this.startTimer = new Timer(beamCfg.startDuration); // charge telegraph duration
@@ -89,13 +90,14 @@ export class BossBeam extends EngineObject {
   }
 
   updateRotation() {
-    this.localAngle += beamCfg.rotationSpeed;
+    this.localAngle += beamCfg.rotationSpeed * this.rotationDirection;
   }
 
   updateColor() {
     if (this.state === "starting") {
       // Telegraph: pulsing yellow/orange warning effect
-      const pulse = Math.sin(this.startTimer.getPercent() * Math.PI * 4) * 0.5 + 0.5;
+      const pulse =
+        Math.sin(this.startTimer.getPercent() * Math.PI * 4) * 0.5 + 0.5;
       const baseAlpha = 0.5 + pulse * 0.3; // pulses between 0.5-0.8
       this.color = rgb(1, 0.7, 0, baseAlpha); // Yellow-orange warning
     } else {

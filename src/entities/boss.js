@@ -63,6 +63,7 @@ export class Boss extends BaseEntity {
     this.pulseTimer = 0;
     this.vulnerableAttackTimer = 200; // start partially charged
     this.nextAttackIsBeam = false;
+    this.nextBeamRotationDirection = 1;
     this.thresholds = [0.66, 0.33];
 
     this.fireEmitters = [];
@@ -406,9 +407,12 @@ export class Boss extends BaseEntity {
 
   fireBeams() {
     const startAngle = rand(0, PI * 2);
+    const rotationDirection = this.nextBeamRotationDirection;
+    this.nextBeamRotationDirection *= -1;
+
     for (let i = 0; i < beamCfg.count; i++) {
       const initialAngle = (i / beamCfg.count) * PI * 2 + startAngle;
-      const beam = new BossBeam();
+      const beam = new BossBeam(rotationDirection);
       this.addChild(beam, vec2(0, 0), initialAngle);
     }
   }
