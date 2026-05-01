@@ -3,6 +3,11 @@ import { vec2 } from "../../engine.js";
 export const player = {
   accel: 0.3,
   damping: 0.5,
+  entry: {
+    duration: 1.2,  // seconds for the ship to fly in
+    startY: -4,     // spawn position below the bottom boundary
+    targetY: 3,     // final resting y position after entry
+  },
   exhaust: {
     emitRateBase: 60, // neutral emitRate
     emitRateRange: 60, // ±range added/subtracted by vertical input

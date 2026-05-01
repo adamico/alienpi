@@ -1,4 +1,4 @@
-import { vec2, Color, PI } from "../engine.js";
+import { vec2, Color, PI, Timer } from "../engine.js";
 import {
   system,
   engine,
@@ -26,7 +26,7 @@ export let player = null;
 export class Player extends BaseEntity {
   constructor(maxHp) {
     super(
-      vec2(system.levelSize.x / 2, 1),
+      vec2(system.levelSize.x / 2, playerCfg.entry.startY),
       weaponsCfg.vulcan.playerSprite || playerCfg.sprite,
       playerCfg.sheet,
       playerCfg.hitboxScale,
@@ -60,6 +60,11 @@ export class Player extends BaseEntity {
 
     this.muzzleEmitters = [];
     this.updateWeaponSprite();
+
+    // Entry animation: ship flies in from below the screen
+    this.entryAnimating = true;
+    this.entryTimer = new Timer(playerCfg.entry.duration);
+    this.startInvulnerability({ duration: playerCfg.entry.duration + 0.5 });
   }
 
   // --- WeaponSystem pass-throughs ----------------------------------------
@@ -124,10 +129,31 @@ export class Player extends BaseEntity {
 
   update() {
     this.extraScale += (1 - this.extraScale) * 0.15;
+    if (this.entryAnimating) {
+      this.updateEntryAnimation();
+      this.updateExhaust();
+      super.update();
+      return;
+    }
     this.updateMoving();
     this.weapons.update(this.weaponContext);
     this.updateExhaust();
     super.update();
+  }
+
+  updateEntryAnimation() {
+    const cfg = playerCfg.entry;
+    const t = Math.min(1, this.entryTimer.get() / cfg.duration);
+    // Cubic ease-out: fast start, smooth deceleration into position
+    const eased = 1 - Math.pow(1 - t, 3);
+    this.pos.y = cfg.startY + (cfg.targetY - cfg.startY) * eased;
+    this.velocity = vec2(0);
+
+    if (this.entryTimer.elapsed()) {
+      this.entryAnimating = false;
+      this.pos.y = cfg.targetY;
+      this.extraScale = 1.15; // Small pop on arrival
+    }
   }
 
   updateWeaponSprite() {
@@ -233,12 +259,18 @@ export class Player extends BaseEntity {
 
   updateExhaust() {
     if (!this.exhaustEmitters) return;
-    const moveDir = input.moveDir;
     const { emitRateBase, emitRateRange, sizeStart, sizeStartBoost } =
       playerCfg.exhaust;
-    this._exhaustEmitRate = emitRateBase + moveDir.y * emitRateRange;
-    this._exhaustSizeStart =
-      sizeStart + Math.max(0, moveDir.y) * sizeStartBoost;
+    if (this.entryAnimating) {
+      // Full thrust during entry fly-in
+      this._exhaustEmitRate = emitRateBase + emitRateRange;
+      this._exhaustSizeStart = sizeStart + sizeStartBoost;
+    } else {
+      const moveDir = input.moveDir;
+      this._exhaustEmitRate = emitRateBase + moveDir.y * emitRateRange;
+      this._exhaustSizeStart =
+        sizeStart + Math.max(0, moveDir.y) * sizeStartBoost;
+    }
 
     for (const emitter of this.exhaustEmitters) {
       emitter.emitRate = this._exhaustEmitRate;
@@ -248,6 +280,7 @@ export class Player extends BaseEntity {
 
   render() {
     const blinkHide =
+      !this.entryAnimating &&
       this.invulnerable &&
       Math.floor(this.invulnerableTimer.get() * 15) % 2 === 0;
 
@@ -366,6 +399,8 @@ export class Player extends BaseEntity {
   }
 
   collideWithObject(other) {
+    if (this.entryAnimating) return false; // pass through everything during entry
+
     if (this.invulnerable) {
       // Still need to collide with boundaries even when invulnerable!
       return !!other.isBoundary;
