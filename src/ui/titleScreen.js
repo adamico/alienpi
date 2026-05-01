@@ -11,10 +11,12 @@ import {
   mouseWasReleased,
 } from "../engine.js";
 import { sprites } from "../sprites.js";
-import { strings } from "../config.js";
+import { GAME_STATES, strings } from "../config.js";
 import { FONT_MENU } from "../fonts.js";
 import { formatHighScore } from "../score.js";
 import { makeMenuRow, paintMenu, updateMenuInteraction } from "./menuView.js";
+import { makePanel } from "./panel.js";
+import { makeText } from "./uiText.js";
 
 const measureCanvas = document.createElement("canvas");
 const measureCtx = measureCanvas.getContext("2d");
@@ -36,6 +38,9 @@ const SOCIAL_LINKS = [
 
 const SOCIAL_IDLE_COLOR = new Color(1, 1, 1, 0.45);
 const SOCIAL_HOVER_COLOR = new Color(1, 1, 1, 1);
+
+const FOCUS_COLOR = rgb(1, 0.9, 0.3);
+const IDLE_COLOR = WHITE;
 
 function measureTextWidth(text, pxHeight, font) {
   measureCtx.font = `${pxHeight}px ${font}`;
@@ -108,10 +113,9 @@ export function createTitleScreen(uiRoot, titleMenu, handlers) {
   const initialTexts = [];
   const socialIcons = [];
 
-  const titleGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  titleGroup.color = new Color(0, 0, 0.08, 0.35);
-  titleGroup.lineWidth = 0;
-  uiRoot.addChild(titleGroup);
+  const titleGroup = makePanel(uiRoot, {
+    color: new Color(0, 0, 0.08, 0.35),
+  });
 
   const bossSprite = sprites.get("boss2.png");
   if (bossSprite) {
@@ -135,38 +139,19 @@ export function createTitleScreen(uiRoot, titleMenu, handlers) {
   controlGroup.lineWidth = 0;
   titleGroup.addChild(controlGroup);
 
-  const controlsTitle = new UIText(
-    vec2(0, -50),
-    vec2(400, 30),
-    strings.ui.controlsTitle,
-  );
-  controlsTitle.textHeight = 22;
-  controlsTitle.font = FONT_MENU;
-  controlsTitle.textColor = rgb(0.2, 1, 0.4);
-  controlsTitle.fontShadow = true;
-  controlGroup.addChild(controlsTitle);
+  makeText(controlGroup, vec2(0, -50), vec2(400, 30), strings.ui.controlsTitle,
+    { textHeight: 22, color: rgb(0.2, 1, 0.4) });
 
-  const controlsBody = new UIText(
-    vec2(0, 20),
-    vec2(600, 100),
-    strings.ui.controlsBody,
-  );
-  controlsBody.textHeight = 18;
-  controlsBody.font = FONT_MENU;
-  controlsBody.fontShadow = true;
-  controlsBody.textColor = WHITE.copy();
-  controlGroup.addChild(controlsBody);
+  makeText(controlGroup, vec2(0, 20), vec2(600, 100), strings.ui.controlsBody,
+    { textHeight: 18, color: WHITE });
 
-  const highScoreText = new UIText(
+  const highScoreText = makeText(
+    titleGroup,
     vec2(0, -110),
     vec2(600, 30),
     strings.ui.highScorePrefix + formatHighScore(),
+    { textHeight: 22, color: rgb(1, 0.85, 0.3) },
   );
-  highScoreText.textHeight = 22;
-  highScoreText.font = FONT_MENU;
-  highScoreText.textColor = rgb(1, 0.85, 0.3);
-  highScoreText.fontShadow = true;
-  titleGroup.addChild(highScoreText);
 
   const menuRows = [
     makeMenuRow(titleGroup, 140),
@@ -249,6 +234,13 @@ export function createTitleScreen(uiRoot, titleMenu, handlers) {
     },
     processPointer(menu) {
       updateMenuInteraction(menu, menuRows);
+    },
+    tick(gameState) {
+      titleGroup.visible = gameState === GAME_STATES.TITLE;
+      if (titleGroup.visible) {
+        this.update({ menu: titleMenu, focusColor: FOCUS_COLOR, idleColor: IDLE_COLOR });
+        this.processPointer(titleMenu);
+      }
     },
   };
 }

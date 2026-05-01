@@ -14,6 +14,7 @@ import {
 import { player } from "../entities/player.js";
 import { sprites } from "../sprites.js";
 import {
+  GAME_STATES,
   player as playerCfg,
   loot as lootCfg,
   weapons as weaponsCfg,
@@ -241,6 +242,11 @@ export function createHudView(parent) {
       timeText.text = `${strings.ui.timePrefix}${minutes
         .toString()
         .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    },
+    tick(gameState, data) {
+      hudGroup.visible =
+        gameState === GAME_STATES.PLAYING || gameState === GAME_STATES.PAUSE;
+      if (hudGroup.visible) this.update(data);
     },
   };
 }

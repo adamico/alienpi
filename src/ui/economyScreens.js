@@ -1,7 +1,8 @@
-import { vec2, rgb, UIObject, UIText, mainCanvasSize, Color, timeReal } from "../engine.js";
-import { strings } from "../config.js";
-import { FONT_MENU } from "../fonts.js";
+import { vec2, rgb, mainCanvasSize, Color, timeReal } from "../engine.js";
+import { GAME_STATES, strings } from "../config.js";
 import { formatHighScore } from "../score.js";
+import { makePanel } from "./panel.js";
+import { makeCenterTitle, makeCenterLine } from "./uiText.js";
 import {
   getSubstrate,
   getDebt,
@@ -9,171 +10,125 @@ import {
   formatSubstrate,
 } from "../economy.js";
 
-function makeDebriefLine(parent, y, label, color = new Color(1, 1, 1, 1)) {
-  const text = new UIText(vec2(0, y), vec2(800, 32), label);
-  text.textHeight = 24;
-  text.font = FONT_MENU;
-  text.textColor = color.copy();
-  text.fontShadow = true;
-  parent.addChild(text);
-  return text;
-}
+const COLOR_HOME_PANEL_BG = new Color(0.04, 0.06, 0.12, 0.85);
+const COLOR_HOME_TITLE = rgb(0.4, 0.9, 1);
+const COLOR_POSITIVE = rgb(0.4, 1, 0.7);
+const COLOR_NEGATIVE = rgb(1, 0.5, 0.3);
+const COLOR_NEUTRAL = new Color(0.85, 0.85, 0.85, 1);
+const COLOR_WHITE = new Color(1, 1, 1, 1);
+const COLOR_DIM = new Color(0.7, 0.7, 0.7, 1);
+const COLOR_DEFEAT = rgb(1, 0.2, 0.2);
+const COLOR_VICTORY = rgb(0.4, 1, 0.4);
+const COLOR_HIGHLIGHT = rgb(1, 0.85, 0.3);
 
 export function createEconomyScreens(uiRoot) {
-  const homeGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  homeGroup.color = new Color(0.04, 0.06, 0.12, 0.85);
-  homeGroup.lineWidth = 0;
-  uiRoot.addChild(homeGroup);
+  const homeGroup = makePanel(uiRoot, {
+    color: COLOR_HOME_PANEL_BG,
+  });
 
-  const homeTitleText = new UIText(
-    vec2(0, -160),
-    vec2(800, 100),
-    strings.ui.homeTitle,
-  );
-  homeTitleText.textHeight = 70;
-  homeTitleText.font = FONT_MENU;
-  homeTitleText.textColor = rgb(0.4, 0.9, 1);
-  homeTitleText.fontShadow = true;
-  homeGroup.addChild(homeTitleText);
-
-  const homeBalanceText = makeDebriefLine(
+  makeCenterTitle(homeGroup, -160, strings.ui.homeTitle, {
+    color: COLOR_HOME_TITLE,
+  });
+  const homeBalanceText = makeCenterLine(
     homeGroup,
     -40,
     strings.ui.homeBalanceLabel,
-    rgb(0.4, 1, 0.7),
+    {
+      color: COLOR_POSITIVE,
+    },
   );
-  const homeDebtText = makeDebriefLine(
-    homeGroup,
-    0,
-    strings.ui.homeDebtLabel,
-    rgb(1, 0.5, 0.3),
-  );
-  const homeLastRunText = makeDebriefLine(
+  const homeDebtText = makeCenterLine(homeGroup, 0, strings.ui.homeDebtLabel, {
+    color: COLOR_NEGATIVE,
+  });
+  const homeLastRunText = makeCenterLine(
     homeGroup,
     40,
     strings.ui.homeLastRunLabel,
-    new Color(0.85, 0.85, 0.85, 1),
+    {
+      color: COLOR_NEUTRAL,
+    },
   );
 
-  const homeLaunchText = new UIText(
-    vec2(0, 130),
-    vec2(800, 50),
+  const homeLaunchText = makeCenterLine(
+    homeGroup,
+    130,
     strings.ui.homeLaunchPrompt,
+    {
+      boxHeight: 50,
+      textHeight: 28,
+      color: COLOR_WHITE,
+    },
   );
-  homeLaunchText.textHeight = 28;
-  homeLaunchText.font = FONT_MENU;
-  homeLaunchText.textColor = new Color(1, 1, 1, 1);
-  homeLaunchText.fontShadow = true;
-  homeGroup.addChild(homeLaunchText);
+  makeCenterLine(homeGroup, 180, strings.ui.homeExitPrompt, {
+    textHeight: 18,
+    color: COLOR_DIM,
+  });
+  const postRunGroup = makePanel(uiRoot);
 
-  const homeExitText = new UIText(
-    vec2(0, 180),
-    vec2(800, 32),
-    strings.ui.homeExitPrompt,
-  );
-  homeExitText.textHeight = 18;
-  homeExitText.font = FONT_MENU;
-  homeExitText.textColor = new Color(0.7, 0.7, 0.7, 1);
-  homeExitText.fontShadow = true;
-  homeGroup.addChild(homeExitText);
-
-  const postRunGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  postRunGroup.color = new Color(0, 0, 0, 0);
-  postRunGroup.lineWidth = 0;
-  uiRoot.addChild(postRunGroup);
-
-  const postRunTitleText = new UIText(
-    vec2(0, -90),
-    vec2(800, 100),
+  const postRunTitleText = makeCenterTitle(
+    postRunGroup,
+    -90,
     strings.ui.gameOverTitle,
+    {
+      textHeight: 80,
+      color: COLOR_DEFEAT,
+      shadow: false,
+    },
   );
-  postRunTitleText.textHeight = 80;
-  postRunTitleText.font = FONT_MENU;
-  postRunTitleText.textColor = rgb(1, 0.2, 0.2);
-  postRunTitleText.fontShadow = false;
-  postRunGroup.addChild(postRunTitleText);
-
-  const retryText = new UIText(
-    vec2(0, 60),
-    vec2(800, 50),
-    strings.ui.retryPrompt,
+  const finalScoreText = makeCenterTitle(
+    postRunGroup,
+    0,
+    strings.ui.finalScorePrefix,
+    {
+      textHeight: 60,
+      color: COLOR_WHITE,
+      shadow: false,
+    },
   );
-  retryText.textHeight = 24;
-  retryText.font = FONT_MENU;
-  retryText.textColor = new Color(1, 1, 1, 1);
-  retryText.fontShadow = false;
-
-  const backToTitleText = new UIText(vec2(0, 100), vec2(800, 40), "");
-  backToTitleText.textHeight = 18;
-  backToTitleText.font = FONT_MENU;
-  backToTitleText.textColor = new Color(0.7, 0.7, 0.7, 1);
-  backToTitleText.fontShadow = false;
+  const gameOverHighScoreText = makeCenterLine(
+    postRunGroup,
+    35,
+    strings.ui.highScorePrefix + formatHighScore(),
+    { boxHeight: 40, textHeight: 26, color: COLOR_HIGHLIGHT, shadow: false },
+  );
+  const retryText = makeCenterLine(postRunGroup, 60, strings.ui.retryPrompt, {
+    boxHeight: 50,
+    textHeight: 24,
+    color: COLOR_WHITE,
+    shadow: false,
+  });
+  const backToTitleText = makeCenterLine(postRunGroup, 100, "", {
+    boxHeight: 40,
+    textHeight: 18,
+    color: COLOR_DIM,
+    shadow: false,
+  });
   backToTitleText.visible = false;
 
-  const finalScoreText = new UIText(
-    vec2(0, 0),
-    vec2(800, 100),
-    strings.ui.finalScorePrefix,
-  );
-  finalScoreText.textHeight = 60;
-  finalScoreText.font = FONT_MENU;
-  finalScoreText.textColor = rgb(1, 1, 1);
-  finalScoreText.fontShadow = false;
-
-  const gameOverHighScoreText = new UIText(
-    vec2(0, 35),
-    vec2(800, 40),
-    strings.ui.highScorePrefix + formatHighScore(),
-  );
-  gameOverHighScoreText.textHeight = 26;
-  gameOverHighScoreText.font = FONT_MENU;
-  gameOverHighScoreText.textColor = rgb(1, 0.85, 0.3);
-  gameOverHighScoreText.fontShadow = false;
-
-  postRunGroup.addChild(finalScoreText);
-  postRunGroup.addChild(gameOverHighScoreText);
-  postRunGroup.addChild(retryText);
-  postRunGroup.addChild(backToTitleText);
-
-  const postRunEarningsText = makeDebriefLine(postRunGroup, 80, "");
-  postRunEarningsText.fontShadow = false;
-  const postRunBossBonusText = makeDebriefLine(
-    postRunGroup,
-    110,
-    "",
-    rgb(1, 0.85, 0.3),
-  );
-  postRunBossBonusText.fontShadow = false;
-  const postRunRepairText = makeDebriefLine(
-    postRunGroup,
-    140,
-    "",
-    rgb(1, 0.5, 0.3),
-  );
-  postRunRepairText.fontShadow = false;
-  const postRunNetText = makeDebriefLine(
-    postRunGroup,
-    175,
-    "",
-    rgb(0.4, 1, 0.7),
-  );
-  postRunNetText.fontShadow = false;
-  postRunNetText.textHeight = 28;
-  const postRunBalanceText = makeDebriefLine(
-    postRunGroup,
-    215,
-    "",
-    rgb(0.4, 1, 0.7),
-  );
-  postRunBalanceText.fontShadow = false;
-  const postRunDebtText = makeDebriefLine(
-    postRunGroup,
-    245,
-    "",
-    rgb(1, 0.5, 0.3),
-  );
-  postRunDebtText.fontShadow = false;
-
+  const postRunEarningsText = makeCenterLine(postRunGroup, 80, "", {
+    shadow: false,
+  });
+  const postRunBossBonusText = makeCenterLine(postRunGroup, 110, "", {
+    color: COLOR_HIGHLIGHT,
+    shadow: false,
+  });
+  const postRunRepairText = makeCenterLine(postRunGroup, 140, "", {
+    color: COLOR_NEGATIVE,
+    shadow: false,
+  });
+  const postRunNetText = makeCenterLine(postRunGroup, 175, "", {
+    textHeight: 28,
+    color: COLOR_POSITIVE,
+    shadow: false,
+  });
+  const postRunBalanceText = makeCenterLine(postRunGroup, 215, "", {
+    color: COLOR_POSITIVE,
+    shadow: false,
+  });
+  const postRunDebtText = makeCenterLine(postRunGroup, 245, "", {
+    color: COLOR_NEGATIVE,
+    shadow: false,
+  });
   let postRunCacheWon = null;
   let postRunCacheBalance = NaN;
   let postRunCacheEarnings = NaN;
@@ -199,6 +154,12 @@ export function createEconomyScreens(uiRoot) {
         postRunCacheHasDebrief = null;
       }
     },
+    tick(gameState, { gameWon, lastRunDebrief } = {}) {
+      homeGroup.visible = gameState === GAME_STATES.HOME;
+      if (homeGroup.visible) this.updateHome();
+      this.setPostRunVisible(gameState === GAME_STATES.POST_RUN);
+      if (postRunGroup.visible) this.updatePostRun({ gameWon, lastRunDebrief });
+    },
     updateHome() {
       homeGroup.size = mainCanvasSize;
       homeBalanceText.text =
@@ -220,9 +181,7 @@ export function createEconomyScreens(uiRoot) {
           sign +
           formatSubstrate(last.net, { compact: false });
         homeLastRunText.textColor =
-          last.net >= 0
-            ? new Color(0.4, 1, 0.7, 1)
-            : new Color(1, 0.5, 0.3, 1);
+          last.net >= 0 ? COLOR_POSITIVE.copy() : COLOR_NEGATIVE.copy();
       }
       homeLaunchText.visible = (timeReal * 2) % 2 < 1.2;
     },
@@ -259,16 +218,16 @@ export function createEconomyScreens(uiRoot) {
 
         if (gameWon) {
           postRunTitleText.text = strings.ui.postRunVictoryTitle;
-          postRunTitleText.textColor = rgb(0.4, 1, 0.4);
+          postRunTitleText.textColor = COLOR_VICTORY.copy();
         } else {
           postRunTitleText.text = strings.ui.postRunDefeatTitle;
-          postRunTitleText.textColor = rgb(1, 0.2, 0.2);
+          postRunTitleText.textColor = COLOR_DEFEAT.copy();
         }
         retryText.text = strings.ui.postRunContinuePrompt;
         finalScoreText.text =
           strings.ui.postRunSubstratePrefix +
           formatSubstrate(balanceForHeadline, { compact: false });
-        finalScoreText.textColor = rgb(0.4, 1, 0.7);
+        finalScoreText.textColor = COLOR_POSITIVE.copy();
         gameOverHighScoreText.visible = false;
 
         const showBreakdown = !!debrief;
@@ -299,7 +258,7 @@ export function createEconomyScreens(uiRoot) {
             netSign +
             formatSubstrate(debrief.net, { compact: false });
           postRunNetText.textColor =
-            debrief.net >= 0 ? rgb(0.4, 1, 0.7) : rgb(1, 0.5, 0.3);
+            debrief.net >= 0 ? COLOR_POSITIVE.copy() : COLOR_NEGATIVE.copy();
           postRunBalanceText.text =
             strings.ui.postRunBalanceLabel +
             ": " +

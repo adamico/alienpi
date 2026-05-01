@@ -1,23 +1,24 @@
 import {
-  vec2,
   rgb,
-  UIObject,
-  UIText,
+  WHITE,
   Color,
-  mainCanvasSize,
   mouseWasReleased,
   timeReal,
 } from "../engine.js";
-import { settings, saveSettings, strings } from "../config.js";
+import { GAME_STATES, settings, saveSettings, strings } from "../config.js";
 import { resetEconomy } from "../economy.js";
-import { FONT_MENU } from "../fonts.js";
 import { makeMenuRow, updateMenuInteraction, paintMenu } from "./menuView.js";
+import { makePanel } from "./panel.js";
+import { makeCenterTitle } from "./uiText.js";
 import {
   buildSharedSettingsSliders,
   buildSharedSettingsRows,
   buildSharedSettingsItems,
   updateSharedSliderInput,
 } from "./settingsShared.js";
+
+const FOCUS_COLOR = rgb(1, 0.9, 0.3);
+const IDLE_COLOR = WHITE;
 
 /**
  * Creates the pause overlay and settings screen, sharing a common
@@ -40,21 +41,13 @@ export function createPauseSettingsScreens(uiRoot, pauseMenu, settingsMenu, hand
   }
 
   // ── Pause screen ─────────────────────────────────────────────────────────
-  const pauseGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  pauseGroup.color = new Color(0, 0, 0, 0.5);
-  pauseGroup.lineWidth = 0;
-  uiRoot.addChild(pauseGroup);
+  const pauseGroup = makePanel(uiRoot, {
+    color: new Color(0, 0, 0, 0.5),
+  });
 
-  const pauseTitleText = new UIText(
-    vec2(0, -260),
-    vec2(800, 100),
-    strings.ui.pauseTitle,
-  );
-  pauseTitleText.textHeight = 70;
-  pauseTitleText.font = FONT_MENU;
-  pauseTitleText.fontShadow = true;
-  pauseTitleText.textColor = rgb(0.4, 0.7, 1);
-  pauseGroup.addChild(pauseTitleText);
+  makeCenterTitle(pauseGroup, -260, strings.ui.pauseTitle, {
+    color: rgb(0.4, 0.7, 1),
+  });
 
   const pauseSliders = buildSharedSettingsSliders(pauseGroup);
   const pauseMusicSlider = pauseSliders.music;
@@ -62,21 +55,13 @@ export function createPauseSettingsScreens(uiRoot, pauseMenu, settingsMenu, hand
   const pauseMenuRows = buildSharedSettingsRows(pauseGroup, makeRow);
 
   // ── Settings screen ───────────────────────────────────────────────────────
-  const settingsGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  settingsGroup.color = new Color(0.05, 0.05, 0.1, 0.9);
-  settingsGroup.lineWidth = 0;
-  uiRoot.addChild(settingsGroup);
+  const settingsGroup = makePanel(uiRoot, {
+    color: new Color(0.05, 0.05, 0.1, 0.9),
+  });
 
-  const settingsTitle = new UIText(
-    vec2(0, -260),
-    vec2(800, 100),
-    strings.ui.settingsTitle,
-  );
-  settingsTitle.textHeight = 70;
-  settingsTitle.font = FONT_MENU;
-  settingsTitle.fontShadow = true;
-  settingsTitle.textColor = rgb(1, 0.8, 0.2);
-  settingsGroup.addChild(settingsTitle);
+  makeCenterTitle(settingsGroup, -260, strings.ui.settingsTitle, {
+    color: rgb(1, 0.8, 0.2),
+  });
 
   const settingsSliders = buildSharedSettingsSliders(settingsGroup);
   const settingsMusicSlider = settingsSliders.music;
@@ -172,6 +157,19 @@ export function createPauseSettingsScreens(uiRoot, pauseMenu, settingsMenu, hand
           settingsSfxSlider.isHoverObject())
       ) {
         saveSettings();
+      }
+    },
+
+    tick(gameState) {
+      pauseGroup.visible = gameState === GAME_STATES.PAUSE;
+      settingsGroup.visible = gameState === GAME_STATES.SETTINGS;
+      if (pauseGroup.visible) {
+        this.updatePause(pauseMenu, FOCUS_COLOR, IDLE_COLOR);
+        this.processPausePointer(pauseMenu);
+      }
+      if (settingsGroup.visible) {
+        this.updateSettings(settingsMenu, FOCUS_COLOR, IDLE_COLOR);
+        this.processSettingsPointer(settingsMenu);
       }
     },
   };

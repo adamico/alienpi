@@ -1,97 +1,67 @@
-import { vec2, rgb, WHITE, UIObject, UIText, Color, mainCanvasSize } from "../engine.js";
-import { FONT_MENU } from "../fonts.js";
-import { strings } from "../config.js";
+import {
+  vec2,
+  rgb,
+  WHITE,
+  Color,
+} from "../engine.js";
+import { GAME_STATES, strings } from "../config.js";
+import { makePanel } from "./panel.js";
+import { makeText, makeCenterTitle, makeCenterLine } from "./uiText.js";
 
 export function createLoreScreen(uiRoot) {
-  const loreGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  loreGroup.color = new Color(0.02, 0.02, 0.08, 0.85);
-  loreGroup.lineWidth = 0;
-  uiRoot.addChild(loreGroup);
+  const loreGroup = makePanel(uiRoot, {
+    color: new Color(0.02, 0.02, 0.08, 0.85),
+  });
 
-  const loreTitleText = new UIText(
-    vec2(0, -270),
-    vec2(800, 100),
-    strings.ui.loreTitle,
-  );
-  loreTitleText.textHeight = 70;
-  loreTitleText.font = FONT_MENU;
-  loreTitleText.fontShadow = true;
-  loreTitleText.textColor = rgb(1, 0.8, 0.2);
-  loreGroup.addChild(loreTitleText);
+  makeCenterTitle(loreGroup, -270, strings.ui.loreTitle, {
+    color: rgb(1, 0.8, 0.2),
+  });
 
-  const loreBodyText = new UIText(
-    vec2(0, 0),
-    vec2(900, 420),
-    strings.ui.loreBody,
-  );
-  loreBodyText.textHeight = 22;
-  loreBodyText.font = FONT_MENU;
-  loreBodyText.textColor = WHITE.copy();
-  loreBodyText.fontShadow = true;
-  loreGroup.addChild(loreBodyText);
+  makeText(loreGroup, vec2(0, 0), vec2(900, 420), strings.ui.loreBody,
+    { textHeight: 22, color: WHITE });
 
-  const loreStartText = new UIText(
-    vec2(0, 280),
-    vec2(800, 40),
-    strings.ui.loreStartPrompt,
-  );
-  loreStartText.textHeight = 20;
-  loreStartText.font = FONT_MENU;
-  loreStartText.textColor = WHITE.copy();
-  loreStartText.fontShadow = true;
-  loreGroup.addChild(loreStartText);
+  makeCenterLine(loreGroup, 280, strings.ui.loreStartPrompt, {
+    boxHeight: 40,
+    textHeight: 20,
+    color: WHITE,
+  });
 
   return {
     root: loreGroup,
     setVisible(v) {
       loreGroup.visible = v;
     },
+    tick(gameState) {
+      loreGroup.visible = gameState === GAME_STATES.LORE;
+    },
   };
 }
 
 export function createCreditsScreen(uiRoot) {
-  const creditsGroup = new UIObject(vec2(0, 0), mainCanvasSize);
-  creditsGroup.color = new Color(0.02, 0.02, 0.08, 0.85);
-  creditsGroup.lineWidth = 0;
-  uiRoot.addChild(creditsGroup);
+  const creditsGroup = makePanel(uiRoot, {
+    color: new Color(0.02, 0.02, 0.08, 0.85),
+  });
 
-  const creditsTitleText = new UIText(
-    vec2(0, -260),
-    vec2(800, 100),
-    strings.ui.creditsTitle,
-  );
-  creditsTitleText.textHeight = 70;
-  creditsTitleText.font = FONT_MENU;
-  creditsTitleText.fontShadow = true;
-  creditsTitleText.textColor = rgb(1, 0.8, 0.2);
-  creditsGroup.addChild(creditsTitleText);
+  makeCenterTitle(creditsGroup, -260, strings.ui.creditsTitle, {
+    color: rgb(1, 0.8, 0.2),
+  });
 
-  const creditsBodyText = new UIText(
-    vec2(0, 0),
-    vec2(900, 420),
-    strings.ui.creditsBody,
-  );
-  creditsBodyText.textHeight = 22;
-  creditsBodyText.font = FONT_MENU;
-  creditsBodyText.textColor = WHITE.copy();
-  creditsBodyText.fontShadow = true;
-  creditsGroup.addChild(creditsBodyText);
+  makeText(creditsGroup, vec2(0, 0), vec2(900, 420), strings.ui.creditsBody,
+    { textHeight: 22, color: WHITE });
 
-  const creditsBackText = new UIText(
-    vec2(0, 280),
-    vec2(800, 40),
-    strings.ui.creditsBackPrompt,
-  );
-  creditsBackText.textHeight = 20;
-  creditsBackText.font = FONT_MENU;
-  creditsBackText.textColor = rgb(0.6, 0.9, 1);
-  creditsBackText.fontShadow = true;
-  creditsGroup.addChild(creditsBackText);
+  makeCenterLine(creditsGroup, 280, strings.ui.creditsBackPrompt, {
+    boxHeight: 40,
+    textHeight: 20,
+    color: rgb(0.6, 0.9, 1),
+  });
 
   return {
     root: creditsGroup,
     setVisible(v) {
       creditsGroup.visible = v;
+    },
+    tick(gameState) {
+      creditsGroup.visible = gameState === GAME_STATES.CREDITS;
     },
   };
 }
