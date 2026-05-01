@@ -129,6 +129,12 @@ const scenes = createGameScenes({
   setPaused,
   getTimeReal: () => timeReal,
   getGameOverTime: () => gameOverTime,
+  soundGameOverJingle,
+  destroyPlayfield: () => {
+    system.isResetting = true;
+    engineObjectsDestroy();
+    system.isResetting = false;
+  },
   menus: {
     titleMenu,
     pauseMenu,
@@ -167,7 +173,6 @@ async function gameInit() {
     pause: {
       resume: () => {
         transitionTo(GAME_STATES.PLAYING, {}, "pause:resume");
-        setPaused(false);
       },
     },
     settings: {
@@ -233,11 +238,6 @@ function gameUpdate() {
 // across replays. Destroying everything lets GC reclaim them and keeps the
 // debrief overlay rendering over a clean field.
 function enterPostRun(outcome) {
-  soundGameOverJingle.play();
-  system.isResetting = true;
-  engineObjectsDestroy();
-  system.isResetting = false;
-  setPaused(true);
   gameOverTime = timeReal;
   commitHighScore();
   lastRunDebrief = commitRun(outcome);

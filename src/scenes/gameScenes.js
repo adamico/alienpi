@@ -7,9 +7,14 @@ import {
 } from "./sceneActions.js";
 
 class TitleScene extends BaseScene {
-  constructor({ menus }) {
+  constructor({ menus, setPaused }) {
     super(GAME_STATES.TITLE);
     this.menus = menus;
+    this.setPaused = setPaused;
+  }
+
+  enter() {
+    this.setPaused(true);
   }
 
   handleFrame(actions) {
@@ -18,9 +23,14 @@ class TitleScene extends BaseScene {
 }
 
 class LoreScene extends BaseScene {
-  constructor({ transitionTo }) {
+  constructor({ transitionTo, setPaused }) {
     super(GAME_STATES.LORE);
     this.transitionTo = transitionTo;
+    this.setPaused = setPaused;
+  }
+
+  enter() {
+    this.setPaused(true);
   }
 
   handleFrame(actions) {
@@ -43,19 +53,21 @@ class HomeScene extends BaseScene {
     this.setPaused = setPaused;
   }
 
+  enter() {
+    this.setPaused(true);
+  }
+
   handleFrame(actions) {
     if (
       hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
       hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
     ) {
       this.resetGame();
-      this.setPaused(false);
       return true;
     }
 
     if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
       this.transitionTo(GAME_STATES.TITLE, {}, "home:cancel");
-      this.setPaused(true);
       return true;
     }
 
@@ -70,10 +82,13 @@ class PlayingScene extends BaseScene {
     this.setPaused = setPaused;
   }
 
+  enter() {
+    this.setPaused(false);
+  }
+
   handleFrame(actions) {
     if (hasSceneAction(actions, SCENE_ACTION.PAUSE)) {
       this.transitionTo(GAME_STATES.PAUSE, {}, "playing:pause");
-      this.setPaused(true);
       return true;
     }
     return false;
@@ -88,10 +103,13 @@ class PauseScene extends BaseScene {
     this.menus = menus;
   }
 
+  enter() {
+    this.setPaused(true);
+  }
+
   handleFrame(actions) {
     if (hasSceneAction(actions, SCENE_ACTION.PAUSE)) {
       this.transitionTo(GAME_STATES.PLAYING, {}, "pause:resume-key");
-      this.setPaused(false);
       return true;
     }
 
@@ -117,9 +135,14 @@ class SettingsScene extends BaseScene {
 }
 
 class CreditsScene extends BaseScene {
-  constructor({ transitionTo }) {
+  constructor({ transitionTo, setPaused }) {
     super(GAME_STATES.CREDITS);
     this.transitionTo = transitionTo;
+    this.setPaused = setPaused;
+  }
+
+  enter() {
+    this.setPaused(true);
   }
 
   handleFrame(actions) {
@@ -137,11 +160,27 @@ class CreditsScene extends BaseScene {
 }
 
 class PostRunScene extends BaseScene {
-  constructor({ transitionTo, getTimeReal, getGameOverTime }) {
+  constructor({
+    transitionTo,
+    getTimeReal,
+    getGameOverTime,
+    soundGameOverJingle,
+    destroyPlayfield,
+    setPaused,
+  }) {
     super(GAME_STATES.POST_RUN);
     this.transitionTo = transitionTo;
     this.getTimeReal = getTimeReal;
     this.getGameOverTime = getGameOverTime;
+    this.soundGameOverJingle = soundGameOverJingle;
+    this.destroyPlayfield = destroyPlayfield;
+    this.setPaused = setPaused;
+  }
+
+  enter() {
+    this.soundGameOverJingle.play();
+    this.destroyPlayfield();
+    this.setPaused(true);
   }
 
   handleFrame(actions) {
