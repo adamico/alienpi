@@ -7,11 +7,15 @@ export class BaseScene {
     return this.id;
   }
 
-  enter(_ctx) {}
+  enter() {}
 
-  exit(_ctx) {}
+  exit() {}
 
-  update(_dt, _ctx) {}
+  update() {}
 
-  handleAction(_action, _ctx) {}
+  handleAction() {}
+
+  handleFrame() {
+    return false;
+  }
 }

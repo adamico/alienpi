@@ -51,11 +51,9 @@ import { SceneContext } from "./src/scenes/sceneContext.js";
 import { SceneManager } from "./src/scenes/sceneManager.js";
 import { SCENE_TRANSITIONS } from "./src/scenes/transitionPolicy.js";
 import {
-  SCENE_ACTION,
   collectSceneActions,
-  hasSceneAction,
-  dispatchMenuFromSceneActions,
 } from "./src/scenes/sceneActions.js";
+import { createGameScenes } from "./src/scenes/gameScenes.js";
 
 export let currentBoss = null;
 let player = null;
@@ -98,6 +96,25 @@ function pushState(nextState, payload = {}, reason = "push") {
 
 function popState(payload = {}, reason = "pop") {
   return sceneManager.popState(payload, reason);
+}
+
+const scenes = createGameScenes({
+  transitionTo,
+  pushState,
+  popState,
+  resetGame: () => resetGame(),
+  setPaused,
+  getTimeReal: () => timeReal,
+  getGameOverTime: () => gameOverTime,
+  menus: {
+    titleMenu,
+    pauseMenu,
+    settingsMenu,
+  },
+});
+
+for (const scene of scenes.values()) {
+  sceneManager.registerScene(scene);
 }
 
 async function gameInit() {
@@ -220,65 +237,7 @@ function gameUpdatePost() {
   });
   const actions = frameActions.actions;
   lastGamepadStick = frameActions.nextStick;
-  sceneManager.recordFrameActions(actions);
-
-  if (gameState === GAME_STATES.TITLE) {
-    dispatchMenuFromSceneActions(titleMenu, actions);
-  } else if (gameState === GAME_STATES.LORE) {
-    if (
-      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
-      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
-    ) {
-      transitionTo(GAME_STATES.HOME, {}, "lore:confirm");
-    }
-  } else if (gameState === GAME_STATES.HOME) {
-    if (
-      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
-      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
-    ) {
-      resetGame();
-      setPaused(false);
-    } else if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
-      transitionTo(GAME_STATES.TITLE, {}, "home:cancel");
-      setPaused(true);
-    }
-  } else if (gameState === GAME_STATES.PLAYING) {
-    if (hasSceneAction(actions, SCENE_ACTION.PAUSE)) {
-      transitionTo(GAME_STATES.PAUSE, {}, "playing:pause");
-      setPaused(true);
-    }
-  } else if (gameState === GAME_STATES.PAUSE) {
-    if (hasSceneAction(actions, SCENE_ACTION.PAUSE)) {
-      transitionTo(GAME_STATES.PLAYING, {}, "pause:resume-key");
-      setPaused(false);
-    } else {
-      dispatchMenuFromSceneActions(pauseMenu, actions);
-    }
-  } else if (gameState === GAME_STATES.SETTINGS) {
-    if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
-      popState({}, "settings:cancel");
-    } else {
-      dispatchMenuFromSceneActions(settingsMenu, actions);
-    }
-  } else if (gameState === GAME_STATES.CREDITS) {
-    if (
-      hasSceneAction(actions, SCENE_ACTION.CANCEL) ||
-      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
-      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
-    ) {
-      transitionTo(GAME_STATES.TITLE, {}, "credits:dismiss");
-    }
-  } else if (gameState === GAME_STATES.POST_RUN) {
-    if (timeReal - gameOverTime > 1.0) {
-      if (
-        hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
-        hasSceneAction(actions, SCENE_ACTION.CANCEL) ||
-        hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
-      ) {
-        transitionTo(GAME_STATES.HOME, {}, "post-run:advance");
-      }
-    }
-  }
+  sceneManager.updateFrame({ actions, dt: timeDelta, runtime: { gameState } });
 
   updateMusic();
   updateSoundVolumes();
