@@ -6,13 +6,16 @@ import {
   Color,
   mainCanvasSize,
   mouseWasReleased,
+  timeReal,
 } from "../engine.js";
 import { settings, saveSettings, strings } from "../config.js";
+import { resetEconomy } from "../economy.js";
 import { FONT_MENU } from "../fonts.js";
 import { makeMenuRow, updateMenuInteraction, paintMenu } from "./menuView.js";
 import {
   buildSharedSettingsSliders,
   buildSharedSettingsRows,
+  buildSharedSettingsItems,
   updateSharedSliderInput,
 } from "./settingsShared.js";
 
@@ -31,7 +34,7 @@ import {
  *   processPausePointer(menu)
  *   processSettingsPointer(menu)
  */
-export function createPauseSettingsScreens(uiRoot) {
+export function createPauseSettingsScreens(uiRoot, pauseMenu, settingsMenu, handlers) {
   function makeRow(parent, y, h = 40) {
     return makeMenuRow(parent, y, h);
   }
@@ -92,16 +95,54 @@ export function createPauseSettingsScreens(uiRoot) {
     if (settingsSfxSlider) settingsSfxSlider.value = sfx;
   }
 
+  // ── Menu wiring ───────────────────────────────────────────────────────────
+  const pauseSharedItems = buildSharedSettingsItems({
+    musicSlider: pauseMusicSlider,
+    sfxSlider: pauseSfxSlider,
+    syncVolumeSliders,
+  });
+  pauseMenu.setItems([
+    ...pauseSharedItems,
+    {
+      kind: "action",
+      label: () => "BACK TO GAME (ESC)",
+      activate: () => handlers.resume(),
+    },
+  ]);
+
+  const settingsSharedItems = buildSharedSettingsItems({
+    musicSlider: settingsMusicSlider,
+    sfxSlider: settingsSfxSlider,
+    syncVolumeSliders,
+  });
+  let resetArmedUntil = 0;
+  settingsMenu.setItems([
+    ...settingsSharedItems,
+    {
+      kind: "action",
+      label: () =>
+        timeReal < resetArmedUntil
+          ? "PRESS AGAIN TO CONFIRM"
+          : "RESET PROGRESS",
+      activate: () => {
+        if (timeReal < resetArmedUntil) {
+          resetEconomy();
+          resetArmedUntil = 0;
+        } else {
+          resetArmedUntil = timeReal + 3;
+        }
+      },
+    },
+    {
+      kind: "action",
+      label: () => "BACK",
+      activate: () => handlers.back(),
+    },
+  ]);
+
   return {
     pauseGroup,
-    pauseMenuRows,
-    pauseMusicSlider,
-    pauseSfxSlider,
     settingsGroup,
-    settingsMenuRows,
-    settingsMusicSlider,
-    settingsSfxSlider,
-    syncVolumeSliders,
 
     updatePause(menu, focusColor, idleColor) {
       updateSharedSliderInput(pauseMusicSlider, pauseSfxSlider);

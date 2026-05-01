@@ -104,7 +104,7 @@ function openLink(url) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-export function createTitleScreen(uiRoot) {
+export function createTitleScreen(uiRoot, titleMenu, handlers) {
   const initialTexts = [];
   const socialIcons = [];
 
@@ -197,6 +197,24 @@ export function createTitleScreen(uiRoot) {
     titleGroup.addChild(icon);
     socialIcons.push({ icon, key: entry.key, hovered: false });
   });
+
+  titleMenu.setItems([
+    {
+      kind: "action",
+      label: () => "START",
+      activate: () => handlers.start(),
+    },
+    {
+      kind: "action",
+      label: () => "SETTINGS",
+      activate: () => handlers.openSettings(),
+    },
+    {
+      kind: "action",
+      label: () => "CREDITS",
+      activate: () => handlers.openCredits(),
+    },
+  ]);
 
   return {
     root: titleGroup,

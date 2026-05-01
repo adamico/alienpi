@@ -4,15 +4,12 @@ import {
   UISystemPlugin,
   uiSystem,
   UIObject,
-  timeReal,
   mainCanvasSize,
   Color,
 } from "./engine.js";
 
 import { GAME_STATES } from "./config.js";
 import { Menu } from "./menuNav.js";
-import { resetEconomy } from "./economy.js";
-import { buildSharedSettingsItems } from "./ui/settingsShared.js";
 import { createPauseSettingsScreens } from "./ui/pauseSettingsScreens.js";
 import { createLoreScreen, createCreditsScreen } from "./ui/storyScreens.js";
 import { createHudView } from "./ui/hudView.js";
@@ -28,12 +25,7 @@ let titleView;
 let pauseSettingsView;
 let loreView;
 let creditsView;
-let hudGroup,
-  titleGroup,
-  pauseGroup,
-  gameOverGroup,
-  preRunGroup,
-  settingsGroup;
+let hudGroup, titleGroup, pauseGroup, gameOverGroup, preRunGroup, settingsGroup;
 
 const FOCUS_COLOR = rgb(1, 0.9, 0.3);
 const IDLE_COLOR = WHITE;
@@ -88,9 +80,21 @@ export function initUI({ getUIState }) {
   hudView = createHudView(uiRoot);
   hudGroup = hudView.root;
 
-  titleView = createTitleScreen(uiRoot);
+  titleView = createTitleScreen(uiRoot, titleMenu, {
+    start: () => titleHandlers.start(),
+    openSettings: () => titleHandlers.openSettings(),
+    openCredits: () => titleHandlers.openCredits(),
+  });
   titleGroup = titleView.root;
-  pauseSettingsView = createPauseSettingsScreens(uiRoot);
+  pauseSettingsView = createPauseSettingsScreens(
+    uiRoot,
+    pauseMenu,
+    settingsMenu,
+    {
+      resume: () => pauseHandlers.resume(),
+      back: () => settingsHandlers.back(),
+    },
+  );
   pauseGroup = pauseSettingsView.pauseGroup;
   settingsGroup = pauseSettingsView.settingsGroup;
   creditsView = createCreditsScreen(uiRoot);
@@ -98,72 +102,6 @@ export function initUI({ getUIState }) {
   economyScreens = createEconomyScreens(uiRoot);
   preRunGroup = economyScreens.homeGroup;
   gameOverGroup = economyScreens.postRunGroup;
-  rebuildMenus();
-}
-
-function rebuildMenus() {
-  titleMenu.setItems([
-    {
-      kind: "action",
-      label: () => "START",
-      activate: () => titleHandlers.start(),
-    },
-    {
-      kind: "action",
-      label: () => "SETTINGS",
-      activate: () => titleHandlers.openSettings(),
-    },
-    {
-      kind: "action",
-      label: () => "CREDITS",
-      activate: () => titleHandlers.openCredits(),
-    },
-  ]);
-
-  const pauseSharedItems = buildSharedSettingsItems({
-    musicSlider: pauseSettingsView.pauseMusicSlider,
-    sfxSlider: pauseSettingsView.pauseSfxSlider,
-    syncVolumeSliders: pauseSettingsView.syncVolumeSliders,
-  });
-  pauseMenu.setItems([
-    ...pauseSharedItems,
-    {
-      kind: "action",
-      label: () => "BACK TO GAME (ESC)",
-      activate: () => pauseHandlers.resume(),
-    },
-  ]);
-
-  const settingsSharedItems = buildSharedSettingsItems({
-    musicSlider: pauseSettingsView.settingsMusicSlider,
-    sfxSlider: pauseSettingsView.settingsSfxSlider,
-    syncVolumeSliders: pauseSettingsView.syncVolumeSliders,
-  });
-  // Two-step "Reset Progress" — first press arms, second confirms within 3s.
-  let resetArmedUntil = 0;
-  settingsMenu.setItems([
-    ...settingsSharedItems,
-    {
-      kind: "action",
-      label: () =>
-        timeReal < resetArmedUntil
-          ? "PRESS AGAIN TO CONFIRM"
-          : "RESET PROGRESS",
-      activate: () => {
-        if (timeReal < resetArmedUntil) {
-          resetEconomy();
-          resetArmedUntil = 0;
-        } else {
-          resetArmedUntil = timeReal + 3;
-        }
-      },
-    },
-    {
-      kind: "action",
-      label: () => "BACK",
-      activate: () => settingsHandlers.back(),
-    },
-  ]);
 }
 
 export function updateUI() {

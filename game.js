@@ -51,9 +51,7 @@ import {
 import { SceneContext } from "./src/scenes/sceneContext.js";
 import { SceneManager } from "./src/scenes/sceneManager.js";
 import { SCENE_TRANSITIONS } from "./src/scenes/transitionPolicy.js";
-import {
-  collectSceneActions,
-} from "./src/scenes/sceneActions.js";
+import { collectSceneActions } from "./src/scenes/sceneActions.js";
 import { createGameScenes } from "./src/scenes/gameScenes.js";
 
 let currentBoss = null;
@@ -106,7 +104,11 @@ sceneManager.subscribe(({ to, context }) => {
   gameWon = context.gameWon;
   lastRunDebrief = context.lastRunDebrief;
   gameOverTime = context.gameOverTime;
-  desiredMusicSound = getDesiredMusicForTransition(to, context, desiredMusicSound);
+  desiredMusicSound = getDesiredMusicForTransition(
+    to,
+    context,
+    desiredMusicSound,
+  );
 });
 
 function transitionTo(nextState, payload = {}, reason = "transition") {
