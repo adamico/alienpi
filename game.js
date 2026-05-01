@@ -56,17 +56,17 @@ import {
 } from "./src/scenes/sceneActions.js";
 import { createGameScenes } from "./src/scenes/gameScenes.js";
 
-export let currentBoss = null;
+let currentBoss = null;
 let player = null;
 
 let activeMusicSound = null;
 let activeMusicInstance = null;
 let desiredMusicSound = soundTitleMusic;
-export let gameState = GAME_STATES.TITLE;
+let gameState = GAME_STATES.TITLE;
 let gameOverTime = 0;
-export let gameTime = 0;
-export let gameWon = false;
-export let lastRunDebrief = null;
+let gameTime = 0;
+let gameWon = false;
+let lastRunDebrief = null;
 
 function getDesiredMusicForTransition(nextState, context, currentDesired) {
   switch (nextState) {
@@ -157,7 +157,15 @@ async function gameInit() {
   setTouchGamepadEnable(true);
   setTouchGamepadSize(200);
   setPaused(true);
-  initUI();
+  initUI({
+    getUIState: () => ({
+      gameState,
+      gameTime,
+      gameWon,
+      currentBoss,
+      lastRunDebrief,
+    }),
+  });
   setMenuHandlers({
     title: {
       start: () => {

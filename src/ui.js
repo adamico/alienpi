@@ -26,7 +26,6 @@ import {
   GAME_STATES,
   strings,
 } from "./config.js";
-import { gameState, gameTime, gameWon, currentBoss } from "../game.js";
 import { Menu } from "./menuNav.js";
 import { drawLootCell } from "./lootIcon.js";
 import { FONT_MENU } from "./fonts.js";
@@ -38,7 +37,6 @@ import {
   formatSubstrate,
   resetEconomy,
 } from "./economy.js";
-import { lastRunDebrief } from "../game.js";
 import {
   makeMenuRow,
   updateMenuInteraction,
@@ -51,6 +49,8 @@ import {
   updateSharedSliderInput,
 } from "./ui/settingsShared.js";
 import { createLoreScreen, createCreditsScreen } from "./ui/storyScreens.js";
+
+let uiStateProvider = null;
 
 let uiRoot;
 let scoreText, timeText;
@@ -167,7 +167,8 @@ function makeRow(parent, y, h = 40) {
   return makeMenuRow(parent, y, h);
 }
 
-export function initUI() {
+export function initUI({ getUIState }) {
+  uiStateProvider = getUIState;
   new UISystemPlugin();
   uiSystem.nativeHeight = 0;
 
@@ -759,7 +760,7 @@ function rebuildMenus() {
   ]);
 }
 
-function updateBossHealthBar(uiCenterY, hudScale) {
+function updateBossHealthBar(currentBoss, uiCenterY, hudScale) {
   const visible =
     currentBoss && !currentBoss.destroyed && currentBoss.state !== "entering";
   if (!visible) {
@@ -875,6 +876,9 @@ function setupWeaponUI() {
 
 export function updateUI() {
   if (!uiRoot) return;
+
+  const { gameState, gameTime, gameWon, currentBoss, lastRunDebrief } =
+    uiStateProvider();
 
   const hudScale = mainCanvasSize.y / 720;
 
@@ -1156,7 +1160,7 @@ export function updateUI() {
       }
     });
 
-    updateBossHealthBar(uiCenterY, hudScale);
+    updateBossHealthBar(currentBoss, uiCenterY, hudScale);
 
     const minutes = Math.floor(gameTime / 60);
     const seconds = Math.floor(gameTime % 60);
@@ -1166,6 +1170,8 @@ export function updateUI() {
 
 export function processMenuPointerInput() {
   if (!uiRoot) return;
+
+  const { gameState } = uiStateProvider();
 
   if (gameState === GAME_STATES.TITLE) {
     updateMenuInteraction(titleMenu, titleMenuRows);
