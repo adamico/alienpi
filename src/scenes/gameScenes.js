@@ -1,6 +1,5 @@
-import { GAME_STATES } from "../config.js";
-import { engineObjects, setPaused, timeReal } from "../engine.js";
-import { system } from "../config.js";
+import { GAME_STATES, system } from "../config.js";
+import { engineObjects, engineObjectsDestroy, setPaused, timeReal } from "../engine.js";
 import { tickDPSLog, setEnemyCount } from "../dpsTracker.js";
 import { resetScore, commitHighScore } from "../score.js";
 import { beginRun, commitRun } from "../economy.js";
@@ -21,17 +20,24 @@ import {
   tickGameTime,
   resetGameTime,
 } from "../world.js";
+import { titleMenu, pauseMenu, settingsMenu } from "../ui.js";
 import { BaseScene } from "./baseScene.js";
+
 import {
   SCENE_ACTION,
   hasSceneAction,
   dispatchMenuFromSceneActions,
 } from "./sceneActions.js";
 
+function destroyPlayfield() {
+  system.isResetting = true;
+  engineObjectsDestroy();
+  system.isResetting = false;
+}
+
 class TitleScene extends BaseScene {
-  constructor({ menus }) {
+  constructor() {
     super(GAME_STATES.TITLE);
-    this.menus = menus;
   }
 
   enter() {
@@ -43,7 +49,7 @@ class TitleScene extends BaseScene {
   }
 
   handleFrame(actions) {
-    return dispatchMenuFromSceneActions(this.menus.titleMenu, actions);
+    return dispatchMenuFromSceneActions(titleMenu, actions);
   }
 }
 
@@ -74,10 +80,9 @@ class LoreScene extends BaseScene {
 }
 
 class HomeScene extends BaseScene {
-  constructor({ transitionTo, destroyPlayfield }) {
+  constructor({ transitionTo }) {
     super(GAME_STATES.HOME);
     this.transitionTo = transitionTo;
-    this.destroyPlayfield = destroyPlayfield;
   }
 
   enter() {
@@ -93,7 +98,7 @@ class HomeScene extends BaseScene {
       hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
       hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
     ) {
-      this.destroyPlayfield();
+      destroyPlayfield();
       initializePlayer();
       spawnBoss();
       setupBoundaries();
@@ -171,10 +176,9 @@ class PlayingScene extends BaseScene {
 }
 
 class PauseScene extends BaseScene {
-  constructor({ transitionTo, menus }) {
+  constructor({ transitionTo }) {
     super(GAME_STATES.PAUSE);
     this.transitionTo = transitionTo;
-    this.menus = menus;
   }
 
   enter() {
@@ -191,15 +195,14 @@ class PauseScene extends BaseScene {
       return true;
     }
 
-    return dispatchMenuFromSceneActions(this.menus.pauseMenu, actions);
+    return dispatchMenuFromSceneActions(pauseMenu, actions);
   }
 }
 
 class SettingsScene extends BaseScene {
-  constructor({ popState, menus }) {
+  constructor({ popState }) {
     super(GAME_STATES.SETTINGS);
     this.popState = popState;
-    this.menus = menus;
   }
 
   handleFrame(actions) {
@@ -208,7 +211,7 @@ class SettingsScene extends BaseScene {
       return true;
     }
 
-    return dispatchMenuFromSceneActions(this.menus.settingsMenu, actions);
+    return dispatchMenuFromSceneActions(settingsMenu, actions);
   }
 }
 
@@ -241,17 +244,16 @@ class CreditsScene extends BaseScene {
 }
 
 class PostRunScene extends BaseScene {
-  constructor({ transitionTo, destroyPlayfield }) {
+  constructor({ transitionTo }) {
     super(GAME_STATES.POST_RUN);
     this.transitionTo = transitionTo;
-    this.destroyPlayfield = destroyPlayfield;
     this.gameOverTime = 0;
   }
 
   enter({ context }) {
     this.gameOverTime = context.gameOverTime;
     soundGameOverJingle.play();
-    this.destroyPlayfield();
+    destroyPlayfield();
     setPaused(true);
   }
 

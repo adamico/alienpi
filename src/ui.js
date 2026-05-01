@@ -9,14 +9,19 @@ import {
 } from "./engine.js";
 
 import { GAME_STATES } from "./config.js";
+import {
+  getGameState,
+  getGameTime,
+  getGameWon,
+  getCurrentBoss,
+  getLastRunDebrief,
+} from "./world.js";
 import { Menu } from "./menuNav.js";
 import { createPauseSettingsScreens } from "./ui/pauseSettingsScreens.js";
 import { createLoreScreen, createCreditsScreen } from "./ui/storyScreens.js";
 import { createHudView } from "./ui/hudView.js";
 import { createEconomyScreens } from "./ui/economyScreens.js";
 import { createTitleScreen } from "./ui/titleScreen.js";
-
-let uiStateProvider = null;
 
 let uiRoot;
 let hudView;
@@ -34,8 +39,7 @@ export const titleMenu = new Menu();
 export const pauseMenu = new Menu();
 export const settingsMenu = new Menu();
 
-export function initUI({ getUIState, handlers = {} }) {
-  uiStateProvider = getUIState;
+export function initUI({ handlers = {} } = {}) {
   new UISystemPlugin();
   uiSystem.nativeHeight = 0;
 
@@ -74,8 +78,11 @@ export function initUI({ getUIState, handlers = {} }) {
 export function updateUI() {
   if (!uiRoot) return;
 
-  const { gameState, gameTime, gameWon, currentBoss, lastRunDebrief } =
-    uiStateProvider();
+  const gameState = getGameState();
+  const gameTime = getGameTime();
+  const gameWon = getGameWon();
+  const currentBoss = getCurrentBoss();
+  const lastRunDebrief = getLastRunDebrief();
 
   uiRoot.pos = mainCanvasSize.scale(0.5).floor();
   uiRoot.size = mainCanvasSize;

@@ -1,13 +1,11 @@
 "use strict";
 
 import {
-  vec2,
   engineInit,
   glSetAntialias,
   setCanvasPixelated,
   setTilesPixelated,
   setFontDefault,
-  engineObjectsDestroy,
   timeDelta,
   setPaused,
   setDebugWatermark,
@@ -26,72 +24,15 @@ import { renderBackground, renderPostBackground } from "./src/scene.js";
 import {
   initUI,
   updateUI,
-  titleMenu,
-  pauseMenu,
-  settingsMenu,
 } from "./src/ui.js";
-import { SceneContext } from "./src/scenes/sceneContext.js";
-import { SceneManager } from "./src/scenes/sceneManager.js";
-import { SCENE_TRANSITIONS } from "./src/scenes/transitionPolicy.js";
-import { createSceneActionCollector } from "./src/scenes/sceneActions.js";
-import { setDesiredMusic, updateAudio } from "./src/soundManager.js";
-import { createGameScenes } from "./src/scenes/gameScenes.js";
 import {
-  getGameTime,
-  getCurrentBoss,
-  getGameState,
-  setGameState,
-  getGameWon,
-  setGameWon,
-  getLastRunDebrief,
-  setLastRunDebrief,
-} from "./src/world.js";
-
-const sceneContext = new SceneContext({
-  gameWon,
-  lastRunDebrief,
-  gameOverTime: 0,
-  previousState: gameState,
-});
-
-const sceneManager = new SceneManager({
-  initialState: gameState,
-  transitionPolicy: SCENE_TRANSITIONS,
-  context: sceneContext,
-});
-
-sceneManager.subscribe(({ to, context }) => {
-  setGameState(to);
-  setGameWon(context.gameWon);
-  setLastRunDebrief(context.lastRunDebrief);
-  setDesiredMusic(scenes.get(to)?.getMusic(context));
-});
-
-const collectSceneActions = createSceneActionCollector({ vec2 });
-
-const transitionTo = sceneManager.transitionTo.bind(sceneManager);
-const pushState = sceneManager.pushState.bind(sceneManager);
-const popState = sceneManager.popState.bind(sceneManager);
-
-const scenes = createGameScenes({
+  sceneManager,
+  collectSceneActions,
   transitionTo,
   pushState,
   popState,
-  destroyPlayfield: () => {
-    system.isResetting = true;
-    engineObjectsDestroy();
-    system.isResetting = false;
-  },
-  menus: {
-    titleMenu,
-    pauseMenu,
-    settingsMenu,
-  },
-});
-
-for (const scene of scenes.values()) {
-  sceneManager.registerScene(scene);
-}
+} from "./src/scenes/gameSceneManager.js";
+import { updateAudio } from "./src/soundManager.js";
 
 async function gameInit() {
   loadSettings();
@@ -105,13 +46,6 @@ async function gameInit() {
   setTouchGamepadSize(200);
   setPaused(true);
   initUI({
-    getUIState: () => ({
-      gameState: getGameState(),
-      gameTime: getGameTime(),
-      gameWon: getGameWon(),
-      currentBoss: getCurrentBoss(),
-      lastRunDebrief: getLastRunDebrief(),
-    }),
     handlers: {
       title: {
         start: () => transitionTo(GAME_STATES.LORE, {}, "title:start"),
