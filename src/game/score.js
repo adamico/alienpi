@@ -1,4 +1,4 @@
-import { rgb } from "./engine.js";
+import { rgb } from "../engine.js";
 import { spawnFloatingText } from "../visuals/gameEffects.js";
 import { addEarnings } from "./economy.js";
 

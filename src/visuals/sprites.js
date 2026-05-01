@@ -3,7 +3,7 @@ import {
   TileInfo,
   TextureInfo,
   textureInfos,
-} from "./engine.js";
+} from "../engine.js";
 
 const spritesMap = new Map();
 

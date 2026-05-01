@@ -1,7 +1,7 @@
-import { vec2 } from "./engine.js";
-import { system, GAME_STATES } from "./config/index.js";
-import { spawnPlayer } from "./entities/player.js";
-import { Boss } from "./entities/boss.js";
+import { vec2 } from "../engine.js";
+import { system, GAME_STATES } from "../config/index.js";
+import { spawnPlayer } from "../entities/player.js";
+import { Boss } from "../entities/boss.js";
 
 let player = null;
 let currentBoss = null;

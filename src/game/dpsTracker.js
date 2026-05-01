@@ -1,4 +1,4 @@
-import { time } from "./engine.js";
+import { time } from "../engine.js";
 
 const WINDOW_SECONDS = 2;
 const LOG_INTERVAL_SECONDS = 3;
