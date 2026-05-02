@@ -1,4 +1,4 @@
-import { vec2, rgb, drawRect, timeReal } from "../engine.js";
+import { vec2, rgb, drawRect, glDraw, timeReal } from "../engine.js";
 import { system, starfield as starCfg, GAME_STATES } from "../config/index.js";
 import { Boundary } from "../entities/boundary.js";
 import { getGameState } from "./world.js";
@@ -7,6 +7,31 @@ const MARQUEE_COLOR = rgb(0.05, 0.05, 0.1);
 const PLAYFIELD_COLOR = rgb(0.01, 0.01, 0.02);
 const PLAYFIELD_MARGIN = 1;
 const MASK_SIZE = 100;
+
+// Precomputed per-star table. Size, x, speed, phase, and rgba depend only on
+// `i` (alpha is `sin(i)**alphaPower`), so we bake them once and only animate
+// the y offset per frame.
+let starsX, starsSize, starsSpeed, starsPhase, starsRgba;
+function buildStarTable() {
+  const n = starCfg.count;
+  starsX = new Float32Array(n);
+  starsSize = new Float32Array(n);
+  starsSpeed = new Float32Array(n);
+  starsPhase = new Float32Array(n);
+  starsRgba = new Int32Array(n);
+  // rgba layout (little-endian on web): R G B A in low->high bytes.
+  // r=g=b=0x80 -> 0x00808080, alpha shifted into the high byte.
+  const rgbBase = 0x00808080;
+  for (let i = 0; i < n; i++) {
+    starsX[i] = i / system.levelSize.x - starCfg.horizontalOffset;
+    starsSize[i] = (i % starCfg.sizeRange) + starCfg.sizeBase;
+    starsSpeed[i] = starCfg.speedBase + (i ** 2.1 % starCfg.speedRange);
+    starsPhase[i] = i ** 2.3;
+    const a = Math.sin(i) ** starCfg.alphaPower;
+    const aByte = Math.max(0, Math.min(255, (a * 255) | 0));
+    starsRgba[i] = (aByte << 24) | rgbBase;
+  }
+}
 
 export function renderBackground() {
   drawPlayField({ drawStars: getGameState() !== GAME_STATES.POST_RUN });
@@ -21,27 +46,24 @@ export function drawPlayField({ drawStars = true } = {}) {
   drawRect(system.cameraPos, vec2(100), MARQUEE_COLOR);
   drawRect(
     system.cameraPos,
-    vec2(
-      system.levelSize.x + PLAYFIELD_MARGIN * 2,
-      system.levelSize.y * 2,
-    ),
+    vec2(system.levelSize.x + PLAYFIELD_MARGIN * 2, system.levelSize.y * 2),
     PLAYFIELD_COLOR,
   );
 
   if (!drawStars) return;
 
-  const pos = vec2(),
-    size = vec2(),
-    color = rgb();
-  for (let i = starCfg.count; i--; ) {
-    const offset =
-      timeReal * (starCfg.speedBase + (i ** 2.1 % starCfg.speedRange)) +
-      i ** 2.3;
-    pos.y = starCfg.verticalOffset - (offset % starCfg.verticalRange);
-    pos.x = i / system.levelSize.x - starCfg.horizontalOffset;
-    size.x = size.y = (i % starCfg.sizeRange) + starCfg.sizeBase;
-    color.set(0.5, 0.5, 0.5, Math.sin(i) ** starCfg.alphaPower);
-    drawRect(pos, size, color);
+  if (!starsX) buildStarTable();
+  const t = timeReal;
+  const vOff = starCfg.verticalOffset;
+  const vRange = starCfg.verticalRange;
+  const n = starCfg.count;
+  // glDraw with all-zero uvs and rgba=0 paints a solid additive-color quad,
+  // matching what drawRect does internally — but skips ASSERTs, screen-space
+  // checks, color allocation, and per-call rgbaInt() conversion.
+  for (let i = 0; i < n; i++) {
+    const y = vOff - ((t * starsSpeed[i] + starsPhase[i]) % vRange);
+    const s = starsSize[i];
+    glDraw(starsX[i], y, s, s, 0, 0, 0, 0, 0, 0, starsRgba[i]);
   }
 }
 
@@ -91,13 +113,7 @@ export function setupBoundaries() {
       vec2(lx + margin + wallThick / 2, ly / 2),
       vec2(wallThick, ly * 3),
     ),
-    new Boundary(
-      vec2(lx / 2, ly + wallThick / 2),
-      vec2(lx * 2, wallThick),
-    ),
-    new Boundary(
-      vec2(lx / 2, -wallThick / 2),
-      vec2(lx * 2, wallThick),
-    ),
+    new Boundary(vec2(lx / 2, ly + wallThick / 2), vec2(lx * 2, wallThick)),
+    new Boundary(vec2(lx / 2, -wallThick / 2), vec2(lx * 2, wallThick)),
   ];
 }

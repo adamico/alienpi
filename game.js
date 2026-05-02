@@ -34,7 +34,7 @@ async function gameInit() {
   await preloadFonts();
   setFontDefault(FONT_HUD);
   await initializeGameAssets();
-  setDebugWatermark(false);
+  setDebugWatermark(true);
   setTouchGamepadEnable(true);
   setTouchGamepadSize(200);
   setPaused(true);

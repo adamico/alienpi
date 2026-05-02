@@ -19,11 +19,11 @@ import {
   orbiter as orbCfg,
   missile as missileCfg,
   player as playerCfg,
-} from "./src/config.js";
+} from "./src/config/index.js";
 
 import { initializeGameAssets, initializePlayer } from "./src/commonSetup.js";
-import { drawPlayField, drawMarquee, setupBoundaries } from "./src/scene.js";
-import { input } from "./src/input.js";
+import { drawPlayField, drawMarquee, setupBoundaries } from "./src/game/scene.js";
+import { input } from "./src/input/input.js";
 
 import { player } from "./src/entities/player.js";
 import { BaseEntity } from "./src/entities/baseEntity.js";
@@ -33,8 +33,8 @@ import { BossOrbiter } from "./src/entities/bossOrbiter.js";
 import { BossMissile } from "./src/entities/bossMissile.js";
 import { Loot } from "./src/entities/loot.js";
 import { Bullet } from "./src/entities/bullet.js";
-import * as gameEffects from "./src/gameEffects.js";
-import { updateSoundVolumes } from "./src/sounds.js";
+import * as gameEffects from "./src/visuals/gameEffects.js";
+import { updateSoundVolumes } from "./src/audio/soundManager.js";
 
 let behaviorEnabled = true;
 

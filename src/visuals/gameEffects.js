@@ -152,7 +152,7 @@ export function explode(pos, size) {
     0, // angle
     s * 0.5, // emitSize
     0.2, // emitTime
-    200, // emitRate
+    Math.min(120, s * 60), // emitRate (scales with size, capped)
     PI * 2, // emitConeAngle
     sprites.get("scorch_02.png", system.particleSheetName),
     new Color(1, 0.8, 0.2, 1), // colorStartA
@@ -228,9 +228,9 @@ function spawnDebris(pos, size) {
     0, // angle
     size * 0.3, // emitSize
     0.1, // emitTime
-    size * 50, // emitRate
+    size * 25, // emitRate
     PI * 2, // emitConeAngle
-    0, // <--- Textureless
+    sprites.get("circle_05.png", system.particleSheetName), // textured so it batches with the rest of the explosion
     new Color(0.8, 0.8, 0.8, 1), // colorStartA (Grayscale / Silver)
     new Color(0.3, 0.3, 0.3, 1), // colorStartB (Dark Grey)
     new Color(0.1, 0.1, 0.1, 0), // colorEndA
@@ -260,14 +260,14 @@ function spawnSmokeBurst(pos, size) {
     0,
     size, // Larger initial spread
     0.2,
-    size * 30,
+    size * 15,
     PI,
     sprites.get("smoke_04.png", system.particleSheetName),
     new Color(0.8, 0.8, 0.8, 0.4),
     new Color(0.4, 0.4, 0.4, 0.2),
     new Color(0, 0, 0, 0),
     new Color(0, 0, 0, 0),
-    1.5, // particleTime
+    1.0, // particleTime
     Math.max(1.2, size * 0.5), // sizeStart
     Math.max(2.5, size * 0.8), // sizeEnd (Reduced from 5.0x to be proportional)
     0.02,
