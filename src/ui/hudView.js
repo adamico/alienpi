@@ -254,6 +254,7 @@ export function createHudView(parent) {
 function setupHealthUI(hudGroup, healthIcons) {
   const heartSprite = sprites.get(playerCfg.hpIcon, playerCfg.hpIconSheet);
   for (let i = 0; i < playerCfg.hp; i++) {
+    if (i >= 5) break; // limit to 5 icons for now, to avoid clutter
     const icon = new UITile(vec2(0, 0), vec2(37, 26).scale(0.8), heartSprite);
     icon.color = WHITE.copy();
     hudGroup.addChild(icon);
