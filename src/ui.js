@@ -67,3 +67,7 @@ export function updateUI() {
     lastRunDebrief: getLastRunDebrief(),
   });
 }
+
+export function handleLoreConfirm() {
+  return loreView ? loreView.handleConfirm() : true;
+}

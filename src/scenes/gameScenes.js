@@ -34,6 +34,7 @@ import {
   hasSceneAction,
   dispatchMenuFromSceneActions,
 } from "./sceneActions.js";
+import { handleLoreConfirm } from "../ui.js";
 
 function destroyPlayfield() {
   system.isResetting = true;
@@ -78,7 +79,10 @@ class LoreScene extends BaseScene {
       hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
       hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
     ) {
-      this.transitionTo(GAME_STATES.HOME, {}, "lore:confirm");
+      if (handleLoreConfirm()) {
+        this.transitionTo(GAME_STATES.HOME, {}, "lore:confirm");
+        return true;
+      }
       return true;
     }
     return false;

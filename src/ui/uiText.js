@@ -9,10 +9,16 @@ import { FONT_MENU } from "../visuals/fonts.js";
  * @param {Vector2}  pos
  * @param {Vector2}  size
  * @param {string}   label
- * @param {{ textHeight?: number, color?: Color, shadow?: boolean }} [opts]
+ * @param {{ textHeight?: number, color?: Color, shadow?: boolean, align?: string }} [opts]
  */
-export function makeText(parent, pos, size, label, { textHeight = 20, color, shadow = true } = {}) {
-  const text = new UIText(pos, size, label);
+export function makeText(
+  parent,
+  pos,
+  size,
+  label,
+  { textHeight = 20, color, shadow = true, align = "center" } = {},
+) {
+  const text = new UIText(pos, size, label, align);
   text.textHeight = textHeight;
   text.font = FONT_MENU;
   text.fontShadow = shadow;
