@@ -79,7 +79,7 @@ export function createEconomyScreens(uiRoot) {
 
   const postRunTitleText = makeCenterTitle(
     postRunGroup,
-    -90,
+    -200,
     strings.postRun.gameOverTitle,
     {
       textHeight: 80,
@@ -103,12 +103,17 @@ export function createEconomyScreens(uiRoot) {
     strings.title.highScorePrefix + formatHighScore(),
     { boxHeight: 40, textHeight: 26, color: COLOR_HIGHLIGHT, shadow: false },
   );
-  const retryText = makeCenterLine(postRunGroup, 60, strings.postRun.retryPrompt, {
-    boxHeight: 50,
-    textHeight: 24,
-    color: COLOR_WHITE,
-    shadow: false,
-  });
+  const retryText = makeCenterLine(
+    postRunGroup,
+    60,
+    strings.postRun.retryPrompt,
+    {
+      boxHeight: 50,
+      textHeight: 24,
+      color: COLOR_WHITE,
+      shadow: false,
+    },
+  );
   const backToTitleText = makeCenterLine(postRunGroup, 100, "", {
     boxHeight: 40,
     textHeight: 18,
@@ -231,7 +236,9 @@ export function createEconomyScreens(uiRoot) {
       const hasDebrief = !!debrief;
       const balanceForHeadline = debrief ? debrief.balance : getSubstrate();
       const earnings = debrief ? debrief.earnings : NaN;
-      const headlineEarnings = Number.isFinite(earnings) ? Math.max(0, earnings) : 0;
+      const headlineEarnings = Number.isFinite(earnings)
+        ? Math.max(0, earnings)
+        : 0;
       const bossBonus = debrief ? debrief.bossBonus : NaN;
       const repair = debrief ? debrief.repair : NaN;
       const net = debrief ? debrief.net : NaN;
