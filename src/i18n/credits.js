@@ -1,6 +1,7 @@
 // Credits screen
 export const credits = {
   backPrompt: "ESC: BACK",
+  skipPrompt: "SPACE: SKIP CREDITS",
   body: `DESIGN & CODE
 kc00l
 

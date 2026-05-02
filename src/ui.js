@@ -71,3 +71,7 @@ export function updateUI() {
 export function handleLoreConfirm() {
   return loreView ? loreView.handleConfirm() : true;
 }
+
+export function handleCreditsConfirm() {
+  return creditsView ? creditsView.handleConfirm() : true;
+}

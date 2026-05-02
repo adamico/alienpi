@@ -34,7 +34,7 @@ import {
   hasSceneAction,
   dispatchMenuFromSceneActions,
 } from "./sceneActions.js";
-import { handleLoreConfirm } from "../ui.js";
+import { handleLoreConfirm, handleCreditsConfirm } from "../ui.js";
 
 function destroyPlayfield() {
   system.isResetting = true;
@@ -240,12 +240,18 @@ class CreditsScene extends BaseScene {
   }
 
   handleFrame(actions) {
+    if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
+      this.transitionTo(GAME_STATES.TITLE, {}, "credits:dismiss-cancel");
+      return true;
+    }
+
     if (
-      hasSceneAction(actions, SCENE_ACTION.CANCEL) ||
       hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
       hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
     ) {
-      this.transitionTo(GAME_STATES.TITLE, {}, "credits:dismiss");
+      if (handleCreditsConfirm()) {
+        this.transitionTo(GAME_STATES.TITLE, {}, "credits:dismiss");
+      }
       return true;
     }
 
