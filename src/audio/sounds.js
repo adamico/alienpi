@@ -218,6 +218,53 @@ export const soundBossBeamCharge = new Sound([
   0.05,
 ]);
 
+// Score ping — brief chime played on kill score popups; caller varies pitch
+// per tier (small/medium/large kill) to give kills a distinct audio signature.
+export const soundScorePing = new Sound([
+  0.3,
+  0,
+  700,
+  0.005,
+  0.04,
+  0.18,
+  0,
+  2.0,
+  8,
+  ,
+  120,
+  0.04,
+  ,
+  ,
+  ,
+  ,
+  0.2,
+  0.65,
+  0.04,
+]);
+
+// Stat reveal — soft warm chime played as each post-run stat counts up.
+export const soundStatReveal = new Sound([
+  0.25,
+  0,
+  520,
+  0.005,
+  0.04,
+  0.25,
+  1,
+  1.3,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  0.15,
+  0.7,
+  0.04,
+]);
+
 // Loot collect — bright, rising chime
 export const soundLootCollect = new Sound([
   0.5,

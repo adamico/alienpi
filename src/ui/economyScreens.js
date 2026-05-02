@@ -9,6 +9,27 @@ import {
   getLastRun,
   formatSubstrate,
 } from "../game/economy.js";
+import { playSfx } from "../audio/soundManager.js";
+import { soundStatReveal } from "../audio/sounds.js";
+
+// Post-run stat count-up animation helpers.
+// Each stat has a stagger delay (startAt) and a count-up window (dur), both
+// in real-time seconds. Returns null until the stat's reveal time is reached.
+function animCountUp(target, elapsed, startAt, dur) {
+  if (elapsed < startAt) return null;
+  const t = Math.min((elapsed - startAt) / dur, 1);
+  const ease = 1 - (1 - t) ** 2; // ease-out quadratic
+  return Math.round(target * ease);
+}
+
+// Bitmask constants for tracking which per-stat sounds have fired.
+const S_SCORE = 1;
+const S_EARN = 2;
+const S_BOSS = 4;
+const S_REPAIR = 8;
+const S_NET = 16;
+const S_BAL = 32;
+const S_DEBT = 64;
 
 const COLOR_HOME_PANEL_BG = new Color(0.04, 0.06, 0.12, 0.85);
 const COLOR_HOME_TITLE = rgb(0.4, 0.9, 1);
@@ -137,6 +158,9 @@ export function createEconomyScreens(uiRoot) {
   let postRunCacheNet = NaN;
   let postRunCacheDebt = NaN;
   let postRunCacheHasDebrief = null;
+  // Count-up animation state.
+  let postRunAnimStartTime = NaN;
+  let postRunSoundsPlayed = 0;
 
   return {
     homeGroup,
@@ -152,6 +176,8 @@ export function createEconomyScreens(uiRoot) {
         postRunCacheNet = NaN;
         postRunCacheDebt = NaN;
         postRunCacheHasDebrief = null;
+        postRunAnimStartTime = NaN;
+        postRunSoundsPlayed = 0;
       }
     },
     tick(gameState, { gameWon, lastRunDebrief } = {}) {
@@ -224,9 +250,6 @@ export function createEconomyScreens(uiRoot) {
           postRunTitleText.textColor = COLOR_DEFEAT.copy();
         }
         retryText.text = strings.postRun.continuePrompt;
-        finalScoreText.text =
-          strings.postRun.substratePrefix +
-          formatSubstrate(balanceForHeadline, { compact: false });
         finalScoreText.textColor = COLOR_POSITIVE.copy();
         gameOverHighScoreText.visible = false;
 
@@ -239,34 +262,123 @@ export function createEconomyScreens(uiRoot) {
         postRunDebtText.visible = showBreakdown && debrief.debt > 0;
 
         if (debrief) {
-          postRunEarningsText.text =
-            strings.postRun.earningsLabel +
-            ": +" +
-            formatSubstrate(debrief.earnings, { compact: false });
-          postRunBossBonusText.text =
-            strings.postRun.bossBonusLabel +
-            ": +" +
-            formatSubstrate(debrief.bossBonus, { compact: false });
-          postRunRepairText.text =
-            strings.postRun.repairLabel +
-            ": -" +
-            formatSubstrate(debrief.repair, { compact: false });
-          const netSign = debrief.net >= 0 ? "+" : "";
-          postRunNetText.text =
-            strings.postRun.netLabel +
-            ": " +
-            netSign +
-            formatSubstrate(debrief.net, { compact: false });
           postRunNetText.textColor =
             debrief.net >= 0 ? COLOR_POSITIVE.copy() : COLOR_NEGATIVE.copy();
-          postRunBalanceText.text =
-            strings.postRun.balanceLabel +
-            ": " +
-            formatSubstrate(debrief.balance, { compact: false });
-          postRunDebtText.text =
-            strings.postRun.debtLabel +
-            ": " +
-            formatSubstrate(debrief.debt, { compact: false });
+        }
+
+        // Start count-up animation from this frame.
+        postRunAnimStartTime = timeReal;
+        postRunSoundsPlayed = 0;
+      }
+
+      // Animate all numeric text fields every frame while screen is active.
+      if (!isNaN(postRunAnimStartTime)) {
+        const el = timeReal - postRunAnimStartTime;
+
+        // finalScoreText starts immediately (stagger 0s, 1.2s count-up).
+        const animScore = animCountUp(balanceForHeadline, el, 0.0, 1.2);
+        finalScoreText.text =
+          strings.postRun.substratePrefix +
+          formatSubstrate(animScore, { compact: false });
+        if (!(postRunSoundsPlayed & S_SCORE)) {
+          postRunSoundsPlayed |= S_SCORE;
+          playSfx(soundStatReveal, undefined, 1.0, 1.5);
+        }
+
+        if (debrief) {
+          // Earnings: stagger 0.4s
+          if (postRunEarningsText.visible) {
+            const v = animCountUp(earnings, el, 0.4, 0.6);
+            postRunEarningsText.text =
+              v !== null
+                ? strings.postRun.earningsLabel +
+                  ": +" +
+                  formatSubstrate(v, { compact: false })
+                : "";
+            if (el >= 0.4 && !(postRunSoundsPlayed & S_EARN)) {
+              postRunSoundsPlayed |= S_EARN;
+              playSfx(soundStatReveal, undefined, 0.7, 1.1);
+            }
+          }
+
+          // Boss bonus: stagger 0.7s (only visible when bossBonus > 0)
+          if (postRunBossBonusText.visible) {
+            const v = animCountUp(bossBonus, el, 0.7, 0.6);
+            postRunBossBonusText.text =
+              v !== null
+                ? strings.postRun.bossBonusLabel +
+                  ": +" +
+                  formatSubstrate(v, { compact: false })
+                : "";
+            if (el >= 0.7 && !(postRunSoundsPlayed & S_BOSS)) {
+              postRunSoundsPlayed |= S_BOSS;
+              playSfx(soundStatReveal, undefined, 0.7, 1.25);
+            }
+          }
+
+          // Repair cost: stagger 1.0s
+          if (postRunRepairText.visible) {
+            const v = animCountUp(repair, el, 1.0, 0.6);
+            postRunRepairText.text =
+              v !== null
+                ? strings.postRun.repairLabel +
+                  ": -" +
+                  formatSubstrate(v, { compact: false })
+                : "";
+            if (el >= 1.0 && !(postRunSoundsPlayed & S_REPAIR)) {
+              postRunSoundsPlayed |= S_REPAIR;
+              playSfx(soundStatReveal, undefined, 0.7, 0.85);
+            }
+          }
+
+          // Net: stagger 1.3s — pitch reflects positive/negative outcome
+          if (postRunNetText.visible) {
+            const v = animCountUp(net, el, 1.3, 0.6);
+            if (v !== null) {
+              const netSign = net >= 0 ? "+" : "";
+              postRunNetText.text =
+                strings.postRun.netLabel +
+                ": " +
+                netSign +
+                formatSubstrate(v, { compact: false });
+            } else {
+              postRunNetText.text = "";
+            }
+            if (el >= 1.3 && !(postRunSoundsPlayed & S_NET)) {
+              postRunSoundsPlayed |= S_NET;
+              playSfx(soundStatReveal, undefined, 0.85, net >= 0 ? 1.3 : 0.75);
+            }
+          }
+
+          // New balance: stagger 1.6s
+          if (postRunBalanceText.visible) {
+            const v = animCountUp(balanceForHeadline, el, 1.6, 0.6);
+            postRunBalanceText.text =
+              v !== null
+                ? strings.postRun.balanceLabel +
+                  ": " +
+                  formatSubstrate(v, { compact: false })
+                : "";
+            if (el >= 1.6 && !(postRunSoundsPlayed & S_BAL)) {
+              postRunSoundsPlayed |= S_BAL;
+              playSfx(soundStatReveal, undefined, 0.8, 1.1);
+            }
+          }
+
+          // Debt: stagger 1.9s (only visible when debt > 0)
+          if (postRunDebtText.visible) {
+            const v = animCountUp(debt, el, 1.9, 0.4);
+            postRunDebtText.text =
+              v !== null
+                ? strings.postRun.debtLabel +
+                  ": " +
+                  formatSubstrate(v, { compact: false })
+                : "";
+            if (el >= 1.9 && !(postRunSoundsPlayed & S_DEBT)) {
+              postRunSoundsPlayed |= S_DEBT;
+              playSfx(soundStatReveal, undefined, 0.6, 0.7);
+            }
+          }
         }
       }
 

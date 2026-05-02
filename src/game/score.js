@@ -1,6 +1,8 @@
 import { rgb } from "../engine.js";
 import { spawnFloatingText } from "../visuals/gameEffects.js";
 import { addEarnings } from "./economy.js";
+import { playSfx } from "../audio/soundManager.js";
+import { soundScorePing } from "../audio/sounds.js";
 
 // Score values per kill. Tunable here.
 export const SCORE = {
@@ -66,6 +68,10 @@ export function addScoreAt(pos, n) {
   const duration = big ? 1.6 : 1.0;
   const rise = big ? 3.5 : 2.2;
   spawnFloatingText(pos, `+${n}`, { color, size, duration, rise });
+  // Audio feedback: pitch rises with kill tier so big kills sound more impressive.
+  const pingVolume = big ? 0.9 : med ? 0.75 : 0.6;
+  const pingPitch = big ? 1.6 : med ? 1.1 : 0.8;
+  playSfx(soundScorePing, pos, pingVolume, pingPitch);
 }
 
 export function resetScore() {

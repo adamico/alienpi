@@ -34,4 +34,3 @@
 ## game feel
 
 - GF1: add slow-motion effect on orbiter loot death. priority: medium.
-- GF5: add numbers going up visual and audio effect for score increases and for post-run stats. priority: low.

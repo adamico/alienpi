@@ -16,6 +16,12 @@ export function getSubstrate() {
   return substrate;
 }
 
+// HUD-facing balance: persistent substrate plus in-run earnings that have not
+// been committed yet. This keeps the top-line value responsive during gameplay.
+export function getLiveSubstrate() {
+  return substrate + (runActive ? runEarnings : 0);
+}
+
 export function getDebt() {
   return debt;
 }

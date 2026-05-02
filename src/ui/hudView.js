@@ -22,7 +22,7 @@ import {
   strings,
 } from "../config/index.js";
 import { drawLootCell } from "../visuals/lootIcon.js";
-import { getSubstrate, getDebt, formatSubstrate } from "../game/economy.js";
+import { getLiveSubstrate, formatSubstrate } from "../game/economy.js";
 
 const BOSS_BAR = {
   padding: 40,
@@ -52,16 +52,6 @@ export function createHudView(parent) {
   scoreText.textAlign = "left";
   scoreText.fontShadow = true;
   hudGroup.addChild(scoreText);
-
-  const hudHighScoreText = new UIText(
-    vec2(0, 0),
-    vec2(300, 24),
-    strings.hud.debtPrefix + "0",
-  );
-  hudHighScoreText.textColor = new Color(1, 0.5, 0.3, 0.85);
-  hudHighScoreText.textAlign = "left";
-  hudHighScoreText.fontShadow = true;
-  hudGroup.addChild(hudHighScoreText);
 
   const timeText = new UIText(
     vec2(0, 0),
@@ -161,14 +151,7 @@ export function createHudView(parent) {
       scoreText.size = vec2(300, 40).scale(hudScale);
       scoreText.textHeight = 30 * hudScale;
       scoreText.text =
-        strings.hud.substratePrefix + formatSubstrate(getSubstrate());
-
-      hudHighScoreText.localPos = vec2(uiAnchor.x, uiAnchor.y + 28 * hudScale);
-      hudHighScoreText.size = vec2(300, 24).scale(hudScale);
-      hudHighScoreText.textHeight = 18 * hudScale;
-      const debt = getDebt();
-      hudHighScoreText.visible = debt > 0;
-      hudHighScoreText.text = strings.hud.debtPrefix + formatSubstrate(debt);
+        strings.hud.substratePrefix + formatSubstrate(getLiveSubstrate());
 
       timeText.localPos = vec2(-uiAnchor.x, uiAnchor.y);
       timeText.size = vec2(300, 40).scale(hudScale);
