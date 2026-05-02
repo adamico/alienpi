@@ -66,6 +66,7 @@ export const system = {
     "boss2.png",
     "drone.png",
     "drone-looter.png",
+    "embed_bg.png",
     "homing2.png",
     "shipA3.png",
     "shipB2.png",

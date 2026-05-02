@@ -1,0 +1,333 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8" />
+  <title>HUD Overlay Preview</title>
+  <style>
+    @font-face {
+      font-family: "Exo 2";
+      src: url("public/assets/fonts/Exo2-VariableFont_wght.ttf") format("truetype-variations");
+      font-weight: 100 900; font-display: block;
+    }
+    @font-face {
+      font-family: "Orbitron";
+      src: url("public/assets/fonts/Orbitron-Medium.ttf") format("truetype");
+      font-display: block;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /*
+     * body matches the game exactly: no position, no margin, overflow hidden,
+     * height = viewport. This means position:absolute children use the browser
+     * viewport as their containing block — identical to how LittleJS positions
+     * the canvas and how hudOverlay positions itself.
+     */
+    body {
+      background: #000;
+      overflow: hidden;
+      height: 100vh;
+      font-family: "Exo 2", system-ui, sans-serif;
+      color: #ccc;
+    }
+
+    /*
+     * Background image — same position/size rule as the LittleJS canvas:
+     *   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%)
+     * This ensures the visual frame and the overlay share the same origin.
+     */
+    #bg {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(100vw, calc(100vh * 1280 / 720));
+      height: min(100vh, calc(100vw * 720 / 1280));
+      z-index: 1;
+    }
+    #bg img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ── Controls panel — centered in playfield for unobstructed side panels ── */
+    #controls {
+      display: flex;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 340px;
+      height: 76vh;
+      max-height: 620px;
+      overflow-y: auto;
+      background: rgba(14, 14, 20, 0.93);
+      border: 1px solid #2a2a3a;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      z-index: 100;
+      padding: 12px 10px 24px;
+      font-size: 13px;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ctrl-group {
+      background: #1c1c28;
+      border: 1px solid #2e2e40;
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+    .ctrl-group h3 {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6af;
+      margin-bottom: 7px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+    label { flex: 1; color: #aaa; font-size: 11px; }
+    input[type=range] { flex: 2; accent-color: #6af; }
+    .val { width: 36px; text-align: right; color: #fff; font-size: 11px; }
+    input[type=number] {
+      flex: 2; background: #1a1a24; border: 1px solid #3a3a50;
+      color: #eee; padding: 2px 5px; border-radius: 3px; font-size: 11px;
+    }
+    select {
+      flex: 2; background: #1a1a24; border: 1px solid #3a3a50;
+      color: #eee; padding: 2px 5px; border-radius: 3px; font-size: 11px;
+    }
+
+    #copy-btn {
+      padding: 7px 0;
+      background: #1e3d5c;
+      color: #7cf;
+      border: 1px solid #3af;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      width: 100%;
+    }
+    #copy-btn:hover { background: #274e74; }
+    #copy-msg { color: #5d5; font-size: 11px; text-align: center; opacity: 0; transition: opacity .4s; }
+  </style>
+</head>
+<body>
+
+<!-- background image: same centering as LittleJS canvas -->
+<div id="bg"><img src="public/assets/embed_bg.png" alt=""></div>
+<!-- hudOverlay.js appends the overlay div directly to document.body, same as the game -->
+
+<div id="controls">
+  <div id="element-controls"></div>
+
+  <div class="ctrl-group">
+    <h3>Preview data</h3>
+    <div class="row"><label>Substrate</label>
+      <input type="number" id="substrate" value="1200"></div>
+    <div class="row"><label>Game time (s)</label>
+      <input type="number" id="gameTime" value="86"></div>
+    <div class="row"><label>Player HP</label>
+      <input type="range" id="playerHp" min="0" max="5" step="1" value="3">
+      <span class="val" id="playerHpVal"></span></div>
+    <div class="row"><label>Active weapon</label>
+      <select id="activeWeapon">
+        <option value="vulcan">Vulcan</option>
+        <option value="shotgun">Shotgun</option>
+        <option value="latch">Beam</option>
+      </select></div>
+    <div class="row"><label>Vulcan lvl</label>
+      <input type="range" id="lvlVulcan" min="0" max="3" step="1" value="2">
+      <span class="val" id="lvlVulcanVal"></span></div>
+    <div class="row"><label>Shotgun lvl</label>
+      <input type="range" id="lvlShotgun" min="0" max="3" step="1" value="1">
+      <span class="val" id="lvlShotgunVal"></span></div>
+    <div class="row"><label>Beam lvl</label>
+      <input type="range" id="lvlLatch" min="0" max="3" step="1" value="0">
+      <span class="val" id="lvlLatchVal"></span></div>
+  </div>
+
+  <button id="copy-btn">Copy constants to clipboard</button>
+  <div id="copy-msg">Copied!</div>
+
+</div>
+
+<script type="module">
+import {
+  getHudOverlayConfig,
+  initHudOverlay,
+  setHudOverlayVisible,
+  updateHudOverlay,
+  setLayoutConstants,
+} from "./src/ui/hudOverlay.js";
+
+const $  = id => document.getElementById(id);
+const num = id => Number($(id).value);
+
+const overlayConfig = getHudOverlayConfig();
+const ELEMENTS = [
+  { key: "substrate", title: "Substrate" },
+  { key: "health", title: "Health" },
+  { key: "weapons", title: "Weapons" },
+  { key: "time", title: "Time" },
+].map((element) => {
+  const cfg = overlayConfig[element.key];
+  return {
+    ...element,
+    defaults: {
+      left: cfg.rect.left,
+      top: cfg.rect.top,
+      width: cfg.rect.width,
+      height: cfg.rect.height,
+      font: Math.round(cfg.fontScale * 100),
+      deg: cfg.persp.deg,
+      dist: parseInt(cfg.persp.dist, 10),
+      skew: cfg.persp.skew ?? 0,
+      roll: cfg.persp.roll ?? 0,
+    },
+  };
+});
+
+function syncVal(id) {
+  const out = $(`${id}Val`);
+  if (out) out.textContent = $(id).value;
+}
+
+function addKnobRow(group, label, id, min, max, step, value) {
+  const row = document.createElement("div");
+  row.className = "row";
+  row.innerHTML = `
+    <label>${label}</label>
+    <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}">
+    <span class="val" id="${id}Val"></span>
+  `;
+  group.appendChild(row);
+}
+
+function buildElementControls() {
+  const host = $("element-controls");
+  ELEMENTS.forEach((el) => {
+    const g = document.createElement("div");
+    g.className = "ctrl-group";
+    g.innerHTML = `<h3>${el.title}</h3>`;
+
+    addKnobRow(g, "left", `${el.key}Left`, -200, 1280, 1, el.defaults.left);
+    addKnobRow(g, "top", `${el.key}Top`, 0, 720, 1, el.defaults.top);
+    addKnobRow(g, "width", `${el.key}W`, 40, 500, 1, el.defaults.width);
+    addKnobRow(g, "height", `${el.key}H`, 20, 400, 1, el.defaults.height);
+    addKnobRow(g, "font %", `${el.key}Font`, 60, 220, 5, el.defaults.font);
+    addKnobRow(g, "persp deg", `${el.key}Deg`, -80, 80, 1, el.defaults.deg);
+    addKnobRow(g, "persp dist", `${el.key}Dist`, 200, 3000, 50, el.defaults.dist);
+    addKnobRow(g, "persp skew", `${el.key}Skew`, -40, 40, 1, el.defaults.skew);
+    addKnobRow(g, "persp roll", `${el.key}Roll`, -40, 40, 1, el.defaults.roll);
+
+    host.appendChild(g);
+  });
+}
+
+function elementValues(key) {
+  return {
+    rect: {
+      left: num(`${key}Left`),
+      top: num(`${key}Top`),
+      width: num(`${key}W`),
+      height: num(`${key}H`),
+    },
+    fontScale: num(`${key}Font`) / 100,
+    persp: {
+      deg: num(`${key}Deg`),
+      dist: num(`${key}Dist`),
+      skew: num(`${key}Skew`),
+      roll: num(`${key}Roll`),
+    },
+  };
+}
+
+buildElementControls();
+
+// Mount overlay to document.body with no container arg — identical to the game.
+initHudOverlay();
+setHudOverlayVisible(true);
+
+const sliders = [
+  "playerHp","lvlVulcan","lvlShotgun","lvlLatch",
+  ...ELEMENTS.flatMap((el) => [
+    `${el.key}Left`, `${el.key}Top`, `${el.key}W`, `${el.key}H`,
+    `${el.key}Font`, `${el.key}Deg`, `${el.key}Dist`, `${el.key}Skew`, `${el.key}Roll`,
+  ]),
+];
+sliders.forEach(id => {
+  syncVal(id);
+  $(id).addEventListener("input", () => { syncVal(id); refresh(); });
+});
+["substrate","gameTime","activeWeapon"].forEach(id =>
+  $(id).addEventListener("input", refresh));
+
+function refresh() {
+  setLayoutConstants({
+    elements: {
+      substrate: elementValues("substrate"),
+      health: elementValues("health"),
+      weapons: elementValues("weapons"),
+      time: elementValues("time"),
+    },
+  });
+
+  updateHudOverlay({
+    substrate:        num("substrate"),
+    gameTime:         num("gameTime"),
+    playerHp:         num("playerHp"),
+    maxHp:            5,
+    weaponLevels:     { vulcan: num("lvlVulcan"), shotgun: num("lvlShotgun"), latch: num("lvlLatch") },
+    currentWeaponKey: $("activeWeapon").value,
+    maxLevel:         3,
+    weaponsCfg:       { vulcan: { label: "VULCAN" }, shotgun: { label: "SHOTGUN" }, latch: { label: "BEAM" } },
+  });
+}
+refresh();
+
+$("copy-btn").addEventListener("click", () => {
+  const e = {
+    substrate: elementValues("substrate"),
+    health: elementValues("health"),
+    weapons: elementValues("weapons"),
+    time: elementValues("time"),
+  };
+
+  const txt =
+`const ELEMENT_CONFIG = {
+  substrate: {
+    rect: { left: ${e.substrate.rect.left}, top: ${e.substrate.rect.top}, width: ${e.substrate.rect.width}, height: ${e.substrate.rect.height} },
+    fontScale: ${e.substrate.fontScale.toFixed(2)},
+    persp: { deg: ${e.substrate.persp.deg}, dist: "${e.substrate.persp.dist}px", skew: ${e.substrate.persp.skew}, roll: ${e.substrate.persp.roll}, origin: "left" },
+  },
+  health: {
+    rect: { left: ${e.health.rect.left}, top: ${e.health.rect.top}, width: ${e.health.rect.width}, height: ${e.health.rect.height} },
+    fontScale: ${e.health.fontScale.toFixed(2)},
+    persp: { deg: ${e.health.persp.deg}, dist: "${e.health.persp.dist}px", skew: ${e.health.persp.skew}, roll: ${e.health.persp.roll}, origin: "left" },
+  },
+  weapons: {
+    rect: { left: ${e.weapons.rect.left}, top: ${e.weapons.rect.top}, width: ${e.weapons.rect.width}, height: ${e.weapons.rect.height} },
+    fontScale: ${e.weapons.fontScale.toFixed(2)},
+    persp: { deg: ${e.weapons.persp.deg}, dist: "${e.weapons.persp.dist}px", skew: ${e.weapons.persp.skew}, roll: ${e.weapons.persp.roll}, origin: "left" },
+  },
+  time: {
+    rect: { left: ${e.time.rect.left}, top: ${e.time.rect.top}, width: ${e.time.rect.width}, height: ${e.time.rect.height} },
+    fontScale: ${e.time.fontScale.toFixed(2)},
+    persp: { deg: ${e.time.persp.deg}, dist: "${e.time.persp.dist}px", skew: ${e.time.persp.skew}, roll: ${e.time.persp.roll}, origin: "right" },
+  },
+};`;
+  navigator.clipboard.writeText(txt).then(() => {
+    const msg = $("copy-msg");
+    msg.style.opacity = "1";
+    setTimeout(() => msg.style.opacity = "0", 1800);
+  });
+});
+</script>
+</body>
+</html>
+
