@@ -26,24 +26,24 @@ const WEAPON_DOT_COLOR = { vulcan: "#4af", shotgun: "#f64", latch: "#4f8" };
  */
 const ELEMENT_CONFIG = {
   substrate: {
-    rect: { left: -26, top: 56, width: 266, height: 50 },
-    fontScale: 1.25,
-    persp: { deg: 0, dist: "1600px", skew: -8, roll: 13, origin: "left" },
+    rect: { left: 41, top: 81, width: 266, height: 50 },
+    fontScale: 1.15,
+    persp: { deg: 0, dist: "1600px", skew: -8, roll: 14, origin: "left" },
   },
   health: {
-    rect: { left: -40, top: 144, width: 154, height: 106 },
+    rect: { left: 23, top: 166, width: 154, height: 106 },
     fontScale: 1.8,
     persp: { deg: 0, dist: "1600px", skew: -8, roll: 10, origin: "left" },
   },
   weapons: {
-    rect: { left: -19, top: 290, width: 258, height: 182 },
-    fontScale: 1.9,
+    rect: { left: 47, top: 290, width: 230, height: 181 },
+    fontScale: 1.65,
     persp: { deg: 49, dist: "900px", skew: 1, roll: -1, origin: "left" },
   },
   time: {
-    rect: { left: 1091, top: 45, width: 227, height: 84 },
-    fontScale: 2.05,
-    persp: { deg: 0, dist: "1600px", skew: 14, roll: -12, origin: "right" },
+    rect: { left: 1045, top: 67, width: 227, height: 84 },
+    fontScale: 1.9,
+    persp: { deg: 0, dist: "1600px", skew: 5, roll: -13, origin: "right" },
   },
 };
 
@@ -53,6 +53,7 @@ const ELEMENT_CONFIG = {
 
 let overlay = null;
 let els = null;
+let resizeListenerAttached = false;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -62,6 +63,8 @@ export function initHudOverlay(container) {
   if (overlay) return;
   overlay = buildOverlay();
   (container ?? document.body).appendChild(overlay);
+  ensureResizeListener();
+  applyOverlayScale();
 }
 
 export function getHudOverlayConfig() {
@@ -103,6 +106,7 @@ export function setLayoutConstants({ elements } = {}) {
     overlay = buildOverlay();
     overlay.style.display = wasVisible ? "block" : "none";
     parent.appendChild(overlay);
+    applyOverlayScale();
   }
 }
 
@@ -194,7 +198,8 @@ function buildOverlay() {
     position: "absolute",
     top: "50%",
     left: "50%",
-    transform: "translate(-50%, -50%)",
+    transform: "translate(-50%, -50%) scale(1)",
+    transformOrigin: "center center",
     width: "1280px",
     height: "720px",
     pointerEvents: "none",
@@ -348,6 +353,18 @@ function buildOverlay() {
 
   els = { subValue, healthRow, weaponRows, timeValue };
   return root;
+}
+
+function ensureResizeListener() {
+  if (resizeListenerAttached) return;
+  window.addEventListener("resize", applyOverlayScale);
+  resizeListenerAttached = true;
+}
+
+function applyOverlayScale() {
+  if (!overlay) return;
+  const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+  overlay.style.transform = `translate(-50%, -50%) scale(${scale})`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
