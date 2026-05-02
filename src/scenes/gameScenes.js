@@ -34,7 +34,7 @@ import {
   hasSceneAction,
   dispatchMenuFromSceneActions,
 } from "./sceneActions.js";
-import { handleLoreConfirm, handleCreditsConfirm } from "../ui.js";
+import { handleUIConfirmForState } from "../ui.js";
 
 function destroyPlayfield() {
   system.isResetting = true;
@@ -79,7 +79,7 @@ class LoreScene extends BaseScene {
       hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
       hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
     ) {
-      if (handleLoreConfirm()) {
+      if (handleUIConfirmForState(GAME_STATES.LORE)) {
         this.transitionTo(GAME_STATES.HOME, {}, "lore:confirm");
         return true;
       }
@@ -249,7 +249,7 @@ class CreditsScene extends BaseScene {
       hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
       hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
     ) {
-      if (handleCreditsConfirm()) {
+      if (handleUIConfirmForState(GAME_STATES.CREDITS)) {
         this.transitionTo(GAME_STATES.TITLE, {}, "credits:dismiss");
       }
       return true;
