@@ -14,6 +14,17 @@ import { SCENE_TRANSITIONS } from "./transitionPolicy.js";
 import { createSceneActionCollector } from "./sceneActions.js";
 import { createGameScenes } from "./gameScenes.js";
 import { initUI } from "../ui.js";
+import { beginSceneWipe } from "../visuals/sceneTransition.js";
+
+// Pause toggles should be instantaneous; everything else gets the wipe.
+const SKIP_WIPE_PAIRS = new Set([
+  `${GAME_STATES.PLAYING}->${GAME_STATES.PAUSE}`,
+  `${GAME_STATES.PAUSE}->${GAME_STATES.PLAYING}`,
+]);
+
+function shouldWipe(from, to) {
+  return !SKIP_WIPE_PAIRS.has(`${from}->${to}`);
+}
 
 const sceneContext = new SceneContext({
   gameWon: getGameWon(),
@@ -28,9 +39,32 @@ export const sceneManager = new SceneManager({
   context: sceneContext,
 });
 
-export const transitionTo = sceneManager.transitionTo.bind(sceneManager);
-export const pushState = sceneManager.pushState.bind(sceneManager);
-export const popState = sceneManager.popState.bind(sceneManager);
+const _transitionTo = sceneManager.transitionTo.bind(sceneManager);
+const _pushState = sceneManager.pushState.bind(sceneManager);
+const _popState = sceneManager.popState.bind(sceneManager);
+
+export function transitionTo(nextState, payload, reason) {
+  if (!sceneManager.canTransitionTo(nextState)) return false;
+  if (!shouldWipe(sceneManager.getState(), nextState)) {
+    return _transitionTo(nextState, payload, reason);
+  }
+  beginSceneWipe(() => _transitionTo(nextState, payload, reason));
+  return true;
+}
+
+export function pushState(nextState, payload, reason) {
+  if (!sceneManager.canTransitionTo(nextState)) return false;
+  if (!shouldWipe(sceneManager.getState(), nextState)) {
+    return _pushState(nextState, payload, reason);
+  }
+  beginSceneWipe(() => _pushState(nextState, payload, reason));
+  return true;
+}
+
+export function popState(payload, reason) {
+  beginSceneWipe(() => _popState(payload, reason));
+  return true;
+}
 export const collectSceneActions = createSceneActionCollector({ vec2 });
 
 const scenes = createGameScenes({ transitionTo, pushState, popState });

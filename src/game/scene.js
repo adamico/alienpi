@@ -1,6 +1,7 @@
 import { vec2, rgb, drawRect, glDraw, timeReal } from "../engine.js";
 import { system, starfield as starCfg, GAME_STATES } from "../config/index.js";
 import { Boundary } from "../entities/boundary.js";
+import { renderSceneTransition } from "../visuals/sceneTransition.js";
 import { getGameState } from "./world.js";
 
 const MARQUEE_COLOR = rgb(0.05, 0.05, 0.1);
@@ -39,6 +40,7 @@ export function renderBackground() {
 
 export function renderPostBackground() {
   drawMarquee();
+  renderSceneTransition();
 }
 
 /** Background fill + optional scrolling starfield. */

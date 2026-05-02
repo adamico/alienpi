@@ -34,5 +34,5 @@
 ## game feel
 
 - GF1: add slow-motion effect on orbiter loot death. priority: medium.
-- ~~GF2: add player ship entry animation. priority: medium.~~
-- GF3: add scene transition effects. priority: low.
+- GF4: add letter to letter text reveal effect for dialogue. priority: low.
+- GF5: add numbers going up visual and audio effect for score increases and for post-run stats. priority: low.
