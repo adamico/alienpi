@@ -221,7 +221,7 @@ export const soundBossBeamCharge = new Sound([
 // Score ping — brief chime played on kill score popups; caller varies pitch
 // per tier (small/medium/large kill) to give kills a distinct audio signature.
 export const soundScorePing = new Sound([
-  0.3,
+  0.9,
   0,
   700,
   0.005,
@@ -244,7 +244,7 @@ export const soundScorePing = new Sound([
 
 // Stat reveal — soft warm chime played as each post-run stat counts up.
 export const soundStatReveal = new Sound([
-  0.25,
+  0.6,
   0,
   520,
   0.005,
@@ -323,7 +323,7 @@ export const soundWeaponSwitch = new Sound([
 ]); // Switch
 
 export const soundGameOverJingle = new Sound([
-  1.4,
+  0.5,
   ,
   65.40639,
   ,

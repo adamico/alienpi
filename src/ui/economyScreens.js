@@ -10,7 +10,7 @@ import {
   formatSubstrate,
 } from "../game/economy.js";
 import { playSfx } from "../audio/soundManager.js";
-import { soundStatReveal } from "../audio/sounds.js";
+import { soundScorePing } from "../audio/sounds.js";
 
 // Post-run stat count-up animation helpers.
 // Each stat has a stagger delay (startAt) and a count-up window (dur), both
@@ -21,15 +21,6 @@ function animCountUp(target, elapsed, startAt, dur) {
   const ease = 1 - (1 - t) ** 2; // ease-out quadratic
   return Math.round(target * ease);
 }
-
-// Bitmask constants for tracking which per-stat sounds have fired.
-const S_SCORE = 1;
-const S_EARN = 2;
-const S_BOSS = 4;
-const S_REPAIR = 8;
-const S_NET = 16;
-const S_BAL = 32;
-const S_DEBT = 64;
 
 const COLOR_HOME_PANEL_BG = new Color(0.04, 0.06, 0.12, 0.85);
 const COLOR_HOME_TITLE = rgb(0.4, 0.9, 1);
@@ -160,7 +151,22 @@ export function createEconomyScreens(uiRoot) {
   let postRunCacheHasDebrief = null;
   // Count-up animation state.
   let postRunAnimStartTime = NaN;
-  let postRunSoundsPlayed = 0;
+  let postRunPrevAnimatedScore = NaN;
+  let postRunPrevAnimatedEarnings = NaN;
+  let postRunPrevAnimatedBossBonus = NaN;
+  let postRunPrevAnimatedRepair = NaN;
+  let postRunPrevAnimatedNet = NaN;
+  let postRunPrevAnimatedBalance = NaN;
+  let postRunPrevAnimatedDebt = NaN;
+  let postRunNextScorePingTime = 0;
+
+  function playPingOnIncrement(currentValue, prevValue, pitch = 1.05) {
+    if (currentValue === null || currentValue === prevValue) return prevValue;
+    if (timeReal < postRunNextScorePingTime) return prevValue;
+    postRunNextScorePingTime = timeReal + 0.05;
+    playSfx(soundScorePing, undefined, 0.35, pitch);
+    return currentValue;
+  }
 
   return {
     homeGroup,
@@ -177,7 +183,14 @@ export function createEconomyScreens(uiRoot) {
         postRunCacheDebt = NaN;
         postRunCacheHasDebrief = null;
         postRunAnimStartTime = NaN;
-        postRunSoundsPlayed = 0;
+        postRunPrevAnimatedScore = NaN;
+        postRunPrevAnimatedEarnings = NaN;
+        postRunPrevAnimatedBossBonus = NaN;
+        postRunPrevAnimatedRepair = NaN;
+        postRunPrevAnimatedNet = NaN;
+        postRunPrevAnimatedBalance = NaN;
+        postRunPrevAnimatedDebt = NaN;
+        postRunNextScorePingTime = 0;
       }
     },
     tick(gameState, { gameWon, lastRunDebrief } = {}) {
@@ -218,6 +231,7 @@ export function createEconomyScreens(uiRoot) {
       const hasDebrief = !!debrief;
       const balanceForHeadline = debrief ? debrief.balance : getSubstrate();
       const earnings = debrief ? debrief.earnings : NaN;
+      const headlineEarnings = Number.isFinite(earnings) ? Math.max(0, earnings) : 0;
       const bossBonus = debrief ? debrief.bossBonus : NaN;
       const repair = debrief ? debrief.repair : NaN;
       const net = debrief ? debrief.net : NaN;
@@ -268,22 +282,31 @@ export function createEconomyScreens(uiRoot) {
 
         // Start count-up animation from this frame.
         postRunAnimStartTime = timeReal;
-        postRunSoundsPlayed = 0;
+        postRunPrevAnimatedScore = NaN;
+        postRunPrevAnimatedEarnings = NaN;
+        postRunPrevAnimatedBossBonus = NaN;
+        postRunPrevAnimatedRepair = NaN;
+        postRunPrevAnimatedNet = NaN;
+        postRunPrevAnimatedBalance = NaN;
+        postRunPrevAnimatedDebt = NaN;
+        postRunNextScorePingTime = timeReal;
       }
 
       // Animate all numeric text fields every frame while screen is active.
       if (!isNaN(postRunAnimStartTime)) {
         const el = timeReal - postRunAnimStartTime;
 
-        // finalScoreText starts immediately (stagger 0s, 1.2s count-up).
-        const animScore = animCountUp(balanceForHeadline, el, 0.0, 1.2);
+        // Headline starts immediately (stagger 0s, 1.2s count-up).
+        const animScore = animCountUp(headlineEarnings, el, 0.0, 1.2);
         finalScoreText.text =
-          strings.postRun.substratePrefix +
+          strings.postRun.earningsLabel +
+          ": +" +
           formatSubstrate(animScore, { compact: false });
-        if (!(postRunSoundsPlayed & S_SCORE)) {
-          postRunSoundsPlayed |= S_SCORE;
-          playSfx(soundStatReveal, undefined, 1.0, 1.5);
-        }
+        postRunPrevAnimatedScore = playPingOnIncrement(
+          animScore,
+          postRunPrevAnimatedScore,
+          1.05,
+        );
 
         if (debrief) {
           // Earnings: stagger 0.4s
@@ -295,10 +318,11 @@ export function createEconomyScreens(uiRoot) {
                   ": +" +
                   formatSubstrate(v, { compact: false })
                 : "";
-            if (el >= 0.4 && !(postRunSoundsPlayed & S_EARN)) {
-              postRunSoundsPlayed |= S_EARN;
-              playSfx(soundStatReveal, undefined, 0.7, 1.1);
-            }
+            postRunPrevAnimatedEarnings = playPingOnIncrement(
+              v,
+              postRunPrevAnimatedEarnings,
+              1.08,
+            );
           }
 
           // Boss bonus: stagger 0.7s (only visible when bossBonus > 0)
@@ -310,10 +334,11 @@ export function createEconomyScreens(uiRoot) {
                   ": +" +
                   formatSubstrate(v, { compact: false })
                 : "";
-            if (el >= 0.7 && !(postRunSoundsPlayed & S_BOSS)) {
-              postRunSoundsPlayed |= S_BOSS;
-              playSfx(soundStatReveal, undefined, 0.7, 1.25);
-            }
+            postRunPrevAnimatedBossBonus = playPingOnIncrement(
+              v,
+              postRunPrevAnimatedBossBonus,
+              1.15,
+            );
           }
 
           // Repair cost: stagger 1.0s
@@ -325,10 +350,11 @@ export function createEconomyScreens(uiRoot) {
                   ": -" +
                   formatSubstrate(v, { compact: false })
                 : "";
-            if (el >= 1.0 && !(postRunSoundsPlayed & S_REPAIR)) {
-              postRunSoundsPlayed |= S_REPAIR;
-              playSfx(soundStatReveal, undefined, 0.7, 0.85);
-            }
+            postRunPrevAnimatedRepair = playPingOnIncrement(
+              v,
+              postRunPrevAnimatedRepair,
+              0.95,
+            );
           }
 
           // Net: stagger 1.3s — pitch reflects positive/negative outcome
@@ -344,10 +370,11 @@ export function createEconomyScreens(uiRoot) {
             } else {
               postRunNetText.text = "";
             }
-            if (el >= 1.3 && !(postRunSoundsPlayed & S_NET)) {
-              postRunSoundsPlayed |= S_NET;
-              playSfx(soundStatReveal, undefined, 0.85, net >= 0 ? 1.3 : 0.75);
-            }
+            postRunPrevAnimatedNet = playPingOnIncrement(
+              v,
+              postRunPrevAnimatedNet,
+              net >= 0 ? 1.12 : 0.88,
+            );
           }
 
           // New balance: stagger 1.6s
@@ -359,10 +386,11 @@ export function createEconomyScreens(uiRoot) {
                   ": " +
                   formatSubstrate(v, { compact: false })
                 : "";
-            if (el >= 1.6 && !(postRunSoundsPlayed & S_BAL)) {
-              postRunSoundsPlayed |= S_BAL;
-              playSfx(soundStatReveal, undefined, 0.8, 1.1);
-            }
+            postRunPrevAnimatedBalance = playPingOnIncrement(
+              v,
+              postRunPrevAnimatedBalance,
+              1.05,
+            );
           }
 
           // Debt: stagger 1.9s (only visible when debt > 0)
@@ -374,10 +402,11 @@ export function createEconomyScreens(uiRoot) {
                   ": " +
                   formatSubstrate(v, { compact: false })
                 : "";
-            if (el >= 1.9 && !(postRunSoundsPlayed & S_DEBT)) {
-              postRunSoundsPlayed |= S_DEBT;
-              playSfx(soundStatReveal, undefined, 0.6, 0.7);
-            }
+            postRunPrevAnimatedDebt = playPingOnIncrement(
+              v,
+              postRunPrevAnimatedDebt,
+              0.9,
+            );
           }
         }
       }
