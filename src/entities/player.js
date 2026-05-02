@@ -143,7 +143,7 @@ export class Player extends BaseEntity {
 
   updateEntryAnimation() {
     const cfg = playerCfg.entry;
-    const t = Math.min(1, this.entryTimer.get() / cfg.duration);
+    const t = this.entryTimer.getPercent();
     // Cubic ease-out: fast start, smooth deceleration into position
     const eased = 1 - Math.pow(1 - t, 3);
     this.pos.y = cfg.startY + (cfg.targetY - cfg.startY) * eased;
