@@ -62,7 +62,12 @@ export function initTestLabOverlay(onExit) {
     if (!panel || panel.contains(e.target)) return;
     const worldPos = screenToWorld(mousePosScreen.copy());
     const { x: lx, y: ly } = system.levelSize;
-    if (worldPos.x > 0 && worldPos.x < lx && worldPos.y > 0 && worldPos.y < ly) {
+    if (
+      worldPos.x > 0 &&
+      worldPos.x < lx &&
+      worldPos.y > 0 &&
+      worldPos.y < ly
+    ) {
       _pendingSpawnPos = worldPos;
     }
   };

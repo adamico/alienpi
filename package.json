@@ -1,10 +1,16 @@
 {
+  "version": "0.1.0",
   "dependencies": {
     "littlejsengine": "^1.18.0",
     "prettier": "^3.8.3"
   },
   "scripts": {
-    "build": "./build.sh"
+    "build": "./build.sh",
+    "publish:itch": "./scripts/publish-itch.sh",
+    "publish:itch:no-build": "BUILD_FIRST=false ./scripts/publish-itch.sh",
+    "release:patch": "npm version patch && npm run publish:itch",
+    "release:minor": "npm version minor && npm run publish:itch",
+    "release:major": "npm version major && npm run publish:itch"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

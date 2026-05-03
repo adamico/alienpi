@@ -44,6 +44,15 @@ async function gameInit() {
   setTouchGamepadSize(200);
   setPaused(true);
   initUIHandlers();
+
+  // Dismiss the loading overlay now that all assets are ready
+  const loader = document.getElementById("loader");
+  if (loader) {
+    loader.classList.add("hidden");
+    loader.addEventListener("transitionend", () => loader.remove(), {
+      once: true,
+    });
+  }
 }
 
 function gameUpdate() {
