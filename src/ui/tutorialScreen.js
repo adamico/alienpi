@@ -75,8 +75,18 @@ export function createTutorialScreen(uiRoot) {
   // Input icons: one primary action icon + one skip icon
   // Both icons are created once and their tileInfo is refreshed each frame so
   // they automatically switch between keyboard and gamepad art.
-  const stepIcon = makeInputIcon(group, "movement", vec2(0, STEP_ICON_Y), STEP_ICON_SIZE);
-  const skipIcon = makeInputIcon(group, "skip", vec2(SKIP_ICON_X, SKIP_ICON_Y), SKIP_ICON_SIZE);
+  const stepIcon = makeInputIcon(
+    group,
+    "movement",
+    vec2(0, STEP_ICON_Y),
+    STEP_ICON_SIZE,
+  );
+  const skipIcon = makeInputIcon(
+    group,
+    "skip",
+    vec2(SKIP_ICON_X, SKIP_ICON_Y),
+    SKIP_ICON_SIZE,
+  );
 
   let lastStepId = null;
 
