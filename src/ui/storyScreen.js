@@ -1,4 +1,4 @@
-import { vec2, rgb, WHITE, Color, timeReal } from "../engine.js";
+import { vec2, rgb, WHITE, Color, timeReal, mainCanvasSize } from "../engine.js";
 import { GAME_STATES, strings, ui } from "../config/index.js";
 import { makePanel } from "./panel.js";
 import { createMultipartTypewriter } from "./typewriter.js";
@@ -121,6 +121,8 @@ export function createLoreScreen(uiRoot) {
         wasVisible = false;
         return;
       }
+
+      loreGroup.size = mainCanvasSize;
 
       if (!wasVisible) {
         resetReveal();
