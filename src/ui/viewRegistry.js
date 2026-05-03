@@ -13,6 +13,7 @@ import { createLoreScreen } from "./storyScreen.js";
 import { createPauseScreen } from "./pauseScreen.js";
 import { createSettingsScreen } from "./settingsScreen.js";
 import { createTitleScreen } from "./titleScreen.js";
+import { createTutorialScreen } from "./tutorialScreen.js";
 import { pauseMenu, settingsMenu, titleMenu } from "./menus.js";
 
 export function getUIContext() {
@@ -82,6 +83,11 @@ registerUIView({
   id: "lore",
   create: (uiRoot) => createLoreScreen(uiRoot),
   confirmStates: [GAME_STATES.LORE],
+});
+
+registerUIView({
+  id: "tutorial",
+  create: (uiRoot) => createTutorialScreen(uiRoot),
 });
 
 registerUIView({

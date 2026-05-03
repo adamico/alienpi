@@ -9,7 +9,7 @@
 
 ## Gameplay
 
-- G2: add weapon tutorials. Priority: medium
+- G2: add weapon tutorials. Priority: medium. Status: done
 - G3: add difficulty levels. Priority: low
 - G4: add attract mode. Priority: low
 
@@ -33,4 +33,4 @@
 
 ## game feel
 
-- GF1: add slow-motion effect on orbiter loot death. priority: medium.
+- GF1: add slow-motion effect on player hit. Priority: medium.

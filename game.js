@@ -18,6 +18,10 @@ import { loadSettings } from "./src/persistence.js";
 import { initializeGameAssets } from "./src/commonSetup.js";
 import { loadHighScore } from "./src/game/score.js";
 import { loadEconomy } from "./src/game/economy.js";
+import {
+  loadTutorialProgress,
+  applyTutorialInput,
+} from "./src/game/tutorialProgress.js";
 import { input } from "./src/input/input.js";
 import { renderBackground, renderPostBackground } from "./src/game/scene.js";
 import { updateUI } from "./src/ui.js";
@@ -31,6 +35,7 @@ async function gameInit() {
   loadSettings();
   loadHighScore();
   loadEconomy();
+  loadTutorialProgress();
   await preloadFonts();
   setFontDefault(FONT_HUD);
   await initializeGameAssets();
@@ -44,6 +49,7 @@ async function gameInit() {
 function gameUpdate() {
   input.reset();
   input.update();
+  applyTutorialInput();
 }
 
 function gameUpdatePost() {

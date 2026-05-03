@@ -32,6 +32,11 @@ export function spawnBoss() {
   return currentBoss;
 }
 
+export function resetWorldActors() {
+  player = null;
+  currentBoss = null;
+}
+
 export function tickGameTime(dt) {
   gameTime += dt;
 }

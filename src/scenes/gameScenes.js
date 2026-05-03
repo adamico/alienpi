@@ -8,6 +8,13 @@ import {
 import { tickDPSLog, setEnemyCount } from "../game/dpsTracker.js";
 import { resetScore, commitHighScore } from "../game/score.js";
 import { beginRun, commitRun } from "../game/economy.js";
+import {
+  isTutorialPending,
+  startTutorialSequence,
+  stopTutorialSequence,
+  updateTutorialSequence,
+  markTutorialCompleted,
+} from "../game/tutorialProgress.js";
 import { vibrate } from "../input/gamepad.js";
 import { setupBoundaries } from "../game/scene.js";
 import {
@@ -23,6 +30,7 @@ import {
   getCurrentBoss,
   initializePlayer,
   spawnBoss,
+  resetWorldActors,
   tickGameTime,
   resetGameTime,
 } from "../game/world.js";
@@ -40,6 +48,17 @@ function destroyPlayfield() {
   system.isResetting = true;
   engineObjectsDestroy();
   system.isResetting = false;
+  resetWorldActors();
+}
+
+function prepareRun({ spawnBossAtStart = true } = {}) {
+  destroyPlayfield();
+  initializePlayer();
+  setupBoundaries();
+  resetGameTime();
+  resetScore();
+  beginRun();
+  if (spawnBossAtStart) spawnBoss();
 }
 
 class TitleScene extends BaseScene {
@@ -80,7 +99,12 @@ class LoreScene extends BaseScene {
       hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
     ) {
       if (handleUIConfirmForState(GAME_STATES.LORE)) {
-        this.transitionTo(GAME_STATES.HOME, {}, "lore:confirm");
+        const runTutorial = isTutorialPending();
+        this.transitionTo(
+          runTutorial ? GAME_STATES.TUTORIAL : GAME_STATES.HOME,
+          {},
+          runTutorial ? "lore:tutorial" : "lore:confirm",
+        );
         return true;
       }
       return true;
@@ -108,13 +132,7 @@ class HomeScene extends BaseScene {
       hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
       hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
     ) {
-      destroyPlayfield();
-      initializePlayer();
-      spawnBoss();
-      setupBoundaries();
-      resetGameTime();
-      resetScore();
-      beginRun();
+      prepareRun({ spawnBossAtStart: true });
       this.transitionTo(GAME_STATES.PLAYING, { gameWon: false }, "run:start");
       return true;
     }
@@ -182,6 +200,68 @@ class PlayingScene extends BaseScene {
       return true;
     }
     return false;
+  }
+}
+
+class TutorialScene extends BaseScene {
+  constructor({ transitionTo }) {
+    super(GAME_STATES.TUTORIAL);
+    this.transitionTo = transitionTo;
+    this.completed = false;
+    this.returnState = GAME_STATES.HOME;
+  }
+
+  enter({ from } = {}) {
+    this.completed = false;
+    this.returnState = from === GAME_STATES.TITLE ? GAME_STATES.TITLE : GAME_STATES.HOME;
+    setPaused(false);
+    destroyPlayfield();
+    initializePlayer();
+    setupBoundaries();
+    resetGameTime();
+    resetScore();
+    startTutorialSequence();
+
+    const player = getPlayer();
+    if (player) {
+      player.weaponLevels.shotgun = Math.max(1, player.weaponLevels.shotgun);
+      player.weaponLevels.latch = Math.max(1, player.weaponLevels.latch);
+    }
+  }
+
+  getMusic() {
+    return soundBossMusic;
+  }
+
+  update() {
+    if (updateTutorialSequence()) {
+      this.finish("tutorial:done");
+    }
+  }
+
+  handleFrame(actions) {
+    if (
+      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
+      hasSceneAction(actions, SCENE_ACTION.CANCEL) ||
+      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
+    ) {
+      this.finish("tutorial:skip");
+      return true;
+    }
+    return false;
+  }
+
+  exit() {
+    stopTutorialSequence();
+  }
+
+  finish(reason) {
+    if (this.completed) return;
+    this.completed = true;
+    markTutorialCompleted();
+    stopTutorialSequence();
+    destroyPlayfield();
+    this.transitionTo(this.returnState, { gameWon: false }, reason);
   }
 }
 
@@ -298,6 +378,7 @@ export function createGameScenes(deps) {
     new TitleScene(deps),
     new LoreScene(deps),
     new HomeScene(deps),
+    new TutorialScene(deps),
     new PlayingScene(deps),
     new PauseScene(deps),
     new SettingsScene(deps),

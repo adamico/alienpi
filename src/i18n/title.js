@@ -7,6 +7,7 @@ export const title = {
     ESC : PAUSE / BACK`,
   controlsTitle: "CONTROLS",
   highScorePrefix: "HIGH SCORE: ",
+  replayTutorial: "TUTORIAL",
   subtitle: "ARCADE DEFENSE SYSTEM",
   title: "ALIEN ORBIT ASSAULT",
 };

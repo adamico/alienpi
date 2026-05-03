@@ -7,6 +7,7 @@ export const GAME_STATES = {
   POST_RUN: "POST_RUN",
   SETTINGS: "SETTINGS",
   TITLE: "TITLE",
+  TUTORIAL: "TUTORIAL",
 };
 
 const ASSET_PATH = "public/assets/";

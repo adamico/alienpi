@@ -191,6 +191,11 @@ export function createTitleScreen(uiRoot, titleMenu, handlers) {
     },
     {
       kind: "action",
+      label: () => strings.title.replayTutorial,
+      activate: () => handlers.replayTutorial?.(),
+    },
+    {
+      kind: "action",
       label: () => "SETTINGS",
       activate: () => handlers.openSettings(),
     },

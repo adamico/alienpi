@@ -8,6 +8,7 @@ import { postRun } from "./postRun.js";
 import { settings } from "./settingsMenu.js";
 import { story } from "./story.js";
 import { title } from "./title.js";
+import { tutorial } from "./tutorial.js";
 
 export const en = {
   credits,
@@ -19,4 +20,5 @@ export const en = {
   settings,
   story,
   title,
+  tutorial,
 };

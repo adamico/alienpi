@@ -1,6 +1,7 @@
 import { rgb, Color, timeReal } from "../engine.js";
 import { GAME_STATES, strings } from "../config/index.js";
 import { resetEconomy } from "../game/economy.js";
+import { resetTutorialProgress } from "../game/tutorialProgress.js";
 import { makeMenuRow } from "./menuView.js";
 import { makePanel } from "./panel.js";
 import { makeCenterTitle } from "./uiText.js";
@@ -39,6 +40,7 @@ export function createSettingsScreen(uiRoot, settingsMenu, handlers) {
       activate: () => {
         if (timeReal < resetArmedUntil) {
           resetEconomy();
+          resetTutorialProgress();
           resetArmedUntil = 0;
         } else {
           resetArmedUntil = timeReal + 3;

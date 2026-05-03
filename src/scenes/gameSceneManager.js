@@ -1,6 +1,7 @@
 import { vec2 } from "../engine.js";
 import { GAME_STATES } from "../config/index.js";
 import { setDesiredMusic } from "../audio/soundManager.js";
+import { resetTutorialProgress } from "../game/tutorialProgress.js";
 import {
   setGameState,
   setGameWon,
@@ -94,6 +95,10 @@ export function initUIHandlers() {
           pushState(GAME_STATES.SETTINGS, {}, "title:open-settings"),
         openCredits: () =>
           transitionTo(GAME_STATES.CREDITS, {}, "title:open-credits"),
+        replayTutorial: () => {
+          resetTutorialProgress();
+          transitionTo(GAME_STATES.TUTORIAL, {}, "title:replay-tutorial");
+        },
       },
       pause: {
         resume: () => transitionTo(GAME_STATES.PLAYING, {}, "pause:resume"),

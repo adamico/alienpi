@@ -1,20 +1,33 @@
 import { GAME_STATES } from "../config/index.js";
 
-const { TITLE, LORE, HOME, PLAYING, PAUSE, POST_RUN, SETTINGS, CREDITS } =
-  GAME_STATES;
+const {
+  TITLE,
+  LORE,
+  HOME,
+  PLAYING,
+  PAUSE,
+  POST_RUN,
+  SETTINGS,
+  CREDITS,
+  TUTORIAL,
+} = GAME_STATES;
 
 export const SCENE_TRANSITIONS = {
   [TITLE]: {
-    canTransitionTo: [LORE, SETTINGS, CREDITS],
+    canTransitionTo: [LORE, SETTINGS, CREDITS, TUTORIAL],
     meta: { pauseOnEnter: true },
   },
   [LORE]: {
-    canTransitionTo: [HOME],
+    canTransitionTo: [HOME, TUTORIAL],
     meta: { pauseOnEnter: true },
   },
   [HOME]: {
     canTransitionTo: [PLAYING, TITLE],
     meta: { pauseOnEnter: true },
+  },
+  [TUTORIAL]: {
+    canTransitionTo: [HOME, TITLE],
+    meta: { pauseOnEnter: false },
   },
   [PLAYING]: {
     canTransitionTo: [PAUSE, POST_RUN],
