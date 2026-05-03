@@ -13,7 +13,7 @@ import { input } from "../../input/input.js";
  * @param {object} weaponLevels Live reference to the WeaponSystem levels map
  */
 export function fireShotgun(ctx, weaponLevels) {
-  playSfx(soundShotgun, ctx.pos);
+  playSfx(soundShotgun, ctx.pos, 0.3);
 
   const cfg = weaponsCfg.shotgun;
   const level = weaponLevels.shotgun;

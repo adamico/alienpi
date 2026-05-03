@@ -28,8 +28,6 @@
 
 ## bugs & performance & tweaks
 
-- ~~B1: story screen text is not contained within the background panel.~~ DONE.
-- B2: shotgun sound is too loud and intrusive. Priority: mid.
 - B3: player shouldn't be able to overlap with boss. Priority: mid.
 - B4: screen is a bit too crowded, consider zooming out the camera a bit. Priority: low.
 
