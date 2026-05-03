@@ -52,8 +52,9 @@ export class Boss extends BaseEntity {
     this.maxHp = bossCfg.hp;
     this.color = bossCfg.color.copy();
     this.setCollision(true);
-    this.mass = 1;
+    this.mass = bossCfg.mass;
     this.isEnemy = true;
+    this.isBoss = true;
     this.noDestroyOnImpact = true;
 
     // Approach the entry position before starting normal movement
@@ -501,6 +502,7 @@ export class Boss extends BaseEntity {
   }
 
   collideWithObject(other) {
+    if (other.isPlayer) return true;
     if (other.isBullet && !other.isEnemy) {
       if (this.destroyed || this.hp <= 0) return false;
       const activeOrbiters = this.orbiters.filter((o) => !o.destroyed);

@@ -2,6 +2,7 @@ import { vec2, rgb } from "../../engine.js";
 
 export const boss = {
   color: rgb(1, 1, 1),
+  mass: 1000,
   fireLocations: [vec2(-1.5, 2), vec2(1.5, 2), vec2(-1.5, -1), vec2(1.5, -1)],
   hitboxScale: 0.8,
   hp: 650,

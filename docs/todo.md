@@ -22,13 +22,11 @@
 
 ## Publishing
 
-- P3: add itch.io pipeline. Priority: medium
 - P4: add analytics. Priority: low
 - P5: add feedback form. Priority: medium
 
 ## bugs & performance & tweaks
 
-- B3: player shouldn't be able to overlap with boss. Priority: mid.
 - B4: screen is a bit too crowded, consider zooming out the camera a bit. Priority: low.
 
 ## balance

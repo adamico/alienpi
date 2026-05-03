@@ -403,7 +403,7 @@ export class Player extends BaseEntity {
 
     if (this.invulnerable) {
       // Still need to collide with boundaries even when invulnerable!
-      return !!other.isBoundary;
+      return !!other.isBoundary || !!other.isBoss;
     }
 
     if (other.isEnemy || (other.isBullet && other.isEnemy)) {
@@ -413,7 +413,8 @@ export class Player extends BaseEntity {
           other.destroy();
         }
       }
-      return false;
+      // Return true for the boss so the physics solver pushes the player away.
+      return !!other.isBoss;
     }
     return true;
   }
