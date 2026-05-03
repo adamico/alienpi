@@ -4,10 +4,17 @@ import { SPRITE_SHEET_PATHS } from "./constants.js";
 const ASSET_PATH = "public/assets/";
 
 const CANVAS_SIZE = vec2(1280, 720);
-const LEVEL_SIZE = vec2(22, 22);
+
+// cameraScale controls how many pixels equal one world unit.
+// LEVEL_DIM is derived so the field occupies the same number of screen pixels
+// regardless of scale: dim = (22 * 32) / scale  (22 wu * 32 px/wu = 704 px).
+const CAMERA_SCALE = 28;
+const LEVEL_DIM = (22 * 32) / CAMERA_SCALE; // ≈25.14 at scale 28
+const LEVEL_SIZE = vec2(LEVEL_DIM, LEVEL_DIM);
 
 export const system = {
   canvasSize: CANVAS_SIZE,
+  cameraScale: CAMERA_SCALE,
   levelSize: LEVEL_SIZE,
   cameraPos: LEVEL_SIZE.scale(0.5),
   enableSharpenShader: true,

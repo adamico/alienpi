@@ -2,6 +2,7 @@ import {
   vec2,
   setCanvasFixedSize,
   setCameraPos,
+  setCameraScale,
   setTileDefaultSize,
   setObjectMaxSpeed,
   setDebugKey,
@@ -19,6 +20,7 @@ import { spawnPlayer } from "./entities/player.js";
 export async function initializeGameAssets() {
   setCanvasFixedSize(system.canvasSize);
   setCameraPos(system.cameraPos);
+  setCameraScale(system.cameraScale);
   setTileDefaultSize(vec2(1));
   setObjectMaxSpeed(engine.objectMaxSpeed);
   setDebugKey(settings.debugKey);

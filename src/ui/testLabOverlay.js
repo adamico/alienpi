@@ -11,6 +11,10 @@ import {
   screenToWorld,
   engineObjects,
   Color,
+  setCameraScale,
+  cameraScale,
+  setCameraPos,
+  vec2,
 } from "../engine.js";
 import {
   system,
@@ -30,6 +34,7 @@ import { Loot } from "../entities/loot.js";
 import { Bullet } from "../entities/bullet.js";
 import * as gameEffects from "../visuals/gameEffects.js";
 import { getCurrentBoss, setCurrentBoss } from "../game/world.js";
+import { setupBoundaries } from "../game/scene.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Module state — reset on each init/destroy cycle
@@ -40,6 +45,10 @@ let behaviorEnabled = true;
 let exitCallback = null;
 let _pendingSpawnPos = null;
 let _clickHandler = null;
+let _wheelHandler = null;
+let _zoomAtOpen = 32;
+let _levelAtOpen = vec2(22, 22);
+let _baseCameraScale = system.cameraScale ?? 32;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -50,6 +59,9 @@ export function initTestLabOverlay(onExit) {
   behaviorEnabled = true;
   exitCallback = onExit ?? null;
   _pendingSpawnPos = null;
+  _zoomAtOpen = cameraScale;
+  _baseCameraScale = cameraScale;
+  _levelAtOpen = vec2(system.levelSize.x, system.levelSize.y);
   panel = buildPanel();
   document.body.appendChild(panel);
   setupListeners();
@@ -84,6 +96,13 @@ export function destroyTestLabOverlay() {
     document.removeEventListener("mousedown", _clickHandler);
     _clickHandler = null;
   }
+  if (_wheelHandler) {
+    document.removeEventListener("wheel", _wheelHandler);
+    _wheelHandler = null;
+  }
+  // Restore zoom and playing field to the values they had when the lab opened
+  setCameraScale(_zoomAtOpen);
+  _applyLevelSize(_levelAtOpen);
 }
 
 /**
@@ -98,6 +117,10 @@ export function updateTestLabOverlay() {
     handleSpawnAt(_pendingSpawnPos);
     _pendingSpawnPos = null;
   }
+
+  // Sync zoom display
+  const zoomDisplay = panel.querySelector("#tl-zoom-display");
+  if (zoomDisplay) zoomDisplay.textContent = Math.round(cameraScale);
 
   // Auto-clear HUD boss bar when boss dies
   const trackedBoss = getCurrentBoss();
@@ -206,6 +229,7 @@ function buildPanel() {
       <p style="margin:8px 0;"><kbd style="background:#222;padding:2px 6px;border-radius:4px;color:#bbb;border:1px solid #333;font-family:monospace;">Space</kbd> Primary Fire</p>
       <p style="margin:8px 0;"><kbd style="background:#222;padding:2px 6px;border-radius:4px;color:#bbb;border:1px solid #333;font-family:monospace;">Q</kbd> Switch Weapon</p>
       <p style="margin:8px 0;"><kbd style="background:#222;padding:2px 6px;border-radius:4px;color:#bbb;border:1px solid #333;font-family:monospace;">Esc</kbd> Back to title</p>
+      <p style="margin:8px 0;"><kbd style="background:#222;padding:2px 6px;border-radius:4px;color:#bbb;border:1px solid #333;font-family:monospace;">Scroll</kbd> Zoom (scale: <span id="tl-zoom-display">${Math.round(_zoomAtOpen)}</span>)</p>
     </div>
   `;
 
@@ -244,6 +268,21 @@ function weaponRow(id, label, defaultVal) {
 
 function setupListeners() {
   const maxWepLevel = playerCfg.weaponSystem.maxLevel;
+
+  // Mouse-wheel zoom — only when the pointer is NOT over the panel.
+  // The playing field stays fixed on screen: its screen footprint =
+  // levelSize * cameraScale = constant, so when cameraScale changes we
+  // compensate by scaling levelSize the other way.
+  _wheelHandler = (e) => {
+    if (panel && panel.contains(e.target)) return;
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.05 : 1 / 1.05;
+    const next = Math.round(Math.min(128, Math.max(8, cameraScale * factor)));
+    setCameraScale(next);
+    const newLevel = _levelAtOpen.scale(_baseCameraScale / next);
+    _applyLevelSize(newLevel);
+  };
+  document.addEventListener("wheel", _wheelHandler, { passive: false });
   ["vulcanLevel", "shotgunLevel", "latchLevel"].forEach((id) => {
     const el = panel.querySelector(`#${id}`);
     if (el) el.max = maxWepLevel;
@@ -346,6 +385,28 @@ function applyWeaponLevels() {
     }
   }
   player.updateWeaponSprite();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playing-field helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Update system.levelSize + system.cameraPos and rebuild boundary walls.
+ * @param {Vector2} newLevel
+ */
+function _applyLevelSize(newLevel) {
+  system.levelSize.x = newLevel.x;
+  system.levelSize.y = newLevel.y;
+  system.cameraPos.x = newLevel.x / 2;
+  system.cameraPos.y = newLevel.y / 2;
+  setCameraPos(system.cameraPos);
+
+  // Tear down old boundaries and rebuild at new world positions
+  for (const obj of engineObjects.slice()) {
+    if (obj.isBoundary) obj.destroy();
+  }
+  setupBoundaries();
 }
 
 const WEAPON_INPUT_IDS = {

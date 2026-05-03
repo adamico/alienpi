@@ -63,13 +63,13 @@ function gameUpdate() {
 
 function gameUpdatePost() {
   updateSceneFrame(timeDelta);
-
   updateAudio();
   updateUI();
 }
 
 glSetAntialias(true);
 setTilesPixelated(false);
+
 engineInit(
   gameInit,
   gameUpdate,

@@ -27,8 +27,6 @@
 
 ## bugs & performance & tweaks
 
-- B4: screen is a bit too crowded, consider zooming out the camera a bit. Priority: low.
-
 ## balance
 
 ## game feel
