@@ -11,6 +11,7 @@ const {
   CREDITS,
   TUTORIAL,
   TEST_LAB,
+  ICON_DEBUG,
 } = GAME_STATES;
 
 export const SCENE_TRANSITIONS = {
@@ -20,7 +21,7 @@ export const SCENE_TRANSITIONS = {
       SETTINGS,
       CREDITS,
       TUTORIAL,
-      ...(DEV_BUILD ? [TEST_LAB] : []),
+      ...(DEV_BUILD ? [TEST_LAB, ICON_DEBUG] : []),
     ],
     meta: { pauseOnEnter: true },
   },
@@ -61,6 +62,10 @@ export const SCENE_TRANSITIONS = {
         [TEST_LAB]: {
           canTransitionTo: [TITLE],
           meta: { pauseOnEnter: false },
+        },
+        [ICON_DEBUG]: {
+          canTransitionTo: [TITLE],
+          meta: { pauseOnEnter: true },
         },
       }
     : {}),

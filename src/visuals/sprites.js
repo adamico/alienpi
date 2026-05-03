@@ -1,9 +1,4 @@
-import {
-  vec2,
-  TileInfo,
-  TextureInfo,
-  textureInfos,
-} from "../engine.js";
+import { vec2, TileInfo, TextureInfo, textureInfos } from "../engine.js";
 
 const spritesMap = new Map();
 
@@ -14,13 +9,30 @@ const spritesMap = new Map();
  * @returns {Promise<void>}
  */
 export async function loadSprites(sheetPath, textureIndex) {
-  // Enable linear filtering for smoother large sprites/rotation
+  // Validate that XML sheet path and texture slot still point to the same PNG.
+  // LittleJS resolves image load errors silently, so surface mismatch explicitly.
   const info = textureInfos[textureIndex];
+  const sheetName = sheetPath.split("/").pop();
+  const expectedFile = `${sheetName}.png`;
+  const srcRaw = info?.image?.currentSrc || info?.image?.src || "";
+  let decodedSrc = srcRaw;
+  try {
+    decodedSrc = decodeURIComponent(srcRaw);
+  } catch {
+    // Keep raw source if decoding fails.
+  }
+  if (!info || !info.image || !decodedSrc.includes(expectedFile)) {
+    console.error(
+      `[sprites] texture mapping mismatch: sheet="${sheetName}" textureIndex=${textureIndex} expected="${expectedFile}" actual="${decodedSrc || "<missing>"}"`,
+    );
+  }
+
+  // Enable linear filtering for smoother large sprites/rotation
   if (info && info.image) {
     info.image.style.imageRendering = "auto";
   }
 
-  const xmlUrl = `${sheetPath}.xml`;
+  const xmlUrl = `${sheetPath}.xml`.replace(/&/g, "%26");
   const response = await fetch(xmlUrl);
   const text = await response.text();
 
@@ -28,16 +40,19 @@ export async function loadSprites(sheetPath, textureIndex) {
   const xml = parser.parseFromString(text, "text/xml");
   const subTextures = xml.getElementsByTagName("SubTexture");
 
-  // Get sheet name from path for the key
-  const sheetName = sheetPath.split("/").pop();
-
   for (let i = 0; i < subTextures.length; i++) {
     const st = subTextures[i];
     const name = st.getAttribute("name");
-    const x = parseFloat(st.getAttribute("x"));
-    const y = parseFloat(st.getAttribute("y"));
+    let x = parseFloat(st.getAttribute("x"));
+    let y = parseFloat(st.getAttribute("y"));
     const w = parseFloat(st.getAttribute("width"));
     const h = parseFloat(st.getAttribute("height"));
+
+    // Apply coordinate transformation for double sheets to fix Kenney XML mismatch
+    if (sheetName.endsWith("_double")) {
+      const sheetHeight = textureInfos[textureIndex].image.height;
+      y = sheetHeight - h - y; // Flip vertically
+    }
 
     // Add a tiny 2px shrink to prevent bleeding from adjacent sprites
     const bleedShrink = 2;
@@ -77,6 +92,22 @@ export const sprites = {
     const width = typeof baseSize === "number" ? baseSize : baseSize.x;
     const aspect = sprite.size.y / sprite.size.x;
     return vec2(width, width * aspect);
+  },
+
+  /**
+   * Returns all registered sprite names for a given sheet
+   * @param {string} sheet
+   * @returns {string[]}
+   */
+  getNames: (sheet) => {
+    const names = [];
+    const prefix = `${sheet}:`;
+    for (const key of spritesMap.keys()) {
+      if (key.startsWith(prefix)) {
+        names.push(key.substring(prefix.length));
+      }
+    }
+    return names;
   },
 };
 

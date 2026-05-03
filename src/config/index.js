@@ -3,6 +3,8 @@ export {
   SPRITE_SHEET_NAME,
   SPRITE_SHEET_PATHS,
   SPRITE_SHEET2_NAME,
+  GAMEPAD_INPUT_SPRITE_SHEET_NAME,
+  KEYMOUSE_INPUT_SPRITE_SHEET_NAME,
   starfield,
 } from "./constants.js";
 export { boss, beam, orbiter, orbiterLooter, shield } from "./entities/boss.js";

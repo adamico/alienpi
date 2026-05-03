@@ -14,6 +14,7 @@ import { createPauseScreen } from "./pauseScreen.js";
 import { createSettingsScreen } from "./settingsScreen.js";
 import { createTitleScreen } from "./titleScreen.js";
 import { createTutorialScreen } from "./tutorialScreen.js";
+import { createIconDebugScreen } from "./iconDebugScreen.js";
 import { pauseMenu, settingsMenu, titleMenu } from "./menus.js";
 
 export function getUIContext() {
@@ -98,4 +99,9 @@ registerUIView({
       gameWon: context.gameWon,
       lastRunDebrief: context.lastRunDebrief,
     }),
+});
+
+registerUIView({
+  id: "iconDebug",
+  create: (uiRoot) => createIconDebugScreen(uiRoot),
 });

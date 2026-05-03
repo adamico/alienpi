@@ -23,6 +23,8 @@ class InputManager {
     this.isFiring = false;
     this.isFocusing = false;
     this.switchWeapon = false;
+    /** @type {'keyboard'|'gamepad'} Last device that produced meaningful input */
+    this.lastInputSource = "keyboard";
 
     // Touch specific: Relative Dragging
     this.touchStartPos = null;
@@ -53,11 +55,21 @@ class InputManager {
     const kDir = keyDirection();
     if (kDir.length() > 0) {
       this.moveDir = this.moveDir.add(kDir.normalize());
+      this.lastInputSource = "keyboard";
     }
 
-    if (keyIsDown(system.shootKey)) this.isFiring = true;
-    if (keyIsDown(system.focusKey)) this.isFocusing = true;
-    if (keyWasPressed(system.switchKey)) this.switchWeapon = true;
+    if (keyIsDown(system.shootKey)) {
+      this.isFiring = true;
+      this.lastInputSource = "keyboard";
+    }
+    if (keyIsDown(system.focusKey)) {
+      this.isFocusing = true;
+      this.lastInputSource = "keyboard";
+    }
+    if (keyWasPressed(system.switchKey)) {
+      this.switchWeapon = true;
+      this.lastInputSource = "keyboard";
+    }
   }
 
   updateGamepad() {
@@ -65,15 +77,23 @@ class InputManager {
     if (gStick.length() > 0.1) {
       // Deadzone - Normalize to ensure full speed
       this.moveDir = this.moveDir.add(gStick.normalize());
+      this.lastInputSource = "gamepad";
     }
 
     // Fire: A (0) or RT (7)
-    if (gamepadIsDown(0) || gamepadIsDown(7)) this.isFiring = true;
+    if (gamepadIsDown(0) || gamepadIsDown(7)) {
+      this.isFiring = true;
+      this.lastInputSource = "gamepad";
+    }
     // Focus: LT (6) or X (2)
-    if (gamepadIsDown(6) || gamepadIsDown(2)) this.isFocusing = true;
+    if (gamepadIsDown(6) || gamepadIsDown(2)) {
+      this.isFocusing = true;
+      this.lastInputSource = "gamepad";
+    }
     // Switch: B (1) or Bumpers (4/5)
     if (gamepadWasPressed(1) || gamepadWasPressed(4) || gamepadWasPressed(5)) {
       this.switchWeapon = true;
+      this.lastInputSource = "gamepad";
     }
   }
 

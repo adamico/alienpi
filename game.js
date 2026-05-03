@@ -76,5 +76,5 @@ engineInit(
   gameUpdatePost,
   renderBackground,
   renderPostBackground,
-  system.spriteSheetLists,
+  system.spriteSheetLists.map((path) => path.replace(/&/g, "%26")),
 );

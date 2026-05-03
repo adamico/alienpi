@@ -225,6 +225,11 @@ function setTitleMenuItems(titleMenu, handlers) {
       label: () => strings.title.testLab,
       activate: () => handlers.openTestLab?.(),
     });
+    items.push({
+      kind: "action",
+      label: () => "ICON DEBUG",
+      activate: () => handlers.openIconDebug?.(),
+    });
   }
 
   titleMenu.setItems(items);

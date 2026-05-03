@@ -415,6 +415,26 @@ class TestLabScene extends BaseScene {
   }
 }
 
+class IconDebugScene extends BaseScene {
+  constructor({ transitionTo }) {
+    super(GAME_STATES.ICON_DEBUG);
+    this.transitionTo = transitionTo;
+  }
+
+  enter() {
+    setPaused(true);
+    destroyPlayfield();
+  }
+
+  handleFrame(actions) {
+    if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
+      this.transitionTo(GAME_STATES.TITLE, {}, "icon-debug:exit");
+      return true;
+    }
+    return false;
+  }
+}
+
 export function createGameScenes(deps) {
   const scenes = [
     new TitleScene(deps),
@@ -426,7 +446,7 @@ export function createGameScenes(deps) {
     new SettingsScene(deps),
     new CreditsScene(deps),
     new PostRunScene(deps),
-    ...(DEV_BUILD ? [new TestLabScene(deps)] : []),
+    ...(DEV_BUILD ? [new TestLabScene(deps), new IconDebugScene(deps)] : []),
   ];
 
   return new Map(scenes.map((scene) => [scene.getId(), scene]));

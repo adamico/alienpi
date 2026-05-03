@@ -101,6 +101,8 @@ export function initUIHandlers() {
         },
         openTestLab: () =>
           transitionTo(GAME_STATES.TEST_LAB, {}, "title:open-test-lab"),
+        openIconDebug: () =>
+          transitionTo(GAME_STATES.ICON_DEBUG, {}, "title:open-icon-debug"),
       },
       pause: {
         resume: () => transitionTo(GAME_STATES.PLAYING, {}, "pause:resume"),
