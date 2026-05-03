@@ -89,11 +89,11 @@ export class Player extends BaseEntity {
   set shootTimer(v) {
     this.weapons.shootTimer = v;
   }
-  get activeVulcanBullets() {
-    return this.weapons.activeVulcanBullets;
+  get activeShotgunBullets() {
+    return this.weapons.activeShotgunBullets;
   }
-  set activeVulcanBullets(v) {
-    this.weapons.activeVulcanBullets = v;
+  set activeShotgunBullets(v) {
+    this.weapons.activeShotgunBullets = v;
   }
 
   upgradeWeapon(key) {

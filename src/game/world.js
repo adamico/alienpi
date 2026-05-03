@@ -18,6 +18,10 @@ export function getCurrentBoss() {
   return currentBoss;
 }
 
+export function setCurrentBoss(value) {
+  currentBoss = value;
+}
+
 export function getGameTime() {
   return gameTime;
 }

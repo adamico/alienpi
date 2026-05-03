@@ -9,7 +9,6 @@
 
 ## Gameplay
 
-- G2: add weapon tutorials. Priority: medium. Status: done
 - G3: add difficulty levels. Priority: low
 - G4: add attract mode. Priority: low
 

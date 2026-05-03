@@ -1,15 +1,15 @@
 import { vec2, rgb, PI } from "../../engine.js";
 
-const VULCAN_BASE_DAMAGE = 0.6;
+const VULCAN_BASE_DAMAGE = 0.3;
 const VULCAN_BASE_SPEED = 0.4;
-const VULCAN_DAMAGE_STEP = 0;
+const VULCAN_DAMAGE_STEP = 0.1;
 const vulcanBullet = {
   despawnRadius: 0.5,
   hitboxScale: 1.0,
   mirrorY: true,
   sheet: "",
   size: vec2(0.5, 0.5),
-  speed: [VULCAN_BASE_SPEED, VULCAN_BASE_SPEED * 1.25, VULCAN_BASE_SPEED * 1.5],
+  speed: VULCAN_BASE_SPEED,
   sprite: "shipA_bullets.png",
   squishHz: 15,
   squishScale: 0.4,
@@ -26,51 +26,42 @@ const shotgunBullet = {
   renderOrder: 1,
   sheet: "",
   size: vec2(1.0, 1.0),
-  speed: 0.5,
+  speed: [VULCAN_BASE_SPEED, VULCAN_BASE_SPEED * 1.25, VULCAN_BASE_SPEED * 1.5],
   sprite: "shipB_bullets.png",
   trailLength: 3,
 };
 
-const vulcanXOffset = 0.5;
-const vulcanYOffset = 0.4;
-
 export const weapons = {
   vulcan: {
     bullet: vulcanBullet,
-    cannonOffsets: [
-      [vec2(0, 1)], // Level 1
-      [vec2(-vulcanXOffset, vulcanYOffset), vec2(vulcanXOffset, vulcanYOffset)], // Level 2
-      [
-        vec2(-vulcanXOffset, vulcanYOffset),
-        vec2(0, 1),
-        vec2(vulcanXOffset, vulcanYOffset),
-      ], // Level 3
-    ],
-    closeRangeCooldown: [6, 6, 6],
-    closeRangeThreshold: 6,
+    bulletCount: [1, 2, 3],
     damage: [
       VULCAN_BASE_DAMAGE,
       VULCAN_BASE_DAMAGE + VULCAN_DAMAGE_STEP,
       VULCAN_BASE_DAMAGE + VULCAN_DAMAGE_STEP * 2,
     ],
+    fireRate: [8, 6, 5],
     exhaustColor: rgb(0.4, 1, 1),
     exhaustOffsets: [vec2(-0.2, -1.2), vec2(0.2, -1.2)],
     label: "VULCAN",
+    muzzleForwardOffset: 1,
+    muzzleSpacing: 0.5,
     muzzleAlpha: 1.0,
     muzzleColor: rgb(0.4, 1, 1),
     muzzleDuration: 0.15,
     muzzleSprite: "muzzle_05.png",
+    pierce: [1, 2, 3],
     playerSprite: "shipA3.png",
-    spawnJitterX: 0.05, // ± world units of random x jitter at spawn
   },
   shotgun: {
     bullet: shotgunBullet,
     coneBase: (40 * PI) / 180,
     coneMax: (80 * PI) / 180,
     coneMin: (16 * PI) / 180,
-    cooldown: [40, 32, 24],
-    count: [3, 5, 7],
-    damage: [1, 1.3, 1.6],
+    bulletCount: [5, 7, 9],
+    closeRangeCooldown: [10, 10, 10],
+    closeRangeThreshold: 6,
+    damage: [0.2, 0.4, 0.6],
     exhaustColor: rgb(1, 0.5, 0.2),
     exhaustOffsets: [vec2(0, -1.3)],
     label: "SHOTGUN",
@@ -83,7 +74,6 @@ export const weapons = {
       [vec2(0, 0)], // Level 3
     ],
     muzzleSprite: "muzzle_05.png",
-    pierce: 3,
     playerSprite: "shipB2.png",
   },
   latch: {

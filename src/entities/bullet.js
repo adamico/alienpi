@@ -168,19 +168,22 @@ export class Bullet extends BaseEntity {
   destroy() {
     if (this.destroyed) return;
     if (this.type === "player") {
-      // Cooldown reset mechanic for Vulcan bullets
-      if (this.weaponKey === "vulcan" && this.player) {
+      // Cooldown reset mechanic for Shotgun volleys
+      if (this.weaponKey === "shotgun" && this.player) {
         // Only decrement the active count for the FIRST bullet of the volley to hit/despawn.
         // This ensures a constant rhythm even if some bullets in a volley miss.
         if (this.volleyState && !this.volleyState.decremented) {
           this.volleyState.decremented = true;
-          this.player.activeVulcanBullets--;
+          this.player.activeShotgunBullets = Math.max(
+            0,
+            this.player.activeShotgunBullets - 1,
+          );
 
           // If it was a close hit, add a firing delay to maintain a steady rate
-          const cfg = weapons.vulcan;
+          const cfg = weapons.shotgun;
           const dist = this.pos.distance(this.player.pos);
           if (dist < cfg.closeRangeThreshold) {
-            const level = this.player.weaponLevels.vulcan;
+            const level = this.player.weaponLevels.shotgun;
             const lifeFrames = (time - this.spawnTime) * 60;
             const targetInterval = cfg.closeRangeCooldown[level - 1];
             const extraDelay = Math.max(0, targetInterval - lifeFrames);

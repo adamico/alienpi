@@ -13,6 +13,7 @@ import {
 } from "./src/engine.js";
 
 import {
+  GAME_STATES,
   system,
   enemy as enemyCfg,
   boss as bossCfg,
@@ -35,12 +36,20 @@ import { Loot } from "./src/entities/loot.js";
 import { Bullet } from "./src/entities/bullet.js";
 import * as gameEffects from "./src/visuals/gameEffects.js";
 import { updateSoundVolumes } from "./src/audio/soundManager.js";
+import { initUI, updateUI } from "./src/ui.js";
+import {
+  setGameState,
+  setCurrentBoss,
+  getCurrentBoss,
+} from "./src/game/world.js";
 
 let behaviorEnabled = true;
 
 async function gameInit() {
   await initializeGameAssets();
   initializePlayer(999);
+  initUI();
+  setGameState(GAME_STATES.PLAYING);
   setupBoundaries();
   setupUIListeners();
 
@@ -75,6 +84,7 @@ function setupUIListeners() {
       for (const obj of engineObjects.slice()) {
         if (SPAWNED.some((C) => obj instanceof C)) obj.destroy();
       }
+      setCurrentBoss(null);
     });
   }
 
@@ -194,6 +204,13 @@ function gameUpdate() {
     }
   }
   updateSoundVolumes();
+  updateUI();
+
+  // Auto-clear boss world reference once the boss is destroyed so the HP bar hides.
+  const trackedBoss = getCurrentBoss();
+  if (trackedBoss && trackedBoss.destroyed) {
+    setCurrentBoss(null);
+  }
 
   // Mirror live weapon levels back into the HTML inputs so picking up loot
   // (or the on-pickup upgrade flow) is visible without manual refresh.
@@ -229,6 +246,7 @@ function handleSpawn() {
     if (entityType === "boss") {
       entity.initOrbiters(); // Only init if full boss selected
     }
+    setCurrentBoss(entity);
   } else if (entityType === "orbiter") {
     entity = new BossOrbiter(0, hpValue, false, spawnPos.copy());
   } else if (entityType === "orbiter_looter") {

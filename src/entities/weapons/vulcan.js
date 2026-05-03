@@ -1,4 +1,4 @@
-import { vec2, rand } from "../../engine.js";
+import { vec2 } from "../../engine.js";
 import { weapons as weaponsCfg } from "../../config/index.js";
 import { soundShoot } from "../../audio/sounds.js";
 import { playSfx } from "../../audio/soundManager.js";
@@ -14,40 +14,34 @@ import { spawnMuzzleFlash } from "../../visuals/gameEffects.js";
 export function fireVulcan(ctx, weaponLevels) {
   const level = weaponLevels.vulcan;
   const cfg = weaponsCfg.vulcan;
-  const bulletSpeed = cfg.bullet.speed[level - 1];
+  const bulletSpeed = cfg.bullet.speed;
+  const damage = cfg.damage[level - 1];
+  const pierce = cfg.pierce[level - 1];
+  const count = cfg.bulletCount[level - 1];
 
   playSfx(soundShoot, ctx.pos);
 
-  const offsets = cfg.cannonOffsets[level - 1];
-  const volleyState = { decremented: false };
-
-  // Pass-through on Player keeps activeVulcanBullets in WeaponSystem
-  ctx.entity.activeVulcanBullets++;
-
-  for (const muzzle of offsets) {
-    const offset = ctx.muzzleLocalOffset(muzzle);
-    const jitter = vec2(rand(-cfg.spawnJitterX, cfg.spawnJitterX), 0);
+  for (let i = 0; i < count; i++) {
+    const xOffset = (i - (count - 1) * 0.5) * cfg.muzzleSpacing;
+    const offset = ctx.muzzleLocalOffset(vec2(xOffset, cfg.muzzleForwardOffset));
     const velocity = vec2(0, bulletSpeed);
 
     const b = new Bullet(
-      ctx.pos.add(offset).add(jitter).subtract(velocity),
+      ctx.pos.add(offset).subtract(velocity),
       velocity,
       "player",
       cfg.bullet,
-      cfg.damage[level - 1],
+      damage,
     );
-
-    // bullet.js back-ref: needs .pos, .activeVulcanBullets, .weaponLevels,
-    // .shootTimer, .updateShooting() — all satisfied by Player pass-throughs.
     b.weaponKey = "vulcan";
-    b.player = ctx.entity;
-    b.volleyState = volleyState;
+    b.pierce = pierce;
+    b.angle = 0;
 
     spawnMuzzleFlash(
       ctx.entity,
       offset,
       1,
-      -1,
+      1,
       cfg.muzzleDuration,
       cfg.muzzleAlpha,
       cfg.muzzleSprite,

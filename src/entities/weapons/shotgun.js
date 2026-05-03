@@ -24,9 +24,13 @@ export function fireShotgun(ctx, weaponLevels) {
   else if (yInput < 0) cone = lerp(cfg.coneBase, cfg.coneMin, -yInput);
 
   const muzzles = cfg.muzzleOffsets[level - 1];
-  const speed = cfg.bullet.speed;
-  const count = cfg.count[level - 1];
+  const speed = cfg.bullet.speed[level - 1];
+  const count = cfg.bulletCount[level - 1];
   const damage = cfg.damage[level - 1];
+  const volleyState = { decremented: false };
+
+  // Pass-through on Player keeps activeShotgunBullets in WeaponSystem.
+  ctx.entity.activeShotgunBullets++;
 
   for (const muzzle of muzzles) {
     const offset = ctx.muzzleLocalOffset(muzzle);
@@ -46,7 +50,8 @@ export function fireShotgun(ctx, weaponLevels) {
         damage,
       );
       b.weaponKey = "shotgun";
-      b.pierce = cfg.pierce;
+      b.player = ctx.entity;
+      b.volleyState = volleyState;
       b.angle = angle;
     }
 

@@ -31,7 +31,7 @@ export class WeaponSystem {
 
     this.shootTimer = 0;
     this.minShootTimer = 0;
-    this.activeVulcanBullets = 0;
+    this.activeShotgunBullets = 0;
 
     this.latchState = { soundTimer: 0, wasFiring: false };
   }
@@ -101,12 +101,12 @@ export class WeaponSystem {
     if (!firing || this.minShootTimer > 0) return;
 
     if (key === "vulcan") {
-      if (this.activeVulcanBullets > 0 || this.shootTimer > 0) return;
-      fireVulcan(ctx, this.weaponLevels);
-    } else if (key === "shotgun") {
       if (this.shootTimer > 0) return;
+      fireVulcan(ctx, this.weaponLevels);
+      this.shootTimer = cfg.fireRate[level - 1];
+    } else if (key === "shotgun") {
+      if (this.activeShotgunBullets > 0 || this.shootTimer > 0) return;
       fireShotgun(ctx, this.weaponLevels);
-      this.shootTimer = cfg.cooldown[level - 1];
     }
   }
 
