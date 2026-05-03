@@ -11,6 +11,8 @@ import {
 } from "../engine.js";
 import {
   GAME_STATES,
+  GAMEPAD_INPUT_SPRITE_SHEET_NAME,
+  // eslint-disable-next-line no-unused-vars
   KEYMOUSE_INPUT_SPRITE_SHEET_NAME,
 } from "../config/index.js";
 import { makePanel } from "./panel.js";
@@ -20,6 +22,8 @@ import { sprites } from "../visuals/sprites.js";
 const COLOR_PANEL = new Color(0.1, 0.1, 0.1, 0.95);
 const COLOR_TEXT = rgb(1, 1, 1);
 const COLOR_LABEL = rgb(0.5, 0.8, 1);
+
+let currentSpriteSheet = GAMEPAD_INPUT_SPRITE_SHEET_NAME;
 
 export function createIconDebugScreen(uiRoot) {
   // Main container that stays fixed
@@ -35,7 +39,7 @@ export function createIconDebugScreen(uiRoot) {
   const title = makeCenterTitle(
     mainGroup,
     titleY,
-    "ICON DEBUG - " + KEYMOUSE_INPUT_SPRITE_SHEET_NAME,
+    "ICON DEBUG - " + currentSpriteSheet,
     {
       color: COLOR_TEXT,
       textHeight: 40,
@@ -43,7 +47,7 @@ export function createIconDebugScreen(uiRoot) {
     },
   );
 
-  const names = sprites.getNames(KEYMOUSE_INPUT_SPRITE_SHEET_NAME).sort();
+  const names = sprites.getNames(currentSpriteSheet).sort();
   const iconSize = 64;
   const padding = 80;
   const cols = 6;
@@ -65,7 +69,7 @@ export function createIconDebugScreen(uiRoot) {
     const tile = new UITile(
       pos,
       vec2(iconSize),
-      sprites.get(name, KEYMOUSE_INPUT_SPRITE_SHEET_NAME),
+      sprites.get(name, currentSpriteSheet),
       COLOR_TEXT,
     );
     scrollGroup.addChild(tile);
