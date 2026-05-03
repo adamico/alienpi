@@ -196,7 +196,7 @@ function buildSocialIcons(parent) {
 }
 
 function setTitleMenuItems(titleMenu, handlers) {
-  titleMenu.setItems([
+  const items = [
     {
       kind: "action",
       label: () => MENU_LABEL_START,
@@ -217,7 +217,17 @@ function setTitleMenuItems(titleMenu, handlers) {
       label: () => MENU_LABEL_CREDITS,
       activate: () => handlers.openCredits(),
     },
-  ]);
+  ];
+
+  if (DEV_BUILD) {
+    items.push({
+      kind: "action",
+      label: () => strings.title.testLab,
+      activate: () => handlers.openTestLab?.(),
+    });
+  }
+
+  titleMenu.setItems(items);
 }
 
 function animateTitleInitials(initialTexts) {

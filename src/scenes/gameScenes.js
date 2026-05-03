@@ -36,6 +36,12 @@ import {
 } from "../game/world.js";
 import { titleMenu, pauseMenu, settingsMenu } from "../ui/menus.js";
 import { BaseScene } from "./baseScene.js";
+// Test Lab overlay — tree-shaken in production because DEV_BUILD=false eliminates all call sites
+import {
+  initTestLabOverlay,
+  destroyTestLabOverlay,
+  updateTestLabOverlay,
+} from "../ui/testLabOverlay.js";
 
 import {
   SCENE_ACTION,
@@ -373,6 +379,42 @@ class PostRunScene extends BaseScene {
   }
 }
 
+class TestLabScene extends BaseScene {
+  constructor({ transitionTo }) {
+    super(GAME_STATES.TEST_LAB);
+    this.transitionTo = transitionTo;
+  }
+
+  enter() {
+    setPaused(false);
+    destroyPlayfield();
+    initializePlayer(999);
+    setupBoundaries();
+    initTestLabOverlay(() => this.transitionTo(GAME_STATES.TITLE, {}, "test-lab:exit"));
+  }
+
+  exit() {
+    destroyTestLabOverlay();
+    destroyPlayfield();
+  }
+
+  getMusic() {
+    return soundTitleMusic;
+  }
+
+  handleFrame(actions) {
+    if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
+      this.transitionTo(GAME_STATES.TITLE, {}, "test-lab:exit");
+      return true;
+    }
+    return false;
+  }
+
+  update() {
+    updateTestLabOverlay();
+  }
+}
+
 export function createGameScenes(deps) {
   const scenes = [
     new TitleScene(deps),
@@ -384,6 +426,7 @@ export function createGameScenes(deps) {
     new SettingsScene(deps),
     new CreditsScene(deps),
     new PostRunScene(deps),
+    ...(DEV_BUILD ? [new TestLabScene(deps)] : []),
   ];
 
   return new Map(scenes.map((scene) => [scene.getId(), scene]));

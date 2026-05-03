@@ -7,7 +7,9 @@ export default defineConfig([
     files: ["**/*.{js,mjs,cjs}"],
     plugins: { js },
     extends: ["js/recommended"],
-    languageOptions: { globals: globals.browser },
+    languageOptions: {
+      globals: { ...globals.browser, DEV_BUILD: "readonly" },
+    },
   },
   {
     // game.js sprays LittleJS exports onto globalThis at runtime; skip no-undef.

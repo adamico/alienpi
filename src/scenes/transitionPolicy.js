@@ -10,11 +10,12 @@ const {
   SETTINGS,
   CREDITS,
   TUTORIAL,
+  TEST_LAB,
 } = GAME_STATES;
 
 export const SCENE_TRANSITIONS = {
   [TITLE]: {
-    canTransitionTo: [LORE, SETTINGS, CREDITS, TUTORIAL],
+    canTransitionTo: [LORE, SETTINGS, CREDITS, TUTORIAL, ...(DEV_BUILD ? [TEST_LAB] : [])],
     meta: { pauseOnEnter: true },
   },
   [LORE]: {
@@ -49,4 +50,10 @@ export const SCENE_TRANSITIONS = {
     canTransitionTo: [HOME],
     meta: { pauseOnEnter: true, minDuration: 1.0 },
   },
+  ...(DEV_BUILD ? {
+    [TEST_LAB]: {
+      canTransitionTo: [TITLE],
+      meta: { pauseOnEnter: false },
+    },
+  } : {}),
 };

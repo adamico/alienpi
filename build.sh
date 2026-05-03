@@ -33,7 +33,7 @@ trap 'mv src/engine.js.bak src/engine.js 2>/dev/null || true' EXIT
 sed 's|littlejs\.esm\.js|littlejs.esm.min.js|' src/engine.js.bak > src/engine.js
 
 echo "📦 Bundling JavaScript..."
-npx esbuild game.js --bundle --minify --format=esm --outfile=dist/game.js
+npx esbuild game.js --bundle --minify --format=esm --define:DEV_BUILD=false --outfile=dist/game.js
 
 # 4. Copy HTML and Assets
 echo "📄 Copying index.html..."

@@ -99,6 +99,8 @@ export function initUIHandlers() {
           resetTutorialProgress();
           transitionTo(GAME_STATES.TUTORIAL, {}, "title:replay-tutorial");
         },
+        openTestLab: () =>
+          transitionTo(GAME_STATES.TEST_LAB, {}, "title:open-test-lab"),
       },
       pause: {
         resume: () => transitionTo(GAME_STATES.PLAYING, {}, "pause:resume"),

@@ -9,5 +9,6 @@ export const title = {
   highScorePrefix: "HIGH SCORE: ",
   replayTutorial: "TUTORIAL",
   subtitle: "ARCADE DEFENSE SYSTEM",
+  testLab: "TEST LAB",
   title: "ALIEN ORBIT ASSAULT",
 };
