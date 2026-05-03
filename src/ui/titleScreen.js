@@ -43,7 +43,7 @@ const BOSS_DECOR_POS = vec2(0, -40);
 const BOSS_DECOR_SIZE = vec2(420, 420);
 const BOSS_DECOR_COLOR = new Color(1, 0.4, 0.4, 0.18);
 
-const MENU_START_Y = 60;
+const MENU_START_Y = 0;
 const MENU_ROW_SPACING = 45;
 const MENU_ROW_COUNT = 6;
 
@@ -222,7 +222,8 @@ function setTitleMenuItems(titleMenu, handlers) {
 
 function animateTitleInitials(initialTexts) {
   const pulse =
-    TITLE_PULSE_BASE + TITLE_PULSE_RANGE * Math.sin(timeReal * TITLE_PULSE_SPEED);
+    TITLE_PULSE_BASE +
+    TITLE_PULSE_RANGE * Math.sin(timeReal * TITLE_PULSE_SPEED);
   for (const text of initialTexts) {
     text.textColor = text._baseColor.copy();
     text.textColor.a *= pulse;

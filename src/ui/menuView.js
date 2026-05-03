@@ -6,7 +6,12 @@ import {
   mouseWasPressed,
   mouseWasReleased,
 } from "../engine.js";
+import { playSfx } from "../audio/soundManager.js";
+import { soundMenuConfirm, soundMenuHover } from "../audio/sounds.js";
 import { FONT_MENU } from "../visuals/fonts.js";
+
+const MENU_HOVER_VOLUME = 1.4;
+const MENU_CONFIRM_VOLUME = 0.55;
 
 const measureCanvas = document.createElement("canvas");
 const measureCtx = measureCanvas.getContext("2d");
@@ -45,11 +50,13 @@ export function updateMenuInteraction(menu, rows) {
     if (row.row.isMouseOverlapping()) {
       if (menu.focusedIndex !== i) {
         menu.focusedIndex = i;
+        playSfx(soundMenuHover, undefined, MENU_HOVER_VOLUME, 1);
       }
 
       if (mouseWasPressed(0) || mouseWasReleased(0)) {
         const item = menu.items[i];
         if (item) {
+          playSfx(soundMenuConfirm, undefined, MENU_CONFIRM_VOLUME, 1);
           if (item.kind === "action") item.activate?.();
           else if (item.kind === "toggle") item.toggle?.();
           return true;

@@ -242,6 +242,52 @@ export const soundScorePing = new Sound([
   0.04,
 ]);
 
+// Menu hover — short soft blip for focus movement.
+export const soundMenuHover = new Sound([
+  0.35,
+  0,
+  420,
+  0.005,
+  0.03,
+  0.08,
+  0,
+  1.8,
+  6,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  0.08,
+  0.75,
+  0.03,
+]);
+
+// Menu confirm — brighter click/chime when activating an item.
+export const soundMenuConfirm = new Sound([
+  0.45,
+  0,
+  620,
+  0.005,
+  0.04,
+  0.14,
+  0,
+  2.0,
+  10,
+  ,
+  120,
+  0.02,
+  ,
+  ,
+  ,
+  ,
+  0.12,
+  0.72,
+  0.04,
+]);
+
 // Stat reveal — soft warm chime played as each post-run stat counts up.
 export const soundStatReveal = new Sound([
   0.6,
