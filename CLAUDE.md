@@ -83,3 +83,17 @@ See [.agents/rules/littlejs.md](.agents/rules/littlejs.md) for the full rule set
 - Don't mutate engine color constants (`WHITE`, `BLACK`, ...) — `.copy()` first.
 - All audio must go through the `SoundGenerator` (ZZFX) class — don't write raw audio. Note the existing `soundShoot` is a raw ZZFX array; new sounds should prefer `SoundGenerator`.
 - LittleJS's "One File Only" convention is intentionally broken here: `game.js` + the `src/` tree split lifecycle, entities, and data into dedicated modules. There is still no build step — the browser resolves ES module imports directly from `node_modules/littlejsengine/dist/littlejs.esm.js`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues at `adamico/alienpi` (use the `gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default canonical vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
