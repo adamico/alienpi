@@ -21,6 +21,8 @@ class InputManager {
     this.switchWeapon = false;
     /** @type {'keyboard'|'gamepad'} Last device that produced meaningful input */
     this.lastInputSource = "keyboard";
+    /** When true, all physical device reads are skipped (tutorial scripted control). */
+    this.controlsLocked = false;
 
     // Touch specific: Relative Dragging
     this.touchStartPos = null;
@@ -42,6 +44,7 @@ class InputManager {
    * Aggregates all input sources.
    */
   update() {
+    if (this.controlsLocked) return;
     this.updateKeyboard();
     this.updateGamepad();
     this.updateActions();
@@ -123,3 +126,11 @@ class InputManager {
 }
 
 export const input = new InputManager();
+
+export function lockPlayerControls() {
+  input.controlsLocked = true;
+}
+
+export function unlockPlayerControls() {
+  input.controlsLocked = false;
+}

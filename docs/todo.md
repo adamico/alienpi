@@ -8,8 +8,6 @@
 
 ## Gameplay
 
-- G1: disable ship controls (movement and fire) in the tutorial scene
-
 ## Sounds
 
 ## Visuals

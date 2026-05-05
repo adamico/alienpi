@@ -3,6 +3,7 @@ import { GAME_STATES, system } from "../config/index.js";
 import { player as playerCfg } from "../config/entities/player.js";
 import { BossMissile } from "../entities/bossMissile.js";
 import { input } from "../input/input.js";
+import { lockPlayerControls, unlockPlayerControls } from "../input/input.js";
 import { getGameState, getPlayer } from "./world.js";
 
 const STORAGE_KEY = "alienpi.progress.v1";
@@ -138,6 +139,7 @@ export function resetTutorialProgress() {
 export function startTutorialSequence() {
   sequenceActive = true;
   sequenceStartedAt = timeReal;
+  lockPlayerControls();
   setStep(0);
 }
 
@@ -148,6 +150,7 @@ export function stopTutorialSequence() {
   stepIndex = 0;
   switchTriggeredThisStep = false;
   tutorialMissiles = [];
+  unlockPlayerControls();
 }
 
 export function updateTutorialSequence() {
