@@ -1,4 +1,4 @@
-import { Color, rgb } from "../engine.js";
+import { Color, rgb, timeReal } from "../engine.js";
 import { GAME_STATES, strings } from "../config/index.js";
 import { makeMenuRow } from "./menuView.js";
 import { makePanel } from "./panel.js";
@@ -30,6 +30,7 @@ export function createPauseScreen(uiRoot, pauseMenu, handlers) {
   ];
   const syncVolumeSliders = makeSyncVolumeSliders(musicSlider, sfxSlider);
 
+  let backToHomeArmedUntil = 0;
   pauseMenu.setItems([
     ...buildSharedSettingsItems({ musicSlider, sfxSlider, syncVolumeSliders }),
     {
@@ -39,8 +40,18 @@ export function createPauseScreen(uiRoot, pauseMenu, handlers) {
     },
     {
       kind: "action",
-      label: () => strings.pause.backToHome,
-      activate: () => handlers.backToHome?.(),
+      label: () =>
+        timeReal < backToHomeArmedUntil
+          ? strings.pause.backToHomeArmed
+          : strings.pause.backToHome,
+      activate: () => {
+        if (timeReal < backToHomeArmedUntil) {
+          backToHomeArmedUntil = 0;
+          handlers.backToHome?.();
+        } else {
+          backToHomeArmedUntil = timeReal + 3;
+        }
+      },
     },
   ]);
 
