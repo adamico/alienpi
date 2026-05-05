@@ -19,6 +19,7 @@ import {
 } from "../visuals/gameEffects.js";
 import { vibrate } from "../input/gamepad.js";
 import { recordHpLost } from "../game/economy.js";
+import { triggerSlowMo } from "../game/timeScale.js";
 import { WeaponSystem } from "./playerWeapons.js";
 
 export let player = null;
@@ -389,6 +390,7 @@ export class Player extends BaseEntity {
     recordHpLost(amount);
     this.applyEffect(new FlashEffect(new Color(1, 0, 0), 0.1));
     applyScreenShake(0.3, 0.1);
+    triggerSlowMo();
     vibrate(180, 0.7, 0.9);
     this.startInvulnerability({ duration: 2 });
 

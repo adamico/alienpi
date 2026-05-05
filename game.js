@@ -24,6 +24,9 @@ import {
 } from "./src/game/tutorialProgress.js";
 import { input } from "./src/input/input.js";
 import { loadBindingsFromSettings } from "./src/input/bindings.js";
+import { tickTimeScale } from "./src/game/timeScale.js";
+import { getGameState } from "./src/game/world.js";
+import { GAME_STATES } from "./src/config/index.js";
 import { renderBackground, renderPostBackground } from "./src/game/scene.js";
 import { updateUI } from "./src/ui.js";
 import {
@@ -64,6 +67,7 @@ function gameUpdate() {
 }
 
 function gameUpdatePost() {
+  tickTimeScale(getGameState() === GAME_STATES.PLAYING);
   updateSceneFrame(timeDelta);
   updateAudio();
   updateUI();
