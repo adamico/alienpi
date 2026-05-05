@@ -8,8 +8,6 @@
 
 ## Gameplay
 
-- G6: when the player takes a hit, briefly slow game time (slow-motion) for game-feel impact, then ease back to normal speed. Duration tunable in config. Effect must not stack when multiple hits land in quick succession.
-
 - G7: offer the player a difficulty selection (Easy / Normal / Hard) from the main menu; selection persists in settings and is restored next session. Active difficulty visible in HUD or pause screen. HITL: which parameters vary per difficulty and numeric deltas.
 
 - G1: remove the current powerups and replace it with a single shootable powerup that cycles through the different powerups. This will make it more intuitive for players to understand how to use the powerups, and it will also add an extra layer of strategy to the game, as players will have to decide which powerup they want to use and when.
@@ -37,8 +35,6 @@
 - PUB2: instrument the game to report aggregate gameplay metrics (session start, run length, deaths, level reached) to an analytics backend. HITL: provider (Plausible, Umami, GA4, self-hosted?), event taxonomy, and consent UX (opt-in banner vs opt-out). No analytics fires before consent.
 
 ## bugs & performance & tweaks
-
-- BPT1: the floating text for the powerup pickup can spawn outside the playing area. Let's implement a dynamic spawn position for it, so that it always spawns within the playing area.
 
 ## balance
 

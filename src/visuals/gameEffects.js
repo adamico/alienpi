@@ -345,8 +345,21 @@ class FloatingText extends EngineObject {
  * @param {string|number} text
  * @param {object} [opts]
  */
-export function spawnFloatingText(pos, text, opts) {
-  return new FloatingText(pos, text, opts);
+export function spawnFloatingText(pos, text, opts = {}) {
+  // BPT1: clamp the spawn so the text + its upward drift stay inside the
+  // playfield. Width margin is a coarse estimate (text length unknown to us
+  // here at exact px); height accounts for the rise drift so the text never
+  // exits the top edge mid-animation.
+  const size = opts.size ?? 1.2;
+  const rise = opts.rise ?? 2.0;
+  const halfH = size * 0.5;
+  const halfW = Math.max(halfH, String(text).length * size * 0.3);
+  const max = system.levelSize;
+  const clamped = vec2(
+    Math.max(halfW, Math.min(max.x - halfW, pos.x)),
+    Math.max(halfH, Math.min(max.y - rise - halfH, pos.y)),
+  );
+  return new FloatingText(clamped, text, opts);
 }
 
 /**
