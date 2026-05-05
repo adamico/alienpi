@@ -1,10 +1,15 @@
-import { rgb, Color, timeReal } from "../engine.js";
+import { rgb, Color, timeReal, mouseIsDown } from "../engine.js";
 import { GAME_STATES, strings } from "../config/index.js";
+import { actionDown } from "../input/bindings.js";
 import { resetEconomy } from "../game/economy.js";
 import { resetTutorialProgress } from "../game/tutorialProgress.js";
 import { makeMenuRow } from "./menuView.js";
 import { makePanel } from "./panel.js";
 import { makeCenterTitle } from "./uiText.js";
+import {
+  HOLD_TO_ACTIVATE_SECONDS,
+  createHoldToActivateController,
+} from "./holdToActivate.js";
 import {
   buildSharedSettingsSliders,
   buildSharedSettingsRows,
@@ -28,10 +33,32 @@ export function createSettingsScreen(uiRoot, settingsMenu, handlers) {
   menuRows.push(makeMenuRow(settingsGroup, 220));
   menuRows.push(makeMenuRow(settingsGroup, 260));
   const syncVolumeSliders = makeSyncVolumeSliders(musicSlider, sfxSlider);
+  const sharedItems = buildSharedSettingsItems({
+    musicSlider,
+    sfxSlider,
+    syncVolumeSliders,
+  });
+  const resetItemIndex = sharedItems.length + 1;
 
-  let resetArmedUntil = 0;
+  const holdConfirmLabel = `HOLD ${strings.controls.labels.confirm}`;
+  const resetHold = createHoldToActivateController({
+    seconds: HOLD_TO_ACTIVATE_SECONDS,
+    isHolding: () => {
+    const resetRow = menuRows[resetItemIndex];
+    const holdingConfirm =
+      settingsMenu.focusedIndex === resetItemIndex && actionDown("confirm");
+      const holdingPointer =
+        !!resetRow?.row && resetRow.row.isMouseOverlapping() && mouseIsDown(0);
+      return holdingConfirm || holdingPointer;
+    },
+    onComplete: () => {
+      resetEconomy();
+      resetTutorialProgress();
+    },
+  });
+
   settingsMenu.setItems([
-    ...buildSharedSettingsItems({ musicSlider, sfxSlider, syncVolumeSliders }),
+    ...sharedItems,
     {
       kind: "action",
       label: () => `${strings.settings.controlsLabel} →`,
@@ -39,19 +66,10 @@ export function createSettingsScreen(uiRoot, settingsMenu, handlers) {
     },
     {
       kind: "action",
+      holdToActivateSeconds: HOLD_TO_ACTIVATE_SECONDS,
       label: () =>
-        timeReal < resetArmedUntil
-          ? "PRESS AGAIN TO CONFIRM"
-          : "RESET PROGRESS",
-      activate: () => {
-        if (timeReal < resetArmedUntil) {
-          resetEconomy();
-          resetTutorialProgress();
-          resetArmedUntil = 0;
-        } else {
-          resetArmedUntil = timeReal + 3;
-        }
-      },
+        resetHold.getLabel(timeReal, strings.settings.resetProgress, holdConfirmLabel),
+      activate: () => {},
     },
     {
       kind: "action",
@@ -63,14 +81,10 @@ export function createSettingsScreen(uiRoot, settingsMenu, handlers) {
   return {
     group: settingsGroup,
     tick(gameState) {
-      tickSettingsPanel(
-        settingsGroup,
-        gameState === GAME_STATES.SETTINGS,
-        settingsMenu,
-        menuRows,
-        musicSlider,
-        sfxSlider,
-      );
+      const visible = gameState === GAME_STATES.SETTINGS;
+      if (!visible) resetHold.clear();
+      else resetHold.tick(timeReal);
+      tickSettingsPanel(settingsGroup, visible, settingsMenu, menuRows, musicSlider, sfxSlider);
     },
   };
 }

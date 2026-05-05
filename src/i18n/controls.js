@@ -18,6 +18,5 @@ export const controls = {
   },
   reservedTooltip: "RESERVED FOR NAVIGATION",
   reset: "RESET ALL TO DEFAULTS",
-  resetConfirm: "PRESS AGAIN TO CONFIRM",
   title: "CONTROLS",
 };

@@ -10,4 +10,5 @@ export const settings = {
   sfxHotkey: " [S]",
   sfxLabel: "SFX: ",
   controlsLabel: "CONTROLS",
+  resetProgress: "RESET PROGRESS",
 };

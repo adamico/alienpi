@@ -37,6 +37,9 @@ export class Menu {
     const item = this.items[this.focusedIndex];
     if (!item) return false;
     if (code === "Enter" || code === "Space") {
+      if (item.kind === "action" && item.holdToActivateSeconds) {
+        return true;
+      }
       playSfx(soundMenuConfirm, undefined, MENU_CONFIRM_VOLUME, 1);
       if (item.kind === "action") item.activate?.();
       else if (item.kind === "toggle") item.toggle?.();

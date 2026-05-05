@@ -7,6 +7,7 @@ import {
   mainCanvasSize,
   keyWasPressed,
   gamepadWasPressed,
+  mouseIsDown,
   mouseWasReleased,
   timeReal,
 } from "../engine.js";
@@ -14,6 +15,7 @@ import { GAME_STATES, strings } from "../config/index.js";
 import {
   REMAPPABLE_ACTIONS,
   LOCKED_ACTIONS,
+  actionDown,
   bindings,
   setBinding,
   resetBindingsToDefaults,
@@ -24,6 +26,9 @@ import { soundMenuConfirm, soundMenuHover } from "../audio/sounds.js";
 import { makePanel } from "./panel.js";
 import { makeCenterTitle, makeText } from "./uiText.js";
 import { makeFooterHints } from "./footerHints.js";
+import {
+  createHoldToActivateController,
+} from "./holdToActivate.js";
 import { makeInputIcon, refreshInputIcon } from "./inputIcon.js";
 
 const PANEL_COLOR = new Color(0.04, 0.04, 0.1, 0.95);
@@ -42,6 +47,7 @@ const IDLE_COLOR = WHITE;
 const TOOLTIP_DURATION = 1.5;
 const HOVER_VOLUME = 1.4;
 const CONFIRM_VOLUME = 0.55;
+const HOLD_CONFIRM_LABEL = `HOLD ${strings.controls.labels.confirm}`;
 const CELL_HIT_SIZE = 60;
 const RESET_HIT_SIZE = vec2(500, 36);
 const BACK_HIT_SIZE = vec2(300, 36);
@@ -238,9 +244,17 @@ export function createControlsScreen(uiRoot, handlers) {
   let focusedZone = "rows";
   let captureState = null; // { action, device } when modal open
   let captureSettled = false; // becomes true the frame AFTER enterCapture
-  let resetArmedUntil = 0;
   let tooltipUntil = 0;
   let lastHoverKey = null; // tracks pointer hover transitions
+
+  const resetHold = createHoldToActivateController({
+    isHolding: () =>
+      (focusedZone === "reset" && actionDown("confirm")) ||
+      (resetHit.isMouseOverlapping() && mouseIsDown(0)),
+    onComplete: () => {
+      resetBindingsToDefaults();
+    },
+  });
 
   function focusKey() {
     if (focusedZone === "rows") return `rows:${focusedRow}:${focusedCol}`;
@@ -365,13 +379,6 @@ export function createControlsScreen(uiRoot, handlers) {
       return;
     }
     if (focusedZone === "reset") {
-      playConfirm();
-      if (timeReal < resetArmedUntil) {
-        resetBindingsToDefaults();
-        resetArmedUntil = 0;
-      } else {
-        resetArmedUntil = timeReal + 3;
-      }
       return;
     }
     if (focusedZone === "back") {
@@ -425,10 +432,11 @@ export function createControlsScreen(uiRoot, handlers) {
     });
     resetText.textColor =
       focusedZone === "reset" ? FOCUS_COLOR.copy() : IDLE_COLOR.copy();
-    resetText.text =
-      timeReal < resetArmedUntil
-        ? strings.controls.resetConfirm
-        : strings.controls.reset;
+    resetText.text = resetHold.getLabel(
+      timeReal,
+      strings.controls.reset,
+      HOLD_CONFIRM_LABEL,
+    );
     backText.textColor =
       focusedZone === "back" ? FOCUS_COLOR.copy() : IDLE_COLOR.copy();
   }
@@ -467,6 +475,7 @@ export function createControlsScreen(uiRoot, handlers) {
       group.visible = visible;
       if (!visible) {
         if (captureState) exitCapture();
+        resetHold.clear();
         return;
       }
       group.size = mainCanvasSize;
@@ -480,6 +489,7 @@ export function createControlsScreen(uiRoot, handlers) {
         }
         modalTooltip.visible = timeReal < tooltipUntil;
       } else {
+        resetHold.tick(timeReal);
         pollPointer();
       }
 

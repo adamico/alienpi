@@ -58,6 +58,9 @@ export function updateMenuInteraction(menu, rows) {
       if (mouseWasPressed(0) || mouseWasReleased(0)) {
         const item = menu.items[i];
         if (item) {
+          if (item.kind === "action" && item.holdToActivateSeconds) {
+            return true;
+          }
           playSfx(soundMenuConfirm, undefined, MENU_CONFIRM_VOLUME, 1);
           if (item.kind === "action") item.activate?.();
           else if (item.kind === "toggle") item.toggle?.();

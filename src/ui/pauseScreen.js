@@ -1,9 +1,14 @@
-import { Color, rgb, timeReal } from "../engine.js";
+import { Color, rgb, timeReal, mouseIsDown } from "../engine.js";
 import { GAME_STATES, strings } from "../config/index.js";
+import { actionDown } from "../input/bindings.js";
 import { makeMenuRow } from "./menuView.js";
 import { makePanel } from "./panel.js";
 import { makeCenterTitle } from "./uiText.js";
 import { makeFooterHints } from "./footerHints.js";
+import {
+  HOLD_TO_ACTIVATE_SECONDS,
+  createHoldToActivateController,
+} from "./holdToActivate.js";
 import {
   buildSharedSettingsSliders,
   buildSharedSettingsRows,
@@ -29,10 +34,31 @@ export function createPauseScreen(uiRoot, pauseMenu, handlers) {
     makeMenuRow(pauseGroup, 275),
   ];
   const syncVolumeSliders = makeSyncVolumeSliders(musicSlider, sfxSlider);
+  const sharedItems = buildSharedSettingsItems({
+    musicSlider,
+    sfxSlider,
+    syncVolumeSliders,
+  });
+  const backToHomeItemIndex = sharedItems.length + 1;
 
-  let backToHomeArmedUntil = 0;
+  const holdConfirmLabel = `HOLD ${strings.controls.labels.confirm}`;
+  const backToHomeHold = createHoldToActivateController({
+    seconds: HOLD_TO_ACTIVATE_SECONDS,
+    isHolding: () => {
+    const backToHomeRow = menuRows[backToHomeItemIndex];
+    const holdingConfirm =
+      pauseMenu.focusedIndex === backToHomeItemIndex && actionDown("confirm");
+      const holdingPointer =
+        !!backToHomeRow?.row && backToHomeRow.row.isMouseOverlapping() && mouseIsDown(0);
+      return holdingConfirm || holdingPointer;
+    },
+    onComplete: () => {
+      handlers.backToHome?.();
+    },
+  });
+
   pauseMenu.setItems([
-    ...buildSharedSettingsItems({ musicSlider, sfxSlider, syncVolumeSliders }),
+    ...sharedItems,
     {
       kind: "action",
       label: () => "BACK TO GAME",
@@ -40,18 +66,10 @@ export function createPauseScreen(uiRoot, pauseMenu, handlers) {
     },
     {
       kind: "action",
+      holdToActivateSeconds: HOLD_TO_ACTIVATE_SECONDS,
       label: () =>
-        timeReal < backToHomeArmedUntil
-          ? strings.pause.backToHomeArmed
-          : strings.pause.backToHome,
-      activate: () => {
-        if (timeReal < backToHomeArmedUntil) {
-          backToHomeArmedUntil = 0;
-          handlers.backToHome?.();
-        } else {
-          backToHomeArmedUntil = timeReal + 3;
-        }
-      },
+        backToHomeHold.getLabel(timeReal, strings.pause.backToHome, holdConfirmLabel),
+      activate: () => {},
     },
   ]);
 
@@ -64,14 +82,9 @@ export function createPauseScreen(uiRoot, pauseMenu, handlers) {
     group: pauseGroup,
     tick(gameState) {
       const visible = gameState === GAME_STATES.PAUSE;
-      tickSettingsPanel(
-        pauseGroup,
-        visible,
-        pauseMenu,
-        menuRows,
-        musicSlider,
-        sfxSlider,
-      );
+      if (!visible) backToHomeHold.clear();
+      else backToHomeHold.tick(timeReal);
+      tickSettingsPanel(pauseGroup, visible, pauseMenu, menuRows, musicSlider, sfxSlider);
       if (visible) footer.refresh();
     },
   };
