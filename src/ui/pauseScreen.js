@@ -1,8 +1,9 @@
 import { Color, rgb } from "../engine.js";
-import { GAME_STATES, strings } from "../config/index.js";
+import { GAME_STATES, strings, ui } from "../config/index.js";
 import { makeMenuRow } from "./menuView.js";
 import { makePanel } from "./panel.js";
 import { makeCenterTitle } from "./uiText.js";
+import { makeFooterHints } from "./footerHints.js";
 import {
   buildSharedSettingsSliders,
   buildSharedSettingsRows,
@@ -29,22 +30,33 @@ export function createPauseScreen(uiRoot, pauseMenu, handlers) {
     ...buildSharedSettingsItems({ musicSlider, sfxSlider, syncVolumeSliders }),
     {
       kind: "action",
-      label: () => "BACK TO GAME (ESC)",
+      label: () => "BACK TO GAME",
       activate: () => handlers.resume(),
     },
   ]);
 
+  const footer = makeFooterHints(
+    pauseGroup,
+    [
+      { action: "confirm", label: "SELECT" },
+      { action: "cancel", label: "RESUME" },
+    ],
+    { y: ui.footerHints.pauseY },
+  );
+
   return {
     group: pauseGroup,
     tick(gameState) {
+      const visible = gameState === GAME_STATES.PAUSE;
       tickSettingsPanel(
         pauseGroup,
-        gameState === GAME_STATES.PAUSE,
+        visible,
         pauseMenu,
         menuRows,
         musicSlider,
         sfxSlider,
       );
+      if (visible) footer.refresh();
     },
   };
 }

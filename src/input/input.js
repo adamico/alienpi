@@ -1,18 +1,14 @@
 import {
   vec2,
   keyDirection,
-  keyIsDown,
-  keyWasPressed,
   gamepadStick,
-  gamepadIsDown,
-  gamepadWasPressed,
   mouseIsDown,
   mouseWasPressed,
   mouseWasReleased,
   mousePos,
   uiSystem,
 } from "../engine.js";
-import { system } from "../config/index.js";
+import { actionDownSource, actionPressedSource } from "./bindings.js";
 
 /**
  * Aggregates Keyboard, Gamepad, and Touch/Mouse input into a unified API.
@@ -48,6 +44,7 @@ class InputManager {
   update() {
     this.updateKeyboard();
     this.updateGamepad();
+    this.updateActions();
     this.updateTouch();
   }
 
@@ -57,43 +54,31 @@ class InputManager {
       this.moveDir = this.moveDir.add(kDir.normalize());
       this.lastInputSource = "keyboard";
     }
-
-    if (keyIsDown(system.shootKey)) {
-      this.isFiring = true;
-      this.lastInputSource = "keyboard";
-    }
-    if (keyIsDown(system.focusKey)) {
-      this.isFocusing = true;
-      this.lastInputSource = "keyboard";
-    }
-    if (keyWasPressed(system.switchKey)) {
-      this.switchWeapon = true;
-      this.lastInputSource = "keyboard";
-    }
   }
 
   updateGamepad() {
     const gStick = gamepadStick(0);
     if (gStick.length() > 0.1) {
-      // Deadzone - Normalize to ensure full speed
       this.moveDir = this.moveDir.add(gStick.normalize());
       this.lastInputSource = "gamepad";
     }
+  }
 
-    // Fire: A (0) or RT (7)
-    if (gamepadIsDown(0) || gamepadIsDown(7)) {
+  updateActions() {
+    const fireSource = actionDownSource("fire");
+    if (fireSource) {
       this.isFiring = true;
-      this.lastInputSource = "gamepad";
+      this.lastInputSource = fireSource;
     }
-    // Focus: LT (6) or X (2)
-    if (gamepadIsDown(6) || gamepadIsDown(2)) {
+    const focusSource = actionDownSource("focus");
+    if (focusSource) {
       this.isFocusing = true;
-      this.lastInputSource = "gamepad";
+      this.lastInputSource = focusSource;
     }
-    // Switch: B (1) or Bumpers (4/5)
-    if (gamepadWasPressed(1) || gamepadWasPressed(4) || gamepadWasPressed(5)) {
+    const switchSource = actionPressedSource("switchWeapon");
+    if (switchSource) {
       this.switchWeapon = true;
-      this.lastInputSource = "gamepad";
+      this.lastInputSource = switchSource;
     }
   }
 

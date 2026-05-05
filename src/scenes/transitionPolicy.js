@@ -8,6 +8,7 @@ const {
   PAUSE,
   POST_RUN,
   SETTINGS,
+  CONTROLS,
   CREDITS,
   TUTORIAL,
   TEST_LAB,
@@ -46,7 +47,11 @@ export const SCENE_TRANSITIONS = {
     meta: { pauseOnEnter: true },
   },
   [SETTINGS]: {
-    canTransitionTo: [TITLE, HOME, PAUSE],
+    canTransitionTo: [TITLE, HOME, PAUSE, CONTROLS],
+    meta: { modal: true, returnWithPop: true },
+  },
+  [CONTROLS]: {
+    canTransitionTo: [SETTINGS],
     meta: { modal: true, returnWithPop: true },
   },
   [CREDITS]: {

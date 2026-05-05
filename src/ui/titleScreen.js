@@ -10,10 +10,11 @@ import {
   mouseWasReleased,
 } from "../engine.js";
 import { sprites } from "../visuals/sprites.js";
-import { GAME_STATES, strings } from "../config/index.js";
+import { GAME_STATES, strings, ui } from "../config/index.js";
 import { FONT_MENU } from "../visuals/fonts.js";
 import { makeMenuRow, paintMenu, updateMenuInteraction } from "./menuView.js";
 import { makePanel } from "./panel.js";
+import { makeFooterHints } from "./footerHints.js";
 
 const measureCanvas = document.createElement("canvas");
 const measureCtx = measureCanvas.getContext("2d");
@@ -272,6 +273,11 @@ export function createTitleScreen(uiRoot, titleMenu, handlers) {
 
   const menuRows = buildMenuRows(titleGroup);
   const socialIcons = buildSocialIcons(titleGroup);
+  const footer = makeFooterHints(
+    titleGroup,
+    [{ action: "confirm", label: "SELECT" }],
+    { y: ui.footerHints.titleY },
+  );
 
   setTitleMenuItems(titleMenu, handlers);
 
@@ -286,6 +292,7 @@ export function createTitleScreen(uiRoot, titleMenu, handlers) {
 
       animateTitleInitials(initialTexts);
       updateSocialLinks(socialIcons, strings.links);
+      footer.refresh();
     },
     processPointer(menu) {
       updateMenuInteraction(menu, menuRows);

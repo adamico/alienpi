@@ -9,4 +9,5 @@ export const settings = {
   settingsTitle: "SETTINGS",
   sfxHotkey: " [S]",
   sfxLabel: "SFX: ",
+  controlsLabel: "CONTROLS",
 };

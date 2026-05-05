@@ -4,6 +4,7 @@ import {
   mouseWasReleased,
   gamepadStick,
 } from "../engine.js";
+import { actionPressed, actionPressedSource } from "../input/bindings.js";
 
 export const SCENE_ACTION = {
   NAV_UP: "NAV_UP",
@@ -41,15 +42,11 @@ export function createSceneActionCollector({ vec2 }) {
     push(SCENE_ACTION.NAV_RIGHT, "keyboard");
   }
 
-  if (keyWasPressed("Enter") || keyWasPressed("Space") || gamepadWasReleased(0)) {
-    push(SCENE_ACTION.CONFIRM, "confirm");
-  }
-  if (keyWasPressed("Escape") || gamepadWasReleased(8) || gamepadWasReleased(1)) {
-    push(SCENE_ACTION.CANCEL, "cancel");
-  }
-  if (keyWasPressed("Escape") || keyWasPressed("KeyP") || gamepadWasReleased(11)) {
-    push(SCENE_ACTION.PAUSE, "pause");
-  }
+  const confirmSrc = actionPressedSource("confirm");
+  if (confirmSrc) push(SCENE_ACTION.CONFIRM, confirmSrc);
+  const cancelSrc = actionPressedSource("cancel");
+  if (cancelSrc) push(SCENE_ACTION.CANCEL, cancelSrc);
+  if (actionPressed("pause")) push(SCENE_ACTION.PAUSE, "pause");
 
   if (mouseWasReleased(0)) {
     push(SCENE_ACTION.POINTER_SELECT, "pointer");

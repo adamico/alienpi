@@ -23,6 +23,7 @@ import {
   applyTutorialInput,
 } from "./src/game/tutorialProgress.js";
 import { input } from "./src/input/input.js";
+import { loadBindingsFromSettings } from "./src/input/bindings.js";
 import { renderBackground, renderPostBackground } from "./src/game/scene.js";
 import { updateUI } from "./src/ui.js";
 import {
@@ -33,6 +34,7 @@ import { updateAudio } from "./src/audio/soundManager.js";
 
 async function gameInit() {
   loadSettings();
+  loadBindingsFromSettings();
   loadHighScore();
   loadEconomy();
   loadTutorialProgress();

@@ -6,9 +6,9 @@ import { createDialogRevealController } from "./dialogRevealController.js";
 import { buildDialogParts } from "./dialogParts.js";
 import {
   createDialogBodyTypewriterView,
-  createDialogPrompt,
   createDialogTitle,
 } from "./dialogTypewriterView.js";
+import { makeFooterHints } from "./footerHints.js";
 
 export function createCreditsScreen(uiRoot) {
   const revealCfg = ui.creditsReveal;
@@ -35,23 +35,22 @@ export function createCreditsScreen(uiRoot) {
   });
   const bodyPartTexts = bodyView.partTexts;
 
-  const promptText = createDialogPrompt(creditsGroup, {
-    y: 280,
-    label: strings.credits.backPrompt,
-    boxHeight: 40,
-    textHeight: 20,
-    color: rgb(0.6, 0.9, 1),
-  });
-  promptText.visible = false;
-
-  const skipPromptText = createDialogPrompt(creditsGroup, {
-    y: 320,
-    label: strings.credits.skipPrompt,
-    boxHeight: 32,
-    textHeight: 18,
-    color: new Color(1, 1, 1, 0.75),
-  });
-  skipPromptText.visible = true;
+  const footer = makeFooterHints(
+    creditsGroup,
+    [
+      { action: "cancel", label: "BACK" },
+      { action: "skip", label: "SKIP" },
+    ],
+    { y: ui.footerHints.creditsY },
+  );
+  const backItem = footer.items[0];
+  const skipItem = footer.items[1];
+  const setItemVisible = (item, v) => {
+    item.tile.visible = v;
+    item.text.visible = v;
+  };
+  setItemVisible(backItem, false);
+  setItemVisible(skipItem, true);
 
   let wasVisible = false;
   let revealState = {
@@ -83,8 +82,8 @@ export function createCreditsScreen(uiRoot) {
     titleText.text = state.titleText;
     bodyView.syncLines(state.bodyPartIndex, state.bodyRevealedChars);
     bodyView.updateWipe(state.bodyWipeProgress);
-    skipPromptText.visible = state.showSkipPrompt;
-    promptText.visible = state.showStartPrompt;
+    setItemVisible(skipItem, state.showSkipPrompt);
+    setItemVisible(backItem, state.showStartPrompt);
   }
 
   function resetReveal() {
@@ -124,6 +123,7 @@ export function createCreditsScreen(uiRoot) {
       }
 
       updateReveal();
+      footer.refresh();
     },
   };
 }

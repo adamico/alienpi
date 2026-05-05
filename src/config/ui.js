@@ -15,6 +15,15 @@ export const ui = {
     promptBlinkHz: 1.4,
     promptBlinkDutyCycle: 0.65,
   },
+  footerHints: {
+    iconSize: 32,
+    iconLabelGap: 8,
+    hintSpacing: 32,
+    labelHeight: 18,
+    titleY: 320,
+    pauseY: 300,
+    creditsY: 340,
+  },
   creditsReveal: {
     titleCharInterval: 0.05,
     titleToBodyDelay: 0.25,

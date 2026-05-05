@@ -12,6 +12,7 @@ import { createHudView } from "./hudView.js";
 import { createLoreScreen } from "./storyScreen.js";
 import { createPauseScreen } from "./pauseScreen.js";
 import { createSettingsScreen } from "./settingsScreen.js";
+import { createControlsScreen } from "./controlsScreen.js";
 import { createTitleScreen } from "./titleScreen.js";
 import { createTutorialScreen } from "./tutorialScreen.js";
 import { createIconDebugScreen } from "./iconDebugScreen.js";
@@ -71,6 +72,15 @@ registerUIView({
   create: (uiRoot, handlers) =>
     createSettingsScreen(uiRoot, settingsMenu, {
       back: handlers.settings?.back,
+      openControls: handlers.settings?.openControls,
+    }),
+});
+
+registerUIView({
+  id: "controls",
+  create: (uiRoot, handlers) =>
+    createControlsScreen(uiRoot, {
+      back: handlers.controls?.back,
     }),
 });
 

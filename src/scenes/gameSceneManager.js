@@ -109,6 +109,11 @@ export function initUIHandlers() {
       },
       settings: {
         back: () => popState({}, "settings:back"),
+        openControls: () =>
+          pushState(GAME_STATES.CONTROLS, {}, "settings:open-controls"),
+      },
+      controls: {
+        back: () => popState({}, "controls:back"),
       },
     },
   });

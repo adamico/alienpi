@@ -37,3 +37,18 @@ export function handleUIConfirmForState(state) {
   }
   return true;
 }
+
+export function handleControlsSceneActions(actions, onBack) {
+  for (const { entry, view } of uiViews) {
+    if (entry.id !== "controls") continue;
+    if (view && typeof view.handleSceneActions === "function") {
+      const handled = view.handleSceneActions(actions);
+      if (handled) return true;
+    }
+  }
+  if (onBack && actions.some((a) => a.type === "CANCEL")) {
+    onBack();
+    return true;
+  }
+  return false;
+}

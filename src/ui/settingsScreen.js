@@ -26,11 +26,17 @@ export function createSettingsScreen(uiRoot, settingsMenu, handlers) {
     buildSharedSettingsSliders(settingsGroup);
   const menuRows = buildSharedSettingsRows(settingsGroup, makeMenuRow);
   menuRows.push(makeMenuRow(settingsGroup, 220));
+  menuRows.push(makeMenuRow(settingsGroup, 260));
   const syncVolumeSliders = makeSyncVolumeSliders(musicSlider, sfxSlider);
 
   let resetArmedUntil = 0;
   settingsMenu.setItems([
     ...buildSharedSettingsItems({ musicSlider, sfxSlider, syncVolumeSliders }),
+    {
+      kind: "action",
+      label: () => `${strings.settings.controlsLabel} →`,
+      activate: () => handlers.openControls?.(),
+    },
     {
       kind: "action",
       label: () =>

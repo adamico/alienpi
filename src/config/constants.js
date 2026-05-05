@@ -1,4 +1,5 @@
 export const GAME_STATES = {
+  CONTROLS: "CONTROLS",
   CREDITS: "CREDITS",
   HOME: "HOME",
   LORE: "LORE",

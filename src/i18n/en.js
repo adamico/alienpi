@@ -1,4 +1,5 @@
 // English (en) localization
+import { controls } from "./controls.js";
 import { credits } from "./credits.js";
 import { home } from "./home.js";
 import { hud } from "./hud.js";
@@ -11,6 +12,7 @@ import { title } from "./title.js";
 import { tutorial } from "./tutorial.js";
 
 export const en = {
+  controls,
   credits,
   home,
   hud,

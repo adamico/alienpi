@@ -8,6 +8,7 @@ export const settings = {
   sfxVolume: 0.8,
   shakeEnabled: true,
   soundEffectsEnabled: true,
+  bindings: null,
 };
 
 export const PERSISTED_KEYS = [
@@ -17,4 +18,5 @@ export const PERSISTED_KEYS = [
   "sfxVolume",
   "shakeEnabled",
   "soundEffectsEnabled",
+  "bindings",
 ];

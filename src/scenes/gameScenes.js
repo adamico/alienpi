@@ -48,7 +48,7 @@ import {
   hasSceneAction,
   dispatchMenuFromSceneActions,
 } from "./sceneActions.js";
-import { handleUIConfirmForState } from "../ui.js";
+import { handleUIConfirmForState, handleControlsSceneActions } from "../ui.js";
 
 function destroyPlayfield() {
   system.isResetting = true;
@@ -311,6 +311,27 @@ class SettingsScene extends BaseScene {
   }
 }
 
+class ControlsScene extends BaseScene {
+  constructor({ popState }) {
+    super(GAME_STATES.CONTROLS);
+    this.popState = popState;
+  }
+
+  enter() {
+    setPaused(true);
+  }
+
+  getMusic() {
+    return soundTitleMusic;
+  }
+
+  handleFrame(actions) {
+    return handleControlsSceneActions(actions, () =>
+      this.popState({}, "controls:back"),
+    );
+  }
+}
+
 class CreditsScene extends BaseScene {
   constructor({ transitionTo }) {
     super(GAME_STATES.CREDITS);
@@ -444,6 +465,7 @@ export function createGameScenes(deps) {
     new PlayingScene(deps),
     new PauseScene(deps),
     new SettingsScene(deps),
+    new ControlsScene(deps),
     new CreditsScene(deps),
     new PostRunScene(deps),
     ...(DEV_BUILD ? [new TestLabScene(deps), new IconDebugScene(deps)] : []),
