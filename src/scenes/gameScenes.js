@@ -13,6 +13,7 @@ import {
   startTutorialSequence,
   stopTutorialSequence,
   updateTutorialSequence,
+  advanceTutorialStep,
   markTutorialCompleted,
 } from "../game/tutorialProgress.js";
 import { vibrate } from "../input/gamepad.js";
@@ -36,7 +37,6 @@ import {
 } from "../game/world.js";
 import { titleMenu, pauseMenu, settingsMenu } from "../ui/menus.js";
 import { BaseScene } from "./baseScene.js";
-// Test Lab overlay — tree-shaken in production because DEV_BUILD=false eliminates all call sites
 import {
   initTestLabOverlay,
   destroyTestLabOverlay,
@@ -46,11 +46,12 @@ import {
 import {
   SCENE_ACTION,
   hasSceneAction,
+  hasSceneSelectAction,
   dispatchMenuFromSceneActions,
 } from "./sceneActions.js";
 import { handleUIConfirmForState, handleControlsSceneActions } from "../ui.js";
 
-function destroyPlayfield() {
+export function destroyPlayfield() {
   system.isResetting = true;
   engineObjectsDestroy();
   system.isResetting = false;
@@ -85,6 +86,15 @@ class TitleScene extends BaseScene {
   }
 }
 
+function transitionToTutorialOrHome(transitionTo, from) {
+  const runTutorial = isTutorialPending();
+  transitionTo(
+    runTutorial ? GAME_STATES.TUTORIAL : GAME_STATES.HOME,
+    {},
+    runTutorial ? `title:tutorial:${from}` : `title:home:${from}`,
+  );
+}
+
 class LoreScene extends BaseScene {
   constructor({ transitionTo }) {
     super(GAME_STATES.LORE);
@@ -100,20 +110,15 @@ class LoreScene extends BaseScene {
   }
 
   handleFrame(actions) {
-    if (
-      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
-      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
-    ) {
+    if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
+      transitionToTutorialOrHome(this.transitionTo, "lore");
+      return true;
+    }
+    if (hasSceneAction(actions, SCENE_ACTION.CONFIRM)) {
       if (handleUIConfirmForState(GAME_STATES.LORE)) {
-        const runTutorial = isTutorialPending();
-        this.transitionTo(
-          runTutorial ? GAME_STATES.TUTORIAL : GAME_STATES.HOME,
-          {},
-          runTutorial ? "lore:tutorial" : "lore:confirm",
-        );
+        transitionToTutorialOrHome(this.transitionTo, "lore");
         return true;
       }
-      return true;
     }
     return false;
   }
@@ -134,17 +139,9 @@ class HomeScene extends BaseScene {
   }
 
   handleFrame(actions) {
-    if (
-      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
-      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
-    ) {
+    if (hasSceneSelectAction(actions)) {
       prepareRun({ spawnBossAtStart: true });
       this.transitionTo(GAME_STATES.PLAYING, { gameWon: false }, "run:start");
-      return true;
-    }
-
-    if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
-      this.transitionTo(GAME_STATES.TITLE, {}, "home:cancel");
       return true;
     }
 
@@ -219,7 +216,8 @@ class TutorialScene extends BaseScene {
 
   enter({ from } = {}) {
     this.completed = false;
-    this.returnState = from === GAME_STATES.TITLE ? GAME_STATES.TITLE : GAME_STATES.HOME;
+    this.returnState =
+      from === GAME_STATES.TITLE ? GAME_STATES.TITLE : GAME_STATES.HOME;
     setPaused(false);
     destroyPlayfield();
     initializePlayer();
@@ -246,12 +244,14 @@ class TutorialScene extends BaseScene {
   }
 
   handleFrame(actions) {
-    if (
-      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
-      hasSceneAction(actions, SCENE_ACTION.CANCEL) ||
-      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
-    ) {
-      this.finish("tutorial:skip");
+    if (hasSceneAction(actions, SCENE_ACTION.NEXT)) {
+      if (advanceTutorialStep()) {
+        this.finish("tutorial:next-done");
+      }
+      return true;
+    }
+    if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
+      this.finish("tutorial:cancel");
       return true;
     }
     return false;
@@ -352,10 +352,7 @@ class CreditsScene extends BaseScene {
       return true;
     }
 
-    if (
-      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
-      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
-    ) {
+    if (hasSceneSelectAction(actions)) {
       if (handleUIConfirmForState(GAME_STATES.CREDITS)) {
         this.transitionTo(GAME_STATES.TITLE, {}, "credits:dismiss");
       }
@@ -387,11 +384,7 @@ class PostRunScene extends BaseScene {
   handleFrame(actions) {
     if (timeReal - this.gameOverTime <= 1.0) return false;
 
-    if (
-      hasSceneAction(actions, SCENE_ACTION.CONFIRM) ||
-      hasSceneAction(actions, SCENE_ACTION.CANCEL) ||
-      hasSceneAction(actions, SCENE_ACTION.POINTER_SELECT)
-    ) {
+    if (hasSceneSelectAction(actions)) {
       this.transitionTo(GAME_STATES.HOME, {}, "post-run:advance");
       return true;
     }
@@ -411,7 +404,9 @@ class TestLabScene extends BaseScene {
     destroyPlayfield();
     initializePlayer(999);
     setupBoundaries();
-    initTestLabOverlay(() => this.transitionTo(GAME_STATES.TITLE, {}, "test-lab:exit"));
+    initTestLabOverlay(() =>
+      this.transitionTo(GAME_STATES.TITLE, {}, "test-lab:exit"),
+    );
   }
 
   exit() {

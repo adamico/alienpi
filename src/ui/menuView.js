@@ -5,6 +5,7 @@ import {
   Color,
   mouseWasPressed,
   mouseWasReleased,
+  mouseDeltaScreen,
 } from "../engine.js";
 import { playSfx } from "../audio/soundManager.js";
 import { soundMenuConfirm, soundMenuHover } from "../audio/sounds.js";
@@ -48,7 +49,8 @@ export function updateMenuInteraction(menu, rows) {
     if (!row.row.visible) continue;
 
     if (row.row.isMouseOverlapping()) {
-      if (menu.focusedIndex !== i) {
+      const mouseMoved = mouseDeltaScreen.x !== 0 || mouseDeltaScreen.y !== 0;
+      if (mouseMoved && menu.focusedIndex !== i) {
         menu.focusedIndex = i;
         playSfx(soundMenuHover, undefined, MENU_HOVER_VOLUME, 1);
       }

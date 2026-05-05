@@ -10,7 +10,7 @@ import {
   mouseWasReleased,
 } from "../engine.js";
 import { sprites } from "../visuals/sprites.js";
-import { GAME_STATES, strings, ui } from "../config/index.js";
+import { GAME_STATES, strings } from "../config/index.js";
 import { FONT_MENU } from "../visuals/fonts.js";
 import { makeMenuRow, paintMenu, updateMenuInteraction } from "./menuView.js";
 import { makePanel } from "./panel.js";
@@ -61,6 +61,7 @@ const SOCIAL_LINKS = [
 const SOCIAL_Y = 300;
 const SOCIAL_ICON_SIZE = 48;
 const SOCIAL_ICON_SPACING = 64;
+const SOCIAL_MARGIN_RIGHT = 128;
 
 const SOCIAL_IDLE_COLOR = new Color(1, 1, 1, 0.45);
 const SOCIAL_HOVER_COLOR = new Color(1, 1, 1, 1);
@@ -175,8 +176,9 @@ function buildMenuRows(parent) {
 
 function buildSocialIcons(parent) {
   const socialIcons = [];
-  const totalWidth = (SOCIAL_LINKS.length - 1) * SOCIAL_ICON_SPACING;
-  const baseX = -totalWidth / 2;
+  const rightEdge =
+    mainCanvasSize.x / 2 - SOCIAL_MARGIN_RIGHT - SOCIAL_ICON_SIZE / 2;
+  const baseX = rightEdge - (SOCIAL_LINKS.length - 1) * SOCIAL_ICON_SPACING;
 
   SOCIAL_LINKS.forEach((entry, index) => {
     const tile = sprites.get(entry.sprite);
@@ -276,7 +278,6 @@ export function createTitleScreen(uiRoot, titleMenu, handlers) {
   const footer = makeFooterHints(
     titleGroup,
     [{ action: "confirm", label: "SELECT" }],
-    { y: ui.footerHints.titleY },
   );
 
   setTitleMenuItems(titleMenu, handlers);

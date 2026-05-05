@@ -43,7 +43,7 @@ export const SCENE_TRANSITIONS = {
     meta: { pauseOnEnter: false },
   },
   [PAUSE]: {
-    canTransitionTo: [PLAYING, SETTINGS],
+    canTransitionTo: [PLAYING, HOME, SETTINGS],
     meta: { pauseOnEnter: true },
   },
   [SETTINGS]: {

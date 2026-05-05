@@ -1,4 +1,4 @@
-import { vec2, rgb, mainCanvasSize, Color, timeReal } from "../engine.js";
+import { rgb, mainCanvasSize, Color, timeReal } from "../engine.js";
 import { GAME_STATES, strings } from "../config/index.js";
 import { formatHighScore } from "../game/score.js";
 import { makePanel } from "./panel.js";
@@ -10,6 +10,7 @@ import {
   formatSubstrate,
 } from "../game/economy.js";
 import { playSfx } from "../audio/soundManager.js";
+import { makeFooterHints } from "./footerHints.js";
 import { soundScorePing } from "../audio/sounds.js";
 
 // Post-run stat count-up animation helpers.
@@ -28,7 +29,6 @@ const COLOR_POSITIVE = rgb(0.4, 1, 0.7);
 const COLOR_NEGATIVE = rgb(1, 0.5, 0.3);
 const COLOR_NEUTRAL = new Color(0.85, 0.85, 0.85, 1);
 const COLOR_WHITE = new Color(1, 1, 1, 1);
-const COLOR_DIM = new Color(0.7, 0.7, 0.7, 1);
 const COLOR_DEFEAT = rgb(1, 0.2, 0.2);
 const COLOR_VICTORY = rgb(0.4, 1, 0.4);
 const COLOR_HIGHLIGHT = rgb(1, 0.85, 0.3);
@@ -61,20 +61,9 @@ export function createEconomyScreens(uiRoot) {
     },
   );
 
-  const homeLaunchText = makeCenterLine(
-    homeGroup,
-    130,
-    strings.home.launchPrompt,
-    {
-      boxHeight: 50,
-      textHeight: 28,
-      color: COLOR_WHITE,
-    },
-  );
-  makeCenterLine(homeGroup, 180, strings.home.exitPrompt, {
-    textHeight: 18,
-    color: COLOR_DIM,
-  });
+  const homeLaunchFooter = makeFooterHints(homeGroup, [
+    { action: "confirm", label: strings.home.launchPrompt },
+  ]);
   const postRunGroup = makePanel(uiRoot);
 
   const postRunTitleText = makeCenterTitle(
@@ -103,24 +92,6 @@ export function createEconomyScreens(uiRoot) {
     strings.title.highScorePrefix + formatHighScore(),
     { boxHeight: 40, textHeight: 26, color: COLOR_HIGHLIGHT, shadow: false },
   );
-  const retryText = makeCenterLine(
-    postRunGroup,
-    60,
-    strings.postRun.retryPrompt,
-    {
-      boxHeight: 50,
-      textHeight: 24,
-      color: COLOR_WHITE,
-      shadow: false,
-    },
-  );
-  const backToTitleText = makeCenterLine(postRunGroup, 100, "", {
-    boxHeight: 40,
-    textHeight: 18,
-    color: COLOR_DIM,
-    shadow: false,
-  });
-  backToTitleText.visible = false;
 
   const postRunEarningsText = makeCenterLine(postRunGroup, 80, "", {
     shadow: false,
@@ -146,6 +117,9 @@ export function createEconomyScreens(uiRoot) {
     color: COLOR_NEGATIVE,
     shadow: false,
   });
+  const postRunFooter = makeFooterHints(postRunGroup, [
+    { action: "confirm", label: strings.postRun.continuePrompt },
+  ]);
   let postRunCacheWon = null;
   let postRunCacheBalance = NaN;
   let postRunCacheEarnings = NaN;
@@ -227,7 +201,7 @@ export function createEconomyScreens(uiRoot) {
         homeLastRunText.textColor =
           last.net >= 0 ? COLOR_POSITIVE.copy() : COLOR_NEGATIVE.copy();
       }
-      homeLaunchText.visible = (timeReal * 2) % 2 < 1.2;
+      homeLaunchFooter.refresh();
     },
     updatePostRun({ gameWon, lastRunDebrief }) {
       postRunGroup.size = mainCanvasSize;
@@ -270,7 +244,6 @@ export function createEconomyScreens(uiRoot) {
           postRunTitleText.text = strings.postRun.defeatTitle;
           postRunTitleText.textColor = COLOR_DEFEAT.copy();
         }
-        retryText.text = strings.postRun.continuePrompt;
         finalScoreText.textColor = COLOR_POSITIVE.copy();
         gameOverHighScoreText.visible = false;
 
@@ -417,9 +390,7 @@ export function createEconomyScreens(uiRoot) {
           }
         }
       }
-
-      retryText.localPos = vec2(0, Math.floor(mainCanvasSize.y * 0.42));
-      retryText.visible = (timeReal * 2) % 2 < 1.2;
+      postRunFooter.refresh();
     },
   };
 }

@@ -20,9 +20,7 @@ export const ui = {
     iconLabelGap: 8,
     hintSpacing: 32,
     labelHeight: 18,
-    titleY: 320,
-    pauseY: 300,
-    creditsY: 340,
+    y: 320,
   },
   creditsReveal: {
     titleCharInterval: 0.05,

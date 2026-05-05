@@ -6,9 +6,9 @@ import { createDialogRevealController } from "./dialogRevealController.js";
 import { buildDialogParts } from "./dialogParts.js";
 import {
   createDialogBodyTypewriterView,
-  createDialogPrompt,
   createDialogTitle,
 } from "./dialogTypewriterView.js";
+import { makeFooterHints } from "./footerHints.js";
 
 export function createLoreScreen(uiRoot) {
   const revealCfg = ui.storyReveal;
@@ -39,23 +39,15 @@ export function createLoreScreen(uiRoot) {
   });
   const bodyPartTexts = bodyView.partTexts;
 
-  const promptText = createDialogPrompt(loreGroup, {
-    y: 280,
-    label: strings.story.startPrompt,
-    boxHeight: 40,
-    textHeight: 20,
-    color: WHITE,
-  });
-  promptText.visible = false;
+  const skipFooter = makeFooterHints(
+    loreGroup,
+    [{ action: "skip", label: strings.story.skipPrompt }],
+  );
 
-  const skipPromptText = createDialogPrompt(loreGroup, {
-    y: 320,
-    label: strings.story.skipPrompt,
-    boxHeight: 32,
-    textHeight: 18,
-    color: new Color(1, 1, 1, 0.75),
-  });
-  skipPromptText.visible = true;
+  const confirmFooter = makeFooterHints(
+    loreGroup,
+    [{ action: "confirm", label: strings.story.startPrompt }],
+  );
 
   let wasVisible = false;
   let revealState = {
@@ -87,8 +79,10 @@ export function createLoreScreen(uiRoot) {
     titleText.text = state.titleText;
     bodyView.syncLines(state.bodyPartIndex, state.bodyRevealedChars);
     bodyView.updateWipe(state.bodyWipeProgress);
-    skipPromptText.visible = state.showSkipPrompt;
-    promptText.visible = state.showStartPrompt;
+    skipFooter.setVisible(state.showSkipPrompt);
+    skipFooter.refresh();
+    confirmFooter.setVisible(state.promptReady);
+    confirmFooter.refresh();
   }
 
   function resetReveal() {

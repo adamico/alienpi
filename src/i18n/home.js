@@ -4,6 +4,5 @@ export const home = {
   balanceLabel: "BALANCE",
   debtLabel: "OUTSTANDING DEBT",
   lastRunLabel: "LAST RUN NET",
-  launchPrompt: "SPACE: LAUNCH MISSION",
-  exitPrompt: "ESC: TITLE",
+  launchPrompt: "LAUNCH MISSION",
 };

@@ -64,6 +64,8 @@ registerUIView({
   create: (uiRoot, handlers) =>
     createPauseScreen(uiRoot, pauseMenu, {
       resume: handlers.pause?.resume,
+      backToHome: handlers.pause?.backToHome,
+      quit: handlers.pause?.quit,
     }),
 });
 

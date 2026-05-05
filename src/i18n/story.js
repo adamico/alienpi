@@ -25,7 +25,7 @@ Your vessel is attuned. Your weapons are charged.
 Replenish what you spend. Recover what was taken.
 
 Chosen One: Will you fall, or will you rise?`,
-  skipPrompt: "SPACE: SKIP STORY",
-  startPrompt: "SPACE: ACCEPT YOUR FATE",
+  skipPrompt: "SKIP STORY",
+  startPrompt: "ACCEPT YOUR FATE",
   title: "The story so far",
 };

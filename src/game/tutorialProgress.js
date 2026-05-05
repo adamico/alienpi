@@ -171,6 +171,17 @@ export function updateTutorialSequence() {
   return false;
 }
 
+export function advanceTutorialStep() {
+  if (!sequenceActive) return false;
+  const nextIdx = stepIndex + 1;
+  if (!STEPS[nextIdx]) {
+    sequenceActive = false;
+    return true;
+  }
+  setStep(nextIdx);
+  return false;
+}
+
 export function getTutorialStepState() {
   const step = getCurrentStep();
   if (!sequenceActive || !step) {

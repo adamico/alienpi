@@ -1,5 +1,5 @@
 import { Color, rgb } from "../engine.js";
-import { GAME_STATES, strings, ui } from "../config/index.js";
+import { GAME_STATES, strings } from "../config/index.js";
 import { makeMenuRow } from "./menuView.js";
 import { makePanel } from "./panel.js";
 import { makeCenterTitle } from "./uiText.js";
@@ -23,7 +23,11 @@ export function createPauseScreen(uiRoot, pauseMenu, handlers) {
 
   const { music: musicSlider, sfx: sfxSlider } =
     buildSharedSettingsSliders(pauseGroup);
-  const menuRows = buildSharedSettingsRows(pauseGroup, makeMenuRow);
+  const menuRows = [
+    ...buildSharedSettingsRows(pauseGroup, makeMenuRow),
+    makeMenuRow(pauseGroup, 230),
+    makeMenuRow(pauseGroup, 275),
+  ];
   const syncVolumeSliders = makeSyncVolumeSliders(musicSlider, sfxSlider);
 
   pauseMenu.setItems([
@@ -33,16 +37,17 @@ export function createPauseScreen(uiRoot, pauseMenu, handlers) {
       label: () => "BACK TO GAME",
       activate: () => handlers.resume(),
     },
+    {
+      kind: "action",
+      label: () => strings.pause.backToHome,
+      activate: () => handlers.backToHome?.(),
+    },
   ]);
 
-  const footer = makeFooterHints(
-    pauseGroup,
-    [
-      { action: "confirm", label: "SELECT" },
-      { action: "cancel", label: "RESUME" },
-    ],
-    { y: ui.footerHints.pauseY },
-  );
+  const footer = makeFooterHints(pauseGroup, [
+    { action: "confirm", label: "SELECT" },
+    { action: "pause", label: "RESUME" },
+  ]);
 
   return {
     group: pauseGroup,

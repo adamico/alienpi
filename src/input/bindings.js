@@ -19,13 +19,14 @@ import { saveSettings } from "../persistence.js";
  * icon needs to be drawn for a step.
  */
 export const DEFAULT_BINDINGS = {
-  fire:         { kbd: "Space",     pad: 0 },
-  focus:        { kbd: "ShiftLeft", pad: 6 },
-  switchWeapon: { kbd: "KeyQ",      pad: 5 },
-  confirm:      { kbd: "Enter",     pad: 0 },
-  cancel:       { kbd: "Escape",    pad: 1 },
-  pause:        { kbd: "KeyP",      pad: 11 },
-  skip:         { kbd: "Space",     pad: 0 },
+  fire: { kbd: "Space", pad: 0 },
+  focus: { kbd: "ShiftLeft", pad: 6 },
+  switchWeapon: { kbd: "KeyQ", pad: 5 },
+  confirm: { kbd: "Enter", pad: 0 },
+  cancel: { kbd: "Escape", pad: 1 },
+  pause: { kbd: "KeyP", pad: 11 },
+  skip: { kbd: "Enter", pad: 0 },
+  next: { kbd: "Enter", pad: 0 },
 };
 
 export const REMAPPABLE_ACTIONS = Object.keys(DEFAULT_BINDINGS);
@@ -35,7 +36,7 @@ export const REMAPPABLE_ACTIONS = Object.keys(DEFAULT_BINDINGS);
  * their defaults so the player cannot softlock themselves out of the menus,
  * and other actions cannot steal their bindings via conflict resolution.
  */
-export const LOCKED_ACTIONS = new Set(["confirm", "cancel", "skip"]);
+export const LOCKED_ACTIONS = new Set(["confirm", "cancel", "skip", "next"]);
 
 export const TUTORIAL_STEP_TO_ACTION = {
   fireVulcan: "fire",
@@ -61,10 +62,17 @@ export function loadBindingsFromSettings() {
   const stored = settings.bindings;
   if (!stored || typeof stored !== "object") return;
   for (const action of REMAPPABLE_ACTIONS) {
+    if (LOCKED_ACTIONS.has(action)) continue;
     if (stored[action] && typeof stored[action] === "object") {
       bindings[action] = {
-        kbd: "kbd" in stored[action] ? stored[action].kbd : DEFAULT_BINDINGS[action].kbd,
-        pad: "pad" in stored[action] ? stored[action].pad : DEFAULT_BINDINGS[action].pad,
+        kbd:
+          "kbd" in stored[action]
+            ? stored[action].kbd
+            : DEFAULT_BINDINGS[action].kbd,
+        pad:
+          "pad" in stored[action]
+            ? stored[action].pad
+            : DEFAULT_BINDINGS[action].pad,
       };
     }
   }

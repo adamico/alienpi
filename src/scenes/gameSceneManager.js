@@ -13,7 +13,7 @@ import { SceneContext } from "./sceneContext.js";
 import { SceneManager } from "./sceneManager.js";
 import { SCENE_TRANSITIONS } from "./transitionPolicy.js";
 import { createSceneActionCollector } from "./sceneActions.js";
-import { createGameScenes } from "./gameScenes.js";
+import { createGameScenes, destroyPlayfield } from "./gameScenes.js";
 import { initUI } from "../ui.js";
 import { beginSceneWipe } from "../visuals/sceneTransition.js";
 
@@ -106,6 +106,10 @@ export function initUIHandlers() {
       },
       pause: {
         resume: () => transitionTo(GAME_STATES.PLAYING, {}, "pause:resume"),
+        backToHome: () => {
+          destroyPlayfield();
+          transitionTo(GAME_STATES.HOME, {}, "pause:back-to-home");
+        },
       },
       settings: {
         back: () => popState({}, "settings:back"),

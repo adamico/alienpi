@@ -35,22 +35,15 @@ export function createCreditsScreen(uiRoot) {
   });
   const bodyPartTexts = bodyView.partTexts;
 
-  const footer = makeFooterHints(
-    creditsGroup,
-    [
-      { action: "cancel", label: "BACK" },
-      { action: "skip", label: "SKIP" },
-    ],
-    { y: ui.footerHints.creditsY },
-  );
-  const backItem = footer.items[0];
-  const skipItem = footer.items[1];
+  const footer = makeFooterHints(creditsGroup, [
+    { action: "skip", label: "SKIP" },
+    { action: "cancel", label: "BACK TO TITLE" },
+  ]);
+  const skipItem = footer.items[0];
   const setItemVisible = (item, v) => {
     item.tile.visible = v;
     item.text.visible = v;
   };
-  setItemVisible(backItem, false);
-  setItemVisible(skipItem, true);
 
   let wasVisible = false;
   let revealState = {
@@ -82,8 +75,7 @@ export function createCreditsScreen(uiRoot) {
     titleText.text = state.titleText;
     bodyView.syncLines(state.bodyPartIndex, state.bodyRevealedChars);
     bodyView.updateWipe(state.bodyWipeProgress);
-    setItemVisible(skipItem, state.showSkipPrompt);
-    setItemVisible(backItem, state.showStartPrompt);
+    setItemVisible(skipItem, true);
   }
 
   function resetReveal() {

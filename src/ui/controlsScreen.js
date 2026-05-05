@@ -36,7 +36,6 @@ const ROW_SPACING = 44;
 const ICON_SIZE = 36;
 const RESET_Y_OFFSET = 30; // gap below last row
 const BACK_Y_OFFSET = 70;
-const FOOTER_Y = 320;
 const MODAL_PANEL_COLOR = new Color(0, 0, 0, 0.75);
 const FOCUS_COLOR = rgb(1, 0.9, 0.3);
 const IDLE_COLOR = WHITE;
@@ -202,7 +201,6 @@ export function createControlsScreen(uiRoot, handlers) {
       { action: "confirm", label: "REBIND" },
       { action: "cancel", label: "BACK" },
     ],
-    { y: FOOTER_Y },
   );
 
   // Modal overlay

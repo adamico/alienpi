@@ -23,12 +23,12 @@ const DEFAULT_LABEL_COLOR = new Color(0.9, 0.9, 0.9, 1);
  * @param {{action: string, label: string}[]} hints
  * @param {{y: number, iconSize?: number, color?: Color}} opts
  */
-export function makeFooterHints(parent, hints, opts) {
+export function makeFooterHints(parent, hints, opts = {}) {
   const {
-    y,
     iconSize = ui.footerHints.iconSize,
     color = DEFAULT_LABEL_COLOR,
   } = opts;
+  const y = ui.footerHints.y;
   const gap = ui.footerHints.iconLabelGap;
   const spacing = ui.footerHints.hintSpacing;
   const labelHeight = ui.footerHints.labelHeight;

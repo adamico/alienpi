@@ -2,7 +2,7 @@
 export const postRun = {
   balanceLabel: "BALANCE",
   bossBonusLabel: "BOSS BONUS",
-  continuePrompt: "SPACE: CONTINUE",
+  continuePrompt: "CONTINUE",
   debtLabel: "DEBT",
   defeatTitle: "WRECKED",
   earningsLabel: "EARNINGS",
@@ -10,7 +10,6 @@ export const postRun = {
   gameOverTitle: "MISSION FAILED",
   netLabel: "NET",
   repairLabel: "REPAIRS",
-  retryPrompt: "SPACE: RETRY",
   substratePrefix: "SUBSTRATE: ",
   victoryTitle: "VICTORY",
 };
