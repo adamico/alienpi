@@ -4,7 +4,7 @@ import { Bullet } from "./bullet.js";
 
 export class NovaBullet extends Bullet {
   constructor(pos, vel, damage = 1) {
-    super(pos, vel, "bossNova", bossBulletCfg, damage);
+    super(pos, vel, "boss", bossBulletCfg, damage);
   }
 
   render() {

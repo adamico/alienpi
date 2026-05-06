@@ -92,6 +92,7 @@ export class Cycler extends BaseEntity {
     for (const o of engineObjects) {
       if (!o.isBullet || o.destroyed) continue;
       if (!this.isOverlappingObject(o)) continue;
+      if (o.type === "boss") continue;
       if (o.weaponKey === "shotgun") o.destroy();
       this.applyBulletKnockback();
       if (!this.locked) this.onBulletHit();

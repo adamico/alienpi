@@ -18,6 +18,8 @@
 
 ## Sounds
 
+- S1: add sound effects for powerup cycler collision with player bullets
+
 ## Visuals
 
 ## Accessibility
@@ -31,6 +33,11 @@
 - PUB2: instrument the game to report aggregate gameplay metrics (session start, run length, deaths, level reached) to an analytics backend. HITL: provider (Plausible, Umami, GA4, self-hosted?), event taxonomy, and consent UX (opt-in banner vs opt-out). No analytics fires before consent.
 
 ## bugs & performance & tweaks
+
+- BP1: some game mechanics currently bypass the slowdown effect:
+  - boss nova attack frequency
+  - possibly boss beam attack rotation speed and frequency
+  - other timers?
 
 ## balance
 
