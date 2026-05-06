@@ -22,6 +22,16 @@ _Avoid_: input device (use only for hardware-level discussion), controller (ambi
 A small sprite representing the current **Binding** for an **Action**, automatically swapping between keyboard and gamepad art based on **Input source**.
 _Avoid_: button hint, glyph
 
+### Pickups
+
+**Powerup state**:
+A discrete effect that an active **Cycler** can grant when picked up — currently `vulcan`, `shotgun`, `beam`, `bonusSubstrate`. Each state has a colour and a one-shot effect on collection (weapon-level up, substrate award, etc.).
+_Avoid_: powerup type (overloaded with the older per-key loot drop), buff (states are instant, not timed)
+
+**Cycler**:
+The single shootable pickup that drifts down the playfield, advancing through the **Powerup state** sequence one step per shot (cooldown-gated). After a set number of cycles it locks to the consolation state (`bonusSubstrate`) until despawn or pickup. Replaces the legacy four-colour loot drops.
+_Avoid_: loot, drop (the legacy term), powerup pickup (ambiguous with the resolved state)
+
 ### UI
 
 **Footer hints**:
@@ -37,6 +47,7 @@ _Avoid_: interactive menu (too broad)
 - An **Action** has at most one **Binding** per device (keyboard, gamepad)
 - An **Input icon** displays the **Binding** for a given **Action** under the active **Input source**
 - **Footer hints** are a collection of **Input icons** + labels, scoped to one menu screen
+- A **Cycler** holds a fixed sequence of **Powerup states** and exposes one of them at a time as the "armed" state — the one collected if the player touches it
 
 ## Example dialogue
 

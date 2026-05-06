@@ -11,7 +11,7 @@ export { boss, beam, orbiter, orbiterLooter, shield } from "./entities/boss.js";
 export { economy } from "./economy.js";
 export { enemyBullet, bossBullet } from "./entities/projectiles.js";
 export { engine } from "./engine.js";
-export { loot } from "./entities/loot.js";
+export { cycler } from "./entities/loot.js";
 export { missile, enemy } from "./entities/enemies.js";
 export { player } from "./entities/player.js";
 export { settings } from "./settings.js";

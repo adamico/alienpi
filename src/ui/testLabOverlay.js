@@ -30,7 +30,7 @@ import { Enemy } from "../entities/enemy.js";
 import { Boss } from "../entities/boss.js";
 import { BossOrbiter } from "../entities/bossOrbiter.js";
 import { BossMissile } from "../entities/bossMissile.js";
-import { Loot } from "../entities/loot.js";
+import { Cycler } from "../entities/cycler.js";
 import { Bullet } from "../entities/bullet.js";
 import * as gameEffects from "../visuals/gameEffects.js";
 import { getCurrentBoss, setCurrentBoss } from "../game/world.js";
@@ -184,11 +184,8 @@ function buildPanel() {
           <option value="orbiter_looter">Boss Orbiter (Loot)</option>
           <option value="missile">Homing Missile</option>
         </optgroup>
-        <optgroup label="Loot">
-          <option value="loot_blue">Blue Power Bolt</option>
-          <option value="loot_green">Green Power Bolt</option>
-          <option value="loot_red">Red Power Bolt</option>
-          <option value="loot_star">Yellow Star</option>
+        <optgroup label="Pickups">
+          <option value="cycler">Powerup Cycler</option>
         </optgroup>
       </select>
     </div>
@@ -307,7 +304,7 @@ function setupListeners() {
   });
 
   panel.querySelector("#tl-clear").addEventListener("click", () => {
-    const SPAWNED = [Enemy, Boss, BossOrbiter, BossMissile, Loot, Bullet];
+    const SPAWNED = [Enemy, Boss, BossOrbiter, BossMissile, Cycler, Bullet];
     for (const obj of engineObjects.slice()) {
       if (SPAWNED.some((C) => obj instanceof C)) obj.destroy();
     }
@@ -448,8 +445,8 @@ function handleSpawnAt(spawnPos) {
   } else if (entityType === "missile") {
     entity = new BossMissile(spawnPos.copy());
     entity.hp = hpValue;
-  } else if (entityType.startsWith("loot_")) {
-    entity = new Loot(spawnPos.copy(), entityType.replace("loot_", ""));
+  } else if (entityType === "cycler") {
+    entity = new Cycler(spawnPos.copy());
   }
 
   if (entity) {

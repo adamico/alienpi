@@ -12,10 +12,9 @@ import * as gameEffects from "../visuals/gameEffects.js";
 import {
   orbiter as orbCfg,
   orbiterLooter as orbLootCfg,
-  player as playerCfg,
 } from "../config/index.js";
 import { BaseEntity } from "./baseEntity.js";
-import { Loot } from "./loot.js";
+import { Cycler } from "./cycler.js";
 import { addScoreAt, SCORE } from "../game/score.js";
 
 /**
@@ -67,12 +66,7 @@ export class BossOrbiter extends BaseEntity {
     if (this.destroyed) return;
 
     if (this.hasLoot) {
-      const lootKeys =
-        playerCfg.weaponSystem.mode === "ACTIVE"
-          ? ["star"]
-          : ["blue", "green", "red", "star"];
-      const key = lootKeys[Math.floor(rand(lootKeys.length))];
-      new Loot(this.pos.copy(), key);
+      new Cycler(this.pos.copy());
     }
 
     super.destroy();
