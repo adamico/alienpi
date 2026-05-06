@@ -81,6 +81,7 @@ export class Boss extends BaseEntity {
     this.telegraphTimer = new Timer();
     this.telegraphAction = null;
     this.novaLockTimer = new Timer();
+    this.pendingSalves = [];
   }
 
   initFireEmitters() {
@@ -255,9 +256,20 @@ export class Boss extends BaseEntity {
       this.updateTelegraph();
       this.updateAttacks();
     }
+    this.updatePendingSalves();
     this.updateVisuals();
     this.updateExhaust();
     super.update();
+  }
+
+  updatePendingSalves() {
+    if (!this.pendingSalves.length) return;
+    const remaining = [];
+    for (const entry of this.pendingSalves) {
+      if (entry.timer.elapsed()) this.fireNovaSalve(entry.stepOffset);
+      else remaining.push(entry);
+    }
+    this.pendingSalves = remaining;
   }
 
   updateTelegraph() {
@@ -437,11 +449,14 @@ export class Boss extends BaseEntity {
     this.novaLockTimer.set(totalSalveWindowMs / 1000 + 0.05);
 
     for (let i = 0; i < salveCount; i++) {
-      const delayMs = i * salveDelayMs;
       const stepOffset = i % 2;
-      setTimeout(() => {
-        if (!this.destroyed) this.fireNovaSalve(stepOffset);
-      }, delayMs);
+      if (i === 0) {
+        this.fireNovaSalve(stepOffset);
+      } else {
+        const timer = new Timer();
+        timer.set((i * salveDelayMs) / 1000);
+        this.pendingSalves.push({ timer, stepOffset });
+      }
     }
   }
 
