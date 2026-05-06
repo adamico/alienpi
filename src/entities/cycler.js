@@ -1,8 +1,5 @@
 import { vec2, WHITE, rgb, timeReal, engineObjects } from "../engine.js";
-import {
-  cycler as cyclerCfg,
-  player as playerCfg,
-} from "../config/index.js";
+import { cycler as cyclerCfg, player as playerCfg } from "../config/index.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
 import { soundLootCollect } from "../audio/sounds.js";
@@ -26,13 +23,7 @@ import { addEarnings } from "../game/economy.js";
  */
 export class Cycler extends BaseEntity {
   constructor(pos) {
-    super(
-      pos,
-      null,
-      null,
-      cyclerCfg.hitboxScale,
-      cyclerCfg.size,
-    );
+    super(pos, null, null, cyclerCfg.hitboxScale, cyclerCfg.size);
 
     this.visualSize = cyclerCfg.size.copy();
     this.size = this.visualSize.scale(cyclerCfg.hitboxScale);
@@ -62,7 +53,17 @@ export class Cycler extends BaseEntity {
     return cyclerCfg.states[this.armedKey];
   }
 
-  /** Called by Bullet.collideWithObject when it lands on the cycler. */
+  /** Mark this entity so weapon code (latch beam) can identify cyclers. */
+  get isCycler() {
+    return true;
+  }
+
+  /** Knockback push applied on every ballistic hit (vulcan/shotgun). */
+  applyBulletKnockback() {
+    this.velocity.y = cyclerCfg.knockbackImpulse;
+  }
+
+  /** Called when a player bullet/beam tick lands on the cycler. */
   onBulletHit() {
     if (this.locked) return;
     if (timeReal - this._lastCycleAt < cyclerCfg.cycleCooldownSeconds) return;
@@ -85,17 +86,23 @@ export class Cycler extends BaseEntity {
   update() {
     // Bullet hit detection. The engine skips collision callbacks between two
     // non-solid triggers (cycler + bullet are both triggers), so we scan
-    // engineObjects manually for any bullet overlap. Cooldown gates the
-    // cycle, so a stream of vulcan bullets is naturally rate-limited.
-    if (!this.locked) {
-      for (const o of engineObjects) {
-        if (!o.isBullet || o.destroyed) continue;
-        if (this.isOverlappingObject(o)) {
-          this.onBulletHit();
-          break;
-        }
-      }
+    // engineObjects manually for any bullet overlap. Each ballistic hit
+    // applies a knockback impulse regardless of whether it advances a cycle
+    // (cooldown gates the cycle but the kick still feels responsive).
+    for (const o of engineObjects) {
+      if (!o.isBullet || o.destroyed) continue;
+      if (!this.isOverlappingObject(o)) continue;
+      if (o.weaponKey === "shotgun") o.destroy();
+      this.applyBulletKnockback();
+      if (!this.locked) this.onBulletHit();
+      break;
     }
+
+    // Ease velocity back toward the baseline downward drift after any kick.
+    const baselineY = -cyclerCfg.speed;
+    this.velocity.y =
+      baselineY + (this.velocity.y - baselineY) * cyclerCfg.knockbackDamping;
+
     if (player && !player.destroyed) {
       if (this.pos.distanceSquared(player.pos) < 1.0) this.collect();
     }

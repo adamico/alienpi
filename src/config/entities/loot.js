@@ -10,6 +10,10 @@ export const cycler = {
   size: vec2(1.5, 0.65),
   speed: 0.05,
   cycleCooldownSeconds: 0.5,
+  // Bullet knockback feel: ballistic hits halt the cycler's downward drift,
+  // kick it upward, then ease back to baseline via per-tick damping.
+  knockbackImpulse: 0.10,
+  knockbackDamping: 0.85,
   // Lock threshold = lockMultiplier * pool.length. After this many cycles
   // the Cycler force-snaps to the consolation state and stops cycling.
   lockMultiplier: 2,

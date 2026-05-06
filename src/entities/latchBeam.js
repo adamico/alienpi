@@ -90,28 +90,39 @@ export class LatchBeam extends EngineObject {
     const range = cfg.range[level - 1];
 
     let endPos;
-    if (this.target && !this.target.destroyed && this.target.hp > 0) {
+    const t = this.target;
+    const tickEligible =
+      t && !t.destroyed && (t.isCycler ? !t.locked : t.hp > 0);
+    if (tickEligible) {
       const interval = cfg.cooldown[level - 1];
       const dmg = cfg.damage[level - 1];
 
       this.damageFrame++;
       if (this.damageFrame >= interval) {
         this.damageFrame = 0;
-        this.target.hp -= dmg;
-        recordDamage("latch", dmg, this.target);
-        if (typeof this.target.applyEffect === "function") {
-          this.target.applyEffect(
-            new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05),
-          );
-        }
-        this.emitImpactSparks();
-        if (this.target.hp <= 0) {
-          playSfx(soundExplosion1);
-          if (this.target.scoreOnKill) {
-            addScoreAt(this.target.pos, this.target.scoreOnKill);
+        if (t.isCycler) {
+          // Beam ticks route to the cycler's cooldown-gated cycle hook
+          // instead of dealing HP damage. No knockback (Q3-a).
+          t.onBulletHit();
+          this.emitImpactSparks();
+          if (t.locked) this.target = null;
+        } else {
+          t.hp -= dmg;
+          recordDamage("latch", dmg, t);
+          if (typeof t.applyEffect === "function") {
+            t.applyEffect(
+              new gameEffects.FlashEffect(new Color(1, 1, 1), 0.05),
+            );
           }
-          this.target.destroy();
-          this.target = null;
+          this.emitImpactSparks();
+          if (t.hp <= 0) {
+            playSfx(soundExplosion1);
+            if (t.scoreOnKill) {
+              addScoreAt(t.pos, t.scoreOnKill);
+            }
+            t.destroy();
+            this.target = null;
+          }
         }
       }
     }

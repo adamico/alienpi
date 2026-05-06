@@ -104,27 +104,43 @@ function acquireLatchTargets(ctx, weaponLevels) {
 
   for (const beam of ctx.latchBeams) {
     const t = beam.target;
-    if (!t || t.destroyed || t.hp <= 0) {
+    if (!t || t.destroyed) {
       beam.target = null;
-    } else if (t.shield && !t.shield.destroyed) {
+      continue;
+    }
+    if (t.pos.distanceSquared(origin) > rangeSq) {
       beam.target = null;
-    } else if (t.pos.distanceSquared(origin) > rangeSq) {
-      beam.target = null;
+      continue;
+    }
+    if (t.isCycler) {
+      if (t.locked) beam.target = null;
+    } else {
+      if (typeof t.hp !== "number" || t.hp <= 0) beam.target = null;
+      else if (t.shield && !t.shield.destroyed) beam.target = null;
     }
   }
 
-  const candidates = [];
+  // Enemies-first priority: collect each pool, sort independently, then
+  // concatenate so spare beams snag a cycler only after all reachable
+  // enemies have been claimed (Q2-b).
+  const enemyCandidates = [];
+  const cyclerCandidates = [];
   for (const o of engineObjects) {
     if (!o || o.destroyed) continue;
-    if (typeof o.hp !== "number" || o.hp <= 0) continue;
-    if (!o.isEnemy) continue;
-    if (o.shield && !o.shield.destroyed) continue;
     const dSq = o.pos.distanceSquared(origin);
     if (dSq > rangeSq) continue;
-    candidates.push({ o, dSq });
+    if (o.isEnemy) {
+      if (typeof o.hp !== "number" || o.hp <= 0) continue;
+      if (o.shield && !o.shield.destroyed) continue;
+      enemyCandidates.push({ o, dSq });
+    } else if (o.isCycler && !o.locked) {
+      cyclerCandidates.push({ o, dSq });
+    }
   }
+  enemyCandidates.sort((a, b) => a.dSq - b.dSq);
+  cyclerCandidates.sort((a, b) => a.dSq - b.dSq);
+  const candidates = enemyCandidates.concat(cyclerCandidates);
   if (candidates.length === 0) return;
-  candidates.sort((a, b) => a.dSq - b.dSq);
 
   const used = new Set(ctx.latchBeams.map((b) => b.target).filter(Boolean));
   let ci = 0;
