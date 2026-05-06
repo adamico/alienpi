@@ -22,7 +22,7 @@ export const player = {
     regenPerSecond: 0.5,
     killBonus: 0.5,
     minToActivate: 0.3,
-    worldTimeScale: 0.3,
+    worldTimeScale: 0.5,
     releaseRampSeconds: 0.4,
   },
   hitboxScale: 0.2,
