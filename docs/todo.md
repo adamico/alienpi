@@ -24,6 +24,8 @@
 
 ## Accessibility
 
+- A1: add powerup cycling tutorial step
+
 ## Testing
 
 ## Publishing
@@ -34,7 +36,7 @@
 
 ## bugs & performance & tweaks
 
-- BP1: some game mechanics currently bypass the slowdown effect:
+- BPT1: some game mechanics currently bypass the slowdown effect:
   - boss nova attack frequency
   - possibly boss beam attack rotation speed and frequency
   - other timers?

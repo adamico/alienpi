@@ -112,7 +112,7 @@ export function commitRun(outcome) {
       ? Math.round(grossGain * economyCfg.deathPenaltyRatio)
       : 0;
 
-  substrate += net - penalty;
+  substrate = Math.max(0, substrate + net - penalty);
   totalEarned += Math.max(0, grossGain);
 
   const breakdown = {
