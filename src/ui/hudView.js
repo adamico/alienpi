@@ -32,14 +32,6 @@ const BOSS_BAR = {
   revealDuration: 0.6,
 };
 
-const FOCUS_BAR = {
-  width: 220,
-  height: 10,
-  border: 1,
-  fgInset: 2,
-  bottomPadding: 60,
-};
-
 const HUD_EMBED_BG = "embed_bg.png";
 
 export function createHudView(parent) {
@@ -75,44 +67,6 @@ export function createHudView(parent) {
   bossHealthBg.addChild(bossHealthFg);
 
   let bossBarRevealStartT = null;
-
-  // G5 focus-charge bar
-  const focusBarBg = new UIObject(
-    vec2(0, 0),
-    vec2(FOCUS_BAR.width, FOCUS_BAR.height),
-  );
-  focusBarBg.color = new Color(0, 0, 0, 0.5);
-  focusBarBg.lineWidth = FOCUS_BAR.border;
-  focusBarBg.lineColor = new Color(0.6, 0.7, 0.95, 1);
-  hudGroup.addChild(focusBarBg);
-  const focusBarFg = new UIObject(vec2(0, 0), vec2(0, 0));
-  focusBarFg.lineWidth = 0;
-  focusBarFg.color = new Color(0.4, 0.7, 1, 1);
-  focusBarBg.addChild(focusBarFg);
-
-  function updateFocusBar(uiCenterY, hudScale) {
-    if (!player) {
-      focusBarBg.visible = false;
-      return;
-    }
-    focusBarBg.visible = true;
-    const yOffset =
-      uiCenterY - (FOCUS_BAR.bottomPadding + FOCUS_BAR.height / 2) * hudScale;
-    focusBarBg.localPos = vec2(0, yOffset);
-    focusBarBg.size = vec2(
-      FOCUS_BAR.width * hudScale,
-      FOCUS_BAR.height * hudScale,
-    );
-    const max = playerCfg.focusCharge.max;
-    const pct = max > 0 ? Math.max(0, Math.min(1, player.focusCharge / max)) : 0;
-    const innerWidth =
-      (FOCUS_BAR.width - FOCUS_BAR.fgInset * 2) * hudScale * pct;
-    const innerHeight = (FOCUS_BAR.height - FOCUS_BAR.fgInset * 2) * hudScale;
-    focusBarFg.size = vec2(innerWidth, innerHeight);
-    const fullInnerWidth =
-      (FOCUS_BAR.width - FOCUS_BAR.fgInset * 2) * hudScale;
-    focusBarFg.localPos = vec2(-(fullInnerWidth - innerWidth) / 2, 0);
-  }
 
   function updateBossHealthBar(currentBoss, uiCenterY, hudScale) {
     const visible =
@@ -182,10 +136,11 @@ export function createHudView(parent) {
         currentWeaponKey: player ? player.currentWeaponKey : null,
         maxLevel: player ? player.maxLevel : 3,
         weaponsCfg,
+        focusCharge: player ? player.focusCharge : 0,
+        focusChargeMax: playerCfg.focusCharge.max,
       });
 
       updateBossHealthBar(currentBoss, uiCenterY, hudScale);
-      updateFocusBar(uiCenterY, hudScale);
     },
     tick(gameState, data) {
       const visible =

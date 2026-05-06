@@ -45,6 +45,11 @@ const ELEMENT_CONFIG = {
     fontScale: 1.9,
     persp: { deg: 0, dist: "1600px", skew: 5, roll: -13, origin: "right" },
   },
+  focus: {
+    rect: { left: 1090, top: 180, width: 160, height: 14 },
+    fontScale: 1,
+    persp: { deg: 0, dist: "1600px", skew: 5, roll: -9.5, origin: "right" },
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -77,7 +82,7 @@ export function getHudOverlayConfig() {
  */
 export function setLayoutConstants({ elements } = {}) {
   if (elements) {
-    ["substrate", "health", "weapons", "time"].forEach((key) => {
+    ["substrate", "health", "weapons", "time", "focus"].forEach((key) => {
       const incoming = elements[key];
       if (!incoming) return;
       const current = ELEMENT_CONFIG[key];
@@ -126,6 +131,8 @@ export function setHudOverlayVisible(visible) {
  *   currentWeaponKey: string,
  *   maxLevel: number,
  *   weaponsCfg: object,
+ *   focusCharge: number,
+ *   focusChargeMax: number,
  * }} data
  */
 export function updateHudOverlay({
@@ -137,6 +144,8 @@ export function updateHudOverlay({
   currentWeaponKey,
   maxLevel,
   weaponsCfg,
+  focusCharge,
+  focusChargeMax,
 }) {
   if (!els) return;
 
@@ -165,6 +174,13 @@ export function updateHudOverlay({
   for (let i = 0; i < els.healthRow.children.length; i++) {
     els.healthRow.children[i].style.background =
       i < playerHp ? "#e55" : "#3a2020";
+  }
+
+  // Focus charge bar
+  if (els.focusFg) {
+    const max = focusChargeMax > 0 ? focusChargeMax : 1;
+    const pct = Math.max(0, Math.min(1, (focusCharge ?? 0) / max));
+    els.focusFg.style.width = `${pct * 100}%`;
   }
 
   // Weapons
@@ -351,7 +367,33 @@ function buildOverlay() {
 
   root.appendChild(rightMid);
 
-  els = { subValue, healthRow, weaponRows, timeValue };
+  // ── Right mid screen: focus charge bar ───────────────────────────────────
+
+  const focusZone = zone(ELEMENT_CONFIG.focus.rect, elementStyle("focus"));
+  const focusBg = document.createElement("div");
+  Object.assign(focusBg.style, {
+    position: "absolute",
+    inset: "0",
+    background: "rgba(40, 40, 80, 0.4)",
+    border: "1px solid rgba(136, 136, 255, 0.4)",
+    boxSizing: "border-box",
+    overflow: "hidden",
+  });
+  const focusFg = document.createElement("div");
+  Object.assign(focusFg.style, {
+    position: "absolute",
+    left: "0",
+    top: "0",
+    bottom: "0",
+    width: "0%",
+    background: "#e8e8ff",
+    boxShadow: "0 0 6px #88f",
+  });
+  focusBg.appendChild(focusFg);
+  focusZone.appendChild(focusBg);
+  root.appendChild(focusZone);
+
+  els = { subValue, healthRow, weaponRows, timeValue, focusFg };
   return root;
 }
 
