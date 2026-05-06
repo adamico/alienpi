@@ -1,5 +1,5 @@
 {
-  "version": "0.1.4",
+  "version": "0.1.5",
   "dependencies": {
     "littlejsengine": "github:KilledByAPixel/LittleJS#4403531f7ceb5db5b0c1a7410b14faf0854d2caf",
     "prettier": "^3.8.3"
