@@ -19,7 +19,12 @@ import {
 } from "../visuals/gameEffects.js";
 import { vibrate } from "../input/gamepad.js";
 import { recordHpLost } from "../game/economy.js";
-import { triggerSlowMo } from "../game/timeScale.js";
+import {
+  triggerSlowMo,
+  setHoldSlowMo,
+  getCurrentTimeScale,
+} from "../game/timeScale.js";
+import { timeDelta } from "../engine.js";
 import { WeaponSystem } from "./playerWeapons.js";
 
 export let player = null;
@@ -42,6 +47,11 @@ export class Player extends BaseEntity {
     this.mass = 1;
     this.extraScale = 1;
     this.damping = playerCfg.damping;
+
+    // G5 focus charge (drains while focus held + slow-mo active, regens passively)
+    this.focusCharge = playerCfg.focusCharge.max;
+    this._focusHoldActive = false;
+    this._focusLastReal = -1;
 
     // Pre-allocate max possible latch beams (scene-graph children stay on Player)
     const maxLatchBeams = Math.max(...weaponsCfg.latch.count);
@@ -136,6 +146,7 @@ export class Player extends BaseEntity {
       super.update();
       return;
     }
+    this.updateFocusCharge();
     this.updateMoving();
     this.weapons.update(this.weaponContext);
     this.updateExhaust();
@@ -307,15 +318,68 @@ export class Player extends BaseEntity {
     this.visualSize = originalSize;
   }
 
+  updateFocusCharge() {
+    const fc = playerCfg.focusCharge;
+
+    // Wall-clock delta via performance.now(). NOTE: engine `timeReal` is
+    // scaled by `timeScale` post-1.18.2 patch, so it's no longer wall-clock
+    // and would drain at game-time (compressed during slow-mo). Clamp to
+    // 0.1s to absorb startup + long-pause spikes.
+    const nowReal = performance.now() / 1000;
+    const dt =
+      this._focusLastReal < 0
+        ? timeDelta
+        : Math.min(nowReal - this._focusLastReal, 0.1);
+    this._focusLastReal = nowReal;
+
+    const wantsHold = input.isFocusing;
+    const threshold = this._focusHoldActive ? 0 : fc.minToActivate;
+    const canHold = wantsHold && this.focusCharge >= threshold;
+
+    if (canHold) {
+      this.focusCharge = Math.max(0, this.focusCharge - fc.drainPerSecond * dt);
+      this._focusHoldActive = this.focusCharge > 0;
+    } else {
+      this._focusHoldActive = false;
+      this.focusCharge = Math.min(
+        fc.max,
+        this.focusCharge + fc.regenPerSecond * dt,
+      );
+    }
+
+    setHoldSlowMo(this._focusHoldActive);
+  }
+
+  /** Add charge from external triggers (e.g. enemy kill bonus). */
+  addFocusCharge(amount) {
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    this.focusCharge = Math.min(
+      playerCfg.focusCharge.max,
+      this.focusCharge + amount,
+    );
+  }
+
   updateMoving() {
     const moveDir = input.moveDir;
     if (moveDir.length() > 0) {
       this.velocity = this.velocity.add(moveDir.scale(playerCfg.accel));
     }
 
-    const maxSpeed = input.isFocusing
-      ? engine.objectMaxSpeed * playerCfg.focusSpeedScale
-      : engine.objectMaxSpeed;
+    // Q3-c bullet-time: while world slow-mo is active, scale the ship's
+    // accel + max speed by 1/timeScale so the player feels normal real-time
+    // movement despite fewer physics ticks per real second. Damping is left
+    // alone (decays per-tick), so momentum carries slightly longer in real
+    // time during slow-mo — a tolerable trade-off for v1.
+    const ts = getCurrentTimeScale();
+    const compensation = ts > 0 && ts < 1 ? 1 / ts : 1;
+    if (compensation !== 1 && moveDir.length() > 0) {
+      // Re-apply accel with compensation: undo the unboosted add above by
+      // adding the difference. Keeps the single-source-of-truth above clean.
+      this.velocity = this.velocity.add(
+        moveDir.scale(playerCfg.accel * (compensation - 1)),
+      );
+    }
+    const maxSpeed = engine.objectMaxSpeed * compensation;
     if (this.velocity.length() > maxSpeed)
       this.velocity = this.velocity.normalize().scale(maxSpeed);
 

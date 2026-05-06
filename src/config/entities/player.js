@@ -14,7 +14,17 @@ export const player = {
     sizeStart: 1, // particle size at birth
     sizeStartBoost: 0.5, // extra size added when thrusting up
   },
-  focusSpeedScale: 0.5,
+  focusCharge: {
+    // G5 charge-based slow-mo. Hold focus → drain charge + slow world; release
+    // or empty → regen passively. Kill bonus reserved for follow-up wiring.
+    max: 2.0,
+    drainPerSecond: 1.0,
+    regenPerSecond: 0.5,
+    killBonus: 0.5,
+    minToActivate: 0.3,
+    worldTimeScale: 0.3,
+    releaseRampSeconds: 0.4,
+  },
   hitboxScale: 0.2,
   hp: 5,
   hpIcon: "shipA3.png",

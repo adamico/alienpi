@@ -1,89 +1,102 @@
-import { setPaused, timeReal } from "../engine.js";
-import { engine } from "../config/index.js";
+import { setTimeScale, timeReal } from "../engine.js";
+import { engine, player as playerCfg } from "../config/index.js";
 
 /**
- * Game-time slow-mo controller.
+ * Game-time controller. Now backed by the engine's real `setTimeScale` API
+ * (LittleJS commit 4403531+). Two independent channels:
  *
- * LittleJS does not expose a real `setTimeScale`, so we approximate it by
- * gating the engine's `paused` flag on a per-frame accumulator: when the
- * accumulator overflows 1.0 we let the engine tick this frame, otherwise we
- * pause it. The accumulator increment per frame is the desired time scale,
- * which ramps from `engine.slowMo.minScale` back to 1.0 over the effect's
- * lifetime.
+ *   - `hit`: G6 transient pulse on player damage. Eases minScale → 1 over a
+ *     short duration. Re-triggering extends the end (capped).
+ *   - `hold`: G5 sustained slow-mo while the focus action is held + charge
+ *     remains. On release ramps back to 1 over `releaseRampSeconds`.
  *
- * Caller is responsible for telling the controller whether the game is
- * currently in a state where slow-mo should run (i.e. PLAYING). Outside
- * gameplay the controller stays inert.
+ * Each frame the channels are evaluated and the **lower** scale wins
+ * (slowest world rules), then pushed to `setTimeScale`. Outside gameplay the
+ * controller resets the engine to scale 1.
  */
 
-let activeStart = -Infinity;
-let activeEnd = -Infinity;
-let accumulator = 0;
-let owned = false;
+// hit channel
+let hitStart = -Infinity;
+let hitEnd = -Infinity;
 
-/** Trigger slow-mo. Re-triggering extends the effect (capped). */
+// hold channel
+let holdActive = false;
+let holdReleaseTime = -Infinity;
+
+let currentScale = 1;
+
 export function triggerSlowMo() {
   const cfg = engine.slowMo;
   const now = timeReal;
-  if (activeEnd > now) {
-    const cap = activeStart + cfg.totalCap;
-    activeEnd = Math.min(activeEnd + cfg.duration * cfg.extendRatio, cap);
+  if (hitEnd > now) {
+    const cap = hitStart + cfg.totalCap;
+    hitEnd = Math.min(hitEnd + cfg.duration * cfg.extendRatio, cap);
   } else {
-    activeStart = now;
-    activeEnd = now + cfg.duration;
+    hitStart = now;
+    hitEnd = now + cfg.duration;
   }
 }
 
-/** Cancel any active slow-mo immediately and release the pause flag. */
+export function setHoldSlowMo(active) {
+  if (active && !holdActive) {
+    holdActive = true;
+  } else if (!active && holdActive) {
+    holdActive = false;
+    holdReleaseTime = timeReal;
+  }
+}
+
 export function cancelSlowMo() {
-  activeStart = -Infinity;
-  activeEnd = -Infinity;
-  accumulator = 0;
-  if (owned) {
-    setPaused(false);
-    owned = false;
-  }
+  hitStart = hitEnd = -Infinity;
+  holdActive = false;
+  holdReleaseTime = -Infinity;
+  currentScale = 1;
+  setTimeScale(1);
 }
 
-/**
- * Per-frame tick. Pass `true` only while gameplay (PLAYING) is active so the
- * controller does not fight the menu/pause states for the engine pause flag.
- */
-export function tickTimeScale(gameplayActive) {
-  const now = timeReal;
-  if (!gameplayActive) {
-    // Outside gameplay, never touch global pause state; scene logic owns it.
-    owned = false;
-    accumulator = 0;
-    return;
-  }
+function computeHitScale(now) {
+  if (now >= hitEnd) return 1;
+  const cfg = engine.slowMo;
+  const lifetime = hitEnd - hitStart;
+  const p = lifetime > 0 ? (now - hitStart) / lifetime : 1;
+  const eased = 1 - (1 - p) * (1 - p);
+  return cfg.minScale + (1 - cfg.minScale) * eased;
+}
 
-  if (now >= activeEnd) {
-    if (owned) {
-      setPaused(false);
-      owned = false;
-      accumulator = 0;
+function computeHoldScale(now) {
+  const fc = playerCfg.focusCharge;
+  if (holdActive) return fc.worldTimeScale;
+  if (holdReleaseTime <= -Infinity) return 1;
+  const t = now - holdReleaseTime;
+  if (t >= fc.releaseRampSeconds) {
+    holdReleaseTime = -Infinity;
+    return 1;
+  }
+  const p = t / fc.releaseRampSeconds;
+  const eased = 1 - (1 - p) * (1 - p);
+  return fc.worldTimeScale + (1 - fc.worldTimeScale) * eased;
+}
+
+export function tickTimeScale(gameplayActive) {
+  if (!gameplayActive) {
+    if (currentScale !== 1) {
+      currentScale = 1;
+      setTimeScale(1);
     }
     return;
   }
-
-  const cfg = engine.slowMo;
-  const lifetime = activeEnd - activeStart;
-  const p = lifetime > 0 ? (now - activeStart) / lifetime : 1;
-  // ease-out: start at minScale, end at 1.0
-  const eased = 1 - (1 - p) * (1 - p);
-  const scale = cfg.minScale + (1 - cfg.minScale) * eased;
-
-  accumulator += scale;
-  if (accumulator >= 1) {
-    accumulator -= 1;
-    setPaused(false);
-  } else {
-    setPaused(true);
+  const now = timeReal;
+  const next = Math.min(computeHitScale(now), computeHoldScale(now));
+  if (next !== currentScale) {
+    currentScale = next;
+    setTimeScale(next);
   }
-  owned = true;
+}
+
+export function getCurrentTimeScale() {
+  return currentScale;
 }
 
 export function isSlowMoActive() {
-  return timeReal < activeEnd;
+  return currentScale < 1;
 }
