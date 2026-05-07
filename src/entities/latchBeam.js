@@ -15,6 +15,7 @@ import { playSfx } from "../audio/soundManager.js";
 import { addScoreAt } from "../game/score.js";
 import { recordDamage } from "../game/dpsTracker.js";
 import * as gameEffects from "../visuals/gameEffects.js";
+import { cyclerSfxFor } from "./cycler.js";
 
 /**
  * A single Ghostbuster-style tether. Parented to Player at the latch nozzle
@@ -103,7 +104,8 @@ export class LatchBeam extends EngineObject {
         if (t.isCycler) {
           // Beam ticks route to the cycler's cooldown-gated cycle hook
           // instead of dealing HP damage. No knockback (Q3-a).
-          t.onBulletHit();
+          const result = t.onBulletHit();
+          playSfx(cyclerSfxFor(result));
           this.emitImpactSparks();
           if (t.locked) this.target = null;
         } else {

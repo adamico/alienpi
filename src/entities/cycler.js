@@ -2,11 +2,22 @@ import { vec2, WHITE, rgb, timeReal, engineObjects } from "../engine.js";
 import { cycler as cyclerCfg, player as playerCfg } from "../config/index.js";
 import { BaseEntity } from "./baseEntity.js";
 import { player } from "./player.js";
-import { soundLootCollect } from "../audio/sounds.js";
+import {
+  soundLootCollect,
+  soundCyclerHit,
+  soundCyclerCycle,
+  soundCyclerLock,
+} from "../audio/sounds.js";
 import { playSfx } from "../audio/soundManager.js";
 import { PulseEffect, spawnFloatingText } from "../visuals/gameEffects.js";
 import { drawLootCell } from "../visuals/lootIcon.js";
 import { addEarnings } from "../game/economy.js";
+
+export function cyclerSfxFor(result) {
+  if (result === "lock") return soundCyclerLock;
+  if (result === "cycle") return soundCyclerCycle;
+  return soundCyclerHit;
+}
 
 /**
  * Powerup Cycler. See docs/adr/0002-powerup-cycler.md.
@@ -40,6 +51,7 @@ export class Cycler extends BaseEntity {
     this.cycleCount = 0;
     this.locked = false;
     this._lastCycleAt = -Infinity;
+    this._processedBullets = new WeakSet();
 
     this.applyEffect(new PulseEffect(rgb(1, 1, 1, 0.4), 6));
   }
@@ -63,10 +75,14 @@ export class Cycler extends BaseEntity {
     this.velocity.y = cyclerCfg.knockbackImpulse;
   }
 
-  /** Called when a player bullet/beam tick lands on the cycler. */
+  /**
+   * Called when a player bullet/beam tick lands on the cycler.
+   * Returns 'lock' | 'cycle' | 'gated' so callers can play the matching sfx.
+   */
   onBulletHit() {
-    if (this.locked) return;
-    if (timeReal - this._lastCycleAt < cyclerCfg.cycleCooldownSeconds) return;
+    if (this.locked) return "gated";
+    if (timeReal - this._lastCycleAt < cyclerCfg.cycleCooldownSeconds)
+      return "gated";
 
     this._lastCycleAt = timeReal;
     this.cycleCount += 1;
@@ -77,10 +93,11 @@ export class Cycler extends BaseEntity {
       const idx = cyclerCfg.pool.indexOf(cyclerCfg.consolationState);
       this.armedIndex = idx >= 0 ? idx : this.armedIndex;
       this.locked = true;
-      return;
+      return "lock";
     }
 
     this.armedIndex = (this.armedIndex + 1) % cyclerCfg.pool.length;
+    return "cycle";
   }
 
   update() {
@@ -93,9 +110,12 @@ export class Cycler extends BaseEntity {
       if (!o.isBullet || o.destroyed) continue;
       if (!this.isOverlappingObject(o)) continue;
       if (o.type === "boss") continue;
+      if (this._processedBullets.has(o)) continue;
+      this._processedBullets.add(o);
       if (o.weaponKey === "shotgun") o.destroy();
       this.applyBulletKnockback();
-      if (!this.locked) this.onBulletHit();
+      const result = this.locked ? "gated" : this.onBulletHit();
+      playSfx(cyclerSfxFor(result));
       break;
     }
 

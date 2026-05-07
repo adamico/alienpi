@@ -2,6 +2,23 @@
 
 import { Sound } from "../engine.js";
 
+// Cycler hit — short low blip, no advance.
+// [volume, randomness, frequency, attack, _, release, _, shapeCurve, slide, _,
+//  pitchJump, pitchJumpTime, repeatTime, noise, _, bitCrush, delay, 1, 0, 0, 0]
+export const soundCyclerHit = new Sound([
+  0.4, 0.1, 440, 0, , 0.06, , 2, 0, , 0, 0, 0, 0, , 0, 0, 1, 0, 0, 0,
+]);
+
+// Cycler cycle — upward pitch-jump, "tick up".
+export const soundCyclerCycle = new Sound([
+  0.5, 0.1, 660, 0, , 0.1, , 2, 0, , 220, 0.04, 0, 0, , 0, 0, 1, 0, 0, 0,
+]);
+
+// Cycler lock — downward slide, "settled / locked".
+export const soundCyclerLock = new Sound([
+  0.6, 0.1, 520, 0, , 0.22, , 2, -8, , 0, 0, 0, 0, , 0, 0, 1, 0, 0, 0,
+]);
+
 // Vulcan — tight burst. Index 1 = per-play pitch randomness (LittleJS strips
 // it from the array at construction and applies it as a per-play jitter).
 export const soundShoot = new Sound([
