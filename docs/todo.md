@@ -18,13 +18,9 @@
 
 ## Sounds
 
-- S1: add sound effects for powerup cycler collision with player bullets
-
 ## Visuals
 
 ## Accessibility
-
-- A1: add powerup cycling tutorial step
 
 ## Testing
 

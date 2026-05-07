@@ -8,6 +8,7 @@ export const tutorial = {
   fireShotgun: "Shotgun: timed high-impact volleys",
   switchLatch: "Weapon switch: cycle to Beam",
   fireLatch: "Beam: hold fire to maintain output",
+  cyclePowerup: "Powerup Cycler: shoot to cycle, collect to arm",
   nextPrompt: "NEXT TUTORIAL",
   cancelPrompt: "SKIP TUTORIAL",
 };

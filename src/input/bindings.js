@@ -45,6 +45,7 @@ export const TUTORIAL_STEP_TO_ACTION = {
   fireLatch: "fire",
   switchShotgun: "switchWeapon",
   switchLatch: "switchWeapon",
+  cyclePowerup: "fire",
 };
 
 function cloneDefaults() {

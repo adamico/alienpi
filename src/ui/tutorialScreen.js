@@ -31,6 +31,8 @@ function getStepCopy(stepId) {
       return strings.tutorial.switchLatch;
     case "fireLatch":
       return strings.tutorial.fireLatch;
+    case "cyclePowerup":
+      return strings.tutorial.cyclePowerup;
     default:
       return "";
   }

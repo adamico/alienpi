@@ -2,9 +2,12 @@ import { vec2, timeReal, rand } from "../engine.js";
 import { GAME_STATES, system } from "../config/index.js";
 import { player as playerCfg } from "../config/entities/player.js";
 import { BossMissile } from "../entities/bossMissile.js";
+import { Cycler } from "../entities/cycler.js";
 import { input } from "../input/input.js";
 import { lockPlayerControls, unlockPlayerControls } from "../input/input.js";
 import { getGameState, getPlayer } from "./world.js";
+
+const WEAPON_KEY_TO_INDEX = { vulcan: 0, shotgun: 1, latch: 2 };
 
 const STORAGE_KEY = "alienpi.progress.v1";
 
@@ -16,6 +19,14 @@ const STEPS = [
   { id: "fireShotgun", duration: 2.6, movement: "strafe", fire: true },
   { id: "switchLatch", duration: 1.2, movement: "idle", switchWeapon: true },
   { id: "fireLatch", duration: 2.8, movement: "hover", fire: true },
+  {
+    id: "cyclePowerup",
+    duration: 6.0,
+    movement: "chase",
+    fire: "pulse",
+    setWeapon: "vulcan",
+    spawnCycler: true,
+  },
 ];
 
 // One full revolution covers all directions equally.
@@ -28,6 +39,8 @@ let stepStartedAt = 0;
 let stepIndex = 0;
 let switchTriggeredThisStep = false;
 let tutorialMissiles = [];
+let tutorialCycler = null;
+let setWeaponAppliedThisStep = false;
 
 const TUTORIAL_MIN_Y = 2.8;
 const TUTORIAL_MAX_Y = 7.2;
@@ -57,11 +70,32 @@ function setStep(nextStepIndex) {
   stepIndex = nextStepIndex;
   stepStartedAt = timeReal;
   switchTriggeredThisStep = false;
+  setWeaponAppliedThisStep = false;
   resetPlayerToSpawn();
+  destroyTutorialCycler();
   const step = STEPS[nextStepIndex];
   if (step && FIRE_STEPS.has(step.id)) {
     spawnTutorialMissiles(2);
   }
+  if (step && step.spawnCycler) {
+    spawnTutorialCycler();
+  }
+}
+
+function destroyTutorialCycler() {
+  if (tutorialCycler && !tutorialCycler.destroyed) {
+    tutorialCycler.destroy();
+  }
+  tutorialCycler = null;
+}
+
+function nearestTargetX(targets, player) {
+  const live = targets.filter((t) => t && !t.destroyed);
+  if (live.length === 0 || !player) return null;
+  const nearest = live.reduce((a, b) =>
+    Math.abs(a.pos.x - player.pos.x) < Math.abs(b.pos.x - player.pos.x) ? a : b,
+  );
+  return nearest;
 }
 
 function getStepMoveDir(step, elapsed, player) {
@@ -76,23 +110,32 @@ function getStepMoveDir(step, elapsed, player) {
     }
     case "strafe":
     case "hover": {
-      // Track nearest live missile's X position
-      const live = tutorialMissiles.filter((m) => !m.destroyed);
-      if (live.length > 0 && player) {
-        const nearest = live.reduce((a, b) =>
-          Math.abs(a.pos.x - player.pos.x) < Math.abs(b.pos.x - player.pos.x)
-            ? a
-            : b,
-        );
-        const dx = nearest.pos.x - player.pos.x;
-        const x = Math.max(-1, Math.min(1, dx * 0.8));
-        return vec2(x, 0);
+      const nearest = nearestTargetX(tutorialMissiles, player);
+      if (!nearest) return vec2(0, 0);
+      const dx = nearest.pos.x - player.pos.x;
+      const x = Math.max(-1, Math.min(1, dx * 0.8));
+      return vec2(x, 0);
+    }
+    case "chase": {
+      if (!tutorialCycler || tutorialCycler.destroyed || !player) {
+        return vec2(0, 0);
       }
-      return vec2(0, 0);
+      const dx = tutorialCycler.pos.x - player.pos.x;
+      const dy = tutorialCycler.pos.y - player.pos.y;
+      const x = Math.max(-1, Math.min(1, dx * 0.8));
+      const y = Math.max(-1, Math.min(1, dy * 0.8));
+      return vec2(x, y);
     }
     default:
       return vec2(0, 0);
   }
+}
+
+function spawnTutorialCycler() {
+  destroyTutorialCycler();
+  const midX = system.levelSize.x / 2;
+  const topY = system.levelSize.y - 5;
+  tutorialCycler = new Cycler(vec2(midX, topY));
 }
 
 function spawnTutorialMissiles(count = 2) {
@@ -149,7 +192,9 @@ export function stopTutorialSequence() {
   stepStartedAt = 0;
   stepIndex = 0;
   switchTriggeredThisStep = false;
+  setWeaponAppliedThisStep = false;
   tutorialMissiles = [];
+  destroyTutorialCycler();
   unlockPlayerControls();
 }
 
@@ -163,7 +208,9 @@ export function updateTutorialSequence() {
   }
 
   const elapsed = timeReal - stepStartedAt;
-  if (elapsed >= step.duration) {
+  const cyclerCollected =
+    step.spawnCycler && tutorialCycler && tutorialCycler.destroyed;
+  if (elapsed >= step.duration || cyclerCollected) {
     setStep(stepIndex + 1);
     if (!getCurrentStep()) {
       sequenceActive = false;
@@ -234,10 +281,33 @@ export function applyTutorialInput() {
   input.moveDir = moveDir;
 
   if (step.focus) input.isFocusing = true;
-  if (step.fire) input.isFiring = true;
+  if (step.fire === "pulse") {
+    // Duty cycle: brief tap then idle, paced just over the cycler's
+    // cycleCooldownSeconds (0.5s) so each shot lands a clean cycle without
+    // the next bullet stacking knockback and shoving the cycler off-screen.
+    const PULSE_PERIOD = 0.7;
+    const PULSE_ON = 0.12;
+    if (elapsed % PULSE_PERIOD < PULSE_ON) input.isFiring = true;
+  } else if (step.fire) {
+    input.isFiring = true;
+  }
 
   if (step.switchWeapon && !switchTriggeredThisStep) {
     input.switchWeapon = true;
     switchTriggeredThisStep = true;
+  }
+
+  if (step.setWeapon && !setWeaponAppliedThisStep) {
+    const idx = WEAPON_KEY_TO_INDEX[step.setWeapon];
+    if (player?.weapons && idx != null && player.weapons.weaponIndex !== idx) {
+      player.weapons.weaponIndex = idx;
+      if (typeof player.onWeaponChanged === "function") {
+        player.onWeaponChanged();
+      }
+      if (Array.isArray(player.latchBeams)) {
+        for (const beam of player.latchBeams) beam.clear();
+      }
+    }
+    setWeaponAppliedThisStep = true;
   }
 }
