@@ -23,7 +23,7 @@ import {
   applyTutorialInput,
 } from "./src/game/tutorialProgress.js";
 import { input } from "./src/input/input.js";
-import { loadBindingsFromSettings } from "./src/input/bindings.js";
+import { loadBindingsFromSettings, actionPressed } from "./src/input/bindings.js";
 import { tickTimeScale } from "./src/game/timeScale.js";
 import { getGameState } from "./src/game/world.js";
 import { GAME_STATES } from "./src/config/index.js";
@@ -68,7 +68,16 @@ function gameUpdate() {
   applyTutorialInput();
 }
 
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.();
+  } else {
+    document.documentElement.requestFullscreen?.();
+  }
+}
+
 function gameUpdatePost() {
+  if (actionPressed("fullScreen")) toggleFullscreen();
   tickTimeScale(getGameState() === GAME_STATES.PLAYING);
   updateSceneFrame(timeDelta);
   updateAudio();

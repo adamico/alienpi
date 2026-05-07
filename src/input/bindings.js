@@ -27,6 +27,7 @@ export const DEFAULT_BINDINGS = {
   pause: { kbd: "KeyP", pad: 11 },
   skip: { kbd: "Enter", pad: 0 },
   next: { kbd: "Enter", pad: 0 },
+  fullScreen: { kbd: "KeyF", pad: 10 },
 };
 
 export const REMAPPABLE_ACTIONS = Object.keys(DEFAULT_BINDINGS);
