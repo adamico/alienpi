@@ -10,7 +10,8 @@
     "publish:itch:no-build": "BUILD_FIRST=false ./scripts/publish-itch.sh",
     "release:patch": "npm version patch && npm run publish:itch",
     "release:minor": "npm version minor && npm run publish:itch",
-    "release:major": "npm version major && npm run publish:itch"
+    "release:major": "npm version major && npm run publish:itch",
+    "devlog": "./scripts/devlog-diff.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

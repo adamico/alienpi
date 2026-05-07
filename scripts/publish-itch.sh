@@ -88,3 +88,20 @@ echo "Publishing $ARTIFACT_PATH to $TARGET"
 "${CMD[@]}"
 
 echo "Publish complete."
+
+# Copy a devlog snippet (commits since the previous tag) to the clipboard so
+# it's ready to paste into itch.io's devlog editor. Best-effort: a missing
+# previous tag, missing pbcopy, or a non-zero devlog script exit are all
+# soft-failures that don't fail the publish.
+DEVLOG_SCRIPT="$ROOT_DIR/scripts/devlog-diff.sh"
+CURRENT_TAG="v$ITCH_VERSION"
+if command -v pbcopy >/dev/null 2>&1 \
+    && [[ -x "$DEVLOG_SCRIPT" ]] \
+    && git rev-parse --verify --quiet "$CURRENT_TAG" >/dev/null; then
+  PREV_TAG="$(git describe --tags --abbrev=0 "${CURRENT_TAG}^" 2>/dev/null || true)"
+  if [[ -n "$PREV_TAG" ]]; then
+    if "$DEVLOG_SCRIPT" "$PREV_TAG" "$CURRENT_TAG" | pbcopy; then
+      echo "Devlog ($PREV_TAG -> $CURRENT_TAG) copied to clipboard."
+    fi
+  fi
+fi
