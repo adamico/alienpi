@@ -1,4 +1,4 @@
-import { vec2, Color, PI, Timer } from "../engine.js";
+import { vec2, Color, PI, Timer, drawCircle, rgb } from "../engine.js";
 import {
   system,
   engine,
@@ -316,6 +316,9 @@ export class Player extends BaseEntity {
     this.visualSize = this.visualSize.scale(this.extraScale);
     super.render();
     this.visualSize = originalSize;
+
+    const hitboxDiameter = Math.min(this.size.x, this.size.y);
+    drawCircle(this.pos, Math.max(hitboxDiameter * 0.5, 0.2), rgb(1, 1, 1, 0.8));
   }
 
   updateFocusCharge() {

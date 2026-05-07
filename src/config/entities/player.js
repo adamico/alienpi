@@ -25,7 +25,7 @@ export const player = {
     worldTimeScale: 0.5,
     releaseRampSeconds: 0.4,
   },
-  hitboxScale: 0.2,
+  hitboxScale: 0.1,
   hp: 5,
   hpIcon: "shipA3.png",
   hpIconSheet: "",

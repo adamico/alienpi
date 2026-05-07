@@ -36,11 +36,6 @@
 
 ## bugs & performance & tweaks
 
-- BPT1: some game mechanics currently bypass the slowdown effect:
-  - boss nova attack frequency
-  - possibly boss beam attack rotation speed and frequency
-  - other timers?
-
 ## balance
 
 ## game feel

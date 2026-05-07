@@ -34,6 +34,7 @@ import {
   initUIHandlers,
 } from "./src/scenes/gameSceneManager.js";
 import { updateAudio } from "./src/audio/soundManager.js";
+import { installAutoPause } from "./src/autoPause.js";
 
 async function gameInit() {
   loadSettings();
@@ -49,6 +50,7 @@ async function gameInit() {
   setTouchGamepadSize(200);
   setPaused(true);
   initUIHandlers();
+  installAutoPause();
 
   // Dismiss the loading overlay now that all assets are ready
   const loader = document.getElementById("loader");
