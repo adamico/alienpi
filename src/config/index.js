@@ -8,7 +8,6 @@ export {
   starfield,
 } from "./constants.js";
 export { boss, beam, orbiter, orbiterLooter, shield } from "./entities/boss.js";
-export { economy } from "./economy.js";
 export { enemyBullet, bossBullet } from "./entities/projectiles.js";
 export { engine } from "./engine.js";
 export { cycler } from "./entities/loot.js";

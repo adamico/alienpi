@@ -32,7 +32,6 @@ src/
     constants.js          # GAME_STATES, sprite-sheet names/paths, starfield
     system.js             # system object (canvas, camera, input keys, asset lists)
     engine.js             # engine physics tunables
-    economy.js            # economy namespace (loan/payout/repair)
     settings.js           # settings object + loadSettings() + saveSettings()
     strings.js            # all UI strings
     ui.js                 # debug UI layout constants
@@ -42,7 +41,7 @@ src/
       projectiles.js      # enemyBullet, bossBullet configs
       enemies.js          # enemy swarm/flocking/formation config + missile
       boss.js             # boss, beam, orbiter, orbiterLooter, shield configs
-      loot.js             # loot config
+      loot.js             # cycler powerup pool config
   sprites.js              # sprites Map + loadSprites()
   sounds.js               # SoundGenerator class + sound definitions
   entities/
@@ -67,7 +66,7 @@ Config module rules: always import from `./config/index.js` (or `../config/index
 
 `collisionRadius` is clamped by `MIN_COLLISION_RADIUS` because sprites scaled by `WORLD_SCALE` are very small.
 
-**Tuning constants** live in [src/config/](src/config/) split into domain modules. All public symbols are re-exported by [src/config/index.js](src/config/index.js): `system` (canvas/level/camera/sprite-sheet/input keys), `engine` (global physics + render scalars like `objectMaxSpeed`, `worldScale`, `minCollisionRadius`), `player` / `weapons` / `enemy` / `boss` (per-entity sprite + tuning), `economy`, `settings`, `strings`, and `ui` (debug-text layout). Entity modules import only the namespaces they need (e.g. bullet.js imports `engine` + `weapons` + `enemyBullet as enemyBulletCfg`). Prefer editing/extending these over inlining magic numbers.
+**Tuning constants** live in [src/config/](src/config/) split into domain modules. All public symbols are re-exported by [src/config/index.js](src/config/index.js): `system` (canvas/level/camera/sprite-sheet/input keys), `engine` (global physics + render scalars like `objectMaxSpeed`, `worldScale`, `minCollisionRadius`), `player` / `weapons` / `enemy` / `boss` (per-entity sprite + tuning), `settings`, `strings`, and `ui` (debug-text layout). Entity modules import only the namespaces they need (e.g. bullet.js imports `engine` + `weapons` + `enemyBullet as enemyBulletCfg`). Prefer editing/extending these over inlining magic numbers.
 
 **Physics defaults** are set once in `gameInit` via `setObjectMaxSpeed(engine.objectMaxSpeed)`. LittleJS's `EngineObject.update()` then clamps each entity's velocity per-axis to that cap. Player overrides its own cap via length-clamp before `super.update()` to implement focus mode.
 

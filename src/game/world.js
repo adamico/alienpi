@@ -8,7 +8,6 @@ let currentBoss = null;
 let gameTime = 0;
 let gameState = GAME_STATES.TITLE;
 let gameWon = false;
-let lastRunDebrief = null;
 
 export function getPlayer() {
   return player;
@@ -65,10 +64,3 @@ export function setGameWon(value) {
   gameWon = value;
 }
 
-export function getLastRunDebrief() {
-  return lastRunDebrief;
-}
-
-export function setLastRunDebrief(value) {
-  lastRunDebrief = value;
-}

@@ -5,9 +5,7 @@ import { resetTutorialProgress } from "../game/tutorialProgress.js";
 import {
   setGameState,
   setGameWon,
-  setLastRunDebrief,
   getGameWon,
-  getLastRunDebrief,
 } from "../game/world.js";
 import { SceneContext } from "./sceneContext.js";
 import { SceneManager } from "./sceneManager.js";
@@ -29,7 +27,6 @@ function shouldWipe(from, to) {
 
 const sceneContext = new SceneContext({
   gameWon: getGameWon(),
-  lastRunDebrief: getLastRunDebrief(),
   gameOverTime: 0,
   previousState: GAME_STATES.TITLE,
 });
@@ -77,7 +74,6 @@ for (const scene of scenes.values()) {
 sceneManager.subscribe(({ to, context }) => {
   setGameState(to);
   setGameWon(context.gameWon);
-  setLastRunDebrief(context.lastRunDebrief);
   setDesiredMusic(scenes.get(to)?.getMusic(context));
 });
 
@@ -108,7 +104,7 @@ export function initUIHandlers() {
         resume: () => transitionTo(GAME_STATES.PLAYING, {}, "pause:resume"),
         backToHome: () => {
           destroyPlayfield();
-          transitionTo(GAME_STATES.HOME, {}, "pause:back-to-home");
+          transitionTo(GAME_STATES.TITLE, {}, "pause:back-to-title");
         },
       },
       settings: {

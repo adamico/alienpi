@@ -50,6 +50,7 @@ export class Boss extends BaseEntity {
 
     this.hp = bossCfg.hp;
     this.maxHp = bossCfg.hp;
+    this.nextMilestone = 0;
     this.color = bossCfg.color.copy();
     this.setCollision(true);
     this.mass = bossCfg.mass;
@@ -534,8 +535,23 @@ export class Boss extends BaseEntity {
       this.hp -= other.damage;
       this.applyEffect(new gameEffects.FlashEffect(new Color(1, 1, 1), 0.1));
       this.applyEffect(new gameEffects.ShakeEffect(0.05, 0.1));
+      const pct = this.hp / this.maxHp;
+      const mThresholds = [0.75, 0.5, 0.25];
+      const mValues = [
+        SCORE.milestone.p75,
+        SCORE.milestone.p50,
+        SCORE.milestone.p25,
+      ];
+      while (
+        this.nextMilestone < 3 &&
+        pct <= mThresholds[this.nextMilestone]
+      ) {
+        addScoreAt(this.pos, mValues[this.nextMilestone]);
+        this.nextMilestone++;
+      }
       if (this.hp <= 0) {
         addScoreAt(this.pos, SCORE.boss);
+        addScoreAt(this.pos, SCORE.bossClear);
         playSfx(soundExplosion1);
         vibrate(600, 1.0, 1.0);
         this.destroy();

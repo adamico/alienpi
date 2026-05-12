@@ -7,7 +7,6 @@ import {
 } from "../engine.js";
 import { tickDPSLog, setEnemyCount } from "../game/dpsTracker.js";
 import { resetScore, commitHighScore } from "../game/score.js";
-import { beginRun, commitRun } from "../game/economy.js";
 import {
   isTutorialPending,
   startTutorialSequence,
@@ -64,7 +63,6 @@ function prepareRun({ spawnBossAtStart = true } = {}) {
   setupBoundaries();
   resetGameTime();
   resetScore();
-  beginRun();
   if (spawnBossAtStart) spawnBoss();
 }
 
@@ -86,13 +84,14 @@ class TitleScene extends BaseScene {
   }
 }
 
-function transitionToTutorialOrHome(transitionTo, from) {
+function transitionToTutorialOrRun(transitionTo, from) {
   const runTutorial = isTutorialPending();
-  transitionTo(
-    runTutorial ? GAME_STATES.TUTORIAL : GAME_STATES.HOME,
-    {},
-    runTutorial ? `title:tutorial:${from}` : `title:home:${from}`,
-  );
+  if (runTutorial) {
+    transitionTo(GAME_STATES.TUTORIAL, {}, `title:tutorial:${from}`);
+  } else {
+    prepareRun({ spawnBossAtStart: true });
+    transitionTo(GAME_STATES.PLAYING, { gameWon: false }, `title:run:${from}`);
+  }
 }
 
 class LoreScene extends BaseScene {
@@ -111,40 +110,15 @@ class LoreScene extends BaseScene {
 
   handleFrame(actions) {
     if (hasSceneAction(actions, SCENE_ACTION.CANCEL)) {
-      transitionToTutorialOrHome(this.transitionTo, "lore");
+      transitionToTutorialOrRun(this.transitionTo, "lore");
       return true;
     }
     if (hasSceneAction(actions, SCENE_ACTION.CONFIRM)) {
       if (handleUIConfirmForState(GAME_STATES.LORE)) {
-        transitionToTutorialOrHome(this.transitionTo, "lore");
+        transitionToTutorialOrRun(this.transitionTo, "lore");
         return true;
       }
     }
-    return false;
-  }
-}
-
-class HomeScene extends BaseScene {
-  constructor({ transitionTo }) {
-    super(GAME_STATES.HOME);
-    this.transitionTo = transitionTo;
-  }
-
-  enter() {
-    setPaused(true);
-  }
-
-  getMusic() {
-    return soundTitleMusic;
-  }
-
-  handleFrame(actions) {
-    if (hasSceneSelectAction(actions)) {
-      prepareRun({ spawnBossAtStart: true });
-      this.transitionTo(GAME_STATES.PLAYING, { gameWon: false }, "run:start");
-      return true;
-    }
-
     return false;
   }
 }
@@ -189,10 +163,9 @@ class PlayingScene extends BaseScene {
     const gameWon = outcome === "victory";
     const gameOverTime = timeReal;
     commitHighScore();
-    const lastRunDebrief = commitRun(outcome);
     this.transitionTo(
       GAME_STATES.POST_RUN,
-      { gameWon, lastRunDebrief, gameOverTime, outcome },
+      { gameWon, gameOverTime, outcome },
       "run:post",
     );
   }
@@ -211,13 +184,13 @@ class TutorialScene extends BaseScene {
     super(GAME_STATES.TUTORIAL);
     this.transitionTo = transitionTo;
     this.completed = false;
-    this.returnState = GAME_STATES.HOME;
+    this.returnState = GAME_STATES.PLAYING;
   }
 
   enter({ from } = {}) {
     this.completed = false;
     this.returnState =
-      from === GAME_STATES.TITLE ? GAME_STATES.TITLE : GAME_STATES.HOME;
+      from === GAME_STATES.TITLE ? GAME_STATES.TITLE : GAME_STATES.PLAYING;
     setPaused(false);
     destroyPlayfield();
     initializePlayer();
@@ -267,6 +240,9 @@ class TutorialScene extends BaseScene {
     markTutorialCompleted();
     stopTutorialSequence();
     destroyPlayfield();
+    if (this.returnState === GAME_STATES.PLAYING) {
+      prepareRun({ spawnBossAtStart: true });
+    }
     this.transitionTo(this.returnState, { gameWon: false }, reason);
   }
 }
@@ -385,7 +361,7 @@ class PostRunScene extends BaseScene {
     if (timeReal - this.gameOverTime <= 1.0) return false;
 
     if (hasSceneSelectAction(actions)) {
-      this.transitionTo(GAME_STATES.HOME, {}, "post-run:advance");
+      this.transitionTo(GAME_STATES.TITLE, {}, "post-run:advance");
       return true;
     }
 
@@ -455,7 +431,6 @@ export function createGameScenes(deps) {
   const scenes = [
     new TitleScene(deps),
     new LoreScene(deps),
-    new HomeScene(deps),
     new TutorialScene(deps),
     new PlayingScene(deps),
     new PauseScene(deps),

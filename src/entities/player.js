@@ -18,7 +18,6 @@ import {
   applyScreenShake,
 } from "../visuals/gameEffects.js";
 import { vibrate } from "../input/gamepad.js";
-import { recordHpLost } from "../game/economy.js";
 import {
   triggerSlowMo,
   setHoldSlowMo,
@@ -454,7 +453,6 @@ export class Player extends BaseEntity {
 
     playSfx(soundPlayerHit);
     this.hp -= amount;
-    recordHpLost(amount);
     this.applyEffect(new FlashEffect(new Color(1, 0, 0), 0.1));
     applyScreenShake(0.3, 0.1);
     triggerSlowMo();

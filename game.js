@@ -16,8 +16,7 @@ import { FONT_HUD, preloadFonts } from "./src/visuals/fonts.js";
 import { system } from "./src/config/index.js";
 import { loadSettings } from "./src/persistence.js";
 import { initializeGameAssets } from "./src/commonSetup.js";
-import { loadHighScore } from "./src/game/score.js";
-import { loadEconomy } from "./src/game/economy.js";
+import { loadHighScore, tickProximity } from "./src/game/score.js";
 import {
   loadTutorialProgress,
   applyTutorialInput,
@@ -25,7 +24,7 @@ import {
 import { input } from "./src/input/input.js";
 import { loadBindingsFromSettings, actionPressed } from "./src/input/bindings.js";
 import { tickTimeScale } from "./src/game/timeScale.js";
-import { getGameState } from "./src/game/world.js";
+import { getGameState, getPlayer } from "./src/game/world.js";
 import { GAME_STATES } from "./src/config/index.js";
 import { renderBackground, renderPostBackground } from "./src/game/scene.js";
 import { updateUI } from "./src/ui.js";
@@ -40,7 +39,6 @@ async function gameInit() {
   loadSettings();
   loadBindingsFromSettings();
   loadHighScore();
-  loadEconomy();
   loadTutorialProgress();
   await preloadFonts();
   setFontDefault(FONT_HUD);
@@ -78,7 +76,12 @@ function toggleFullscreen() {
 
 function gameUpdatePost() {
   if (actionPressed("fullScreen")) toggleFullscreen();
-  tickTimeScale(getGameState() === GAME_STATES.PLAYING);
+  const playing = getGameState() === GAME_STATES.PLAYING;
+  tickTimeScale(playing);
+  if (playing) {
+    const p = getPlayer();
+    tickProximity(p ? p.pos : null);
+  }
   updateSceneFrame(timeDelta);
   updateAudio();
   updateUI();

@@ -2,7 +2,6 @@ export class SceneContext {
   constructor(initial = {}) {
     this._state = {
       gameWon: false,
-      lastRunDebrief: null,
       gameOverTime: 0,
       previousState: null,
       ...initial,

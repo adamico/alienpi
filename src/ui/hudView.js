@@ -17,7 +17,7 @@ import {
   weapons as weaponsCfg,
   system,
 } from "../config/index.js";
-import { getLiveSubstrate } from "../game/economy.js";
+import { getScore, getProximityMul } from "../game/score.js";
 import {
   initHudOverlay,
   setHudOverlayVisible,
@@ -30,6 +30,9 @@ const BOSS_BAR = {
   border: 2,
   fgInset: 4,
   revealDuration: 0.6,
+  milestoneThresholds: [0.75, 0.5, 0.25],
+  milestoneTickWidth: 4,
+  milestoneTickOverhang: 6,
 };
 
 const HUD_EMBED_BG = "embed_bg.png";
@@ -65,6 +68,13 @@ export function createHudView(parent) {
   );
   bossHealthFg.lineWidth = 0;
   bossHealthBg.addChild(bossHealthFg);
+
+  const milestoneTicks = BOSS_BAR.milestoneThresholds.map(() => {
+    const tick = new UIObject(vec2(0, 0), vec2(BOSS_BAR.milestoneTickWidth, 1));
+    tick.lineWidth = 0;
+    bossHealthBg.addChild(tick);
+    return tick;
+  });
 
   let bossBarRevealStartT = null;
 
@@ -106,6 +116,26 @@ export function createHudView(parent) {
     bossHealthBg.color = new Color(0.2 + 0.8 * flash, flash, flash, 0.7);
     bossHealthBg.lineColor = new Color(1, flash, flash);
     bossHealthFg.color = new Color(1, 0.2 + 0.8 * flash, 0.2 + 0.8 * flash);
+
+    const tickFullyVisible = ease >= 0.999;
+    const tickHeight =
+      (BOSS_BAR.height + BOSS_BAR.milestoneTickOverhang) * hudScale;
+    const tickWidth = BOSS_BAR.milestoneTickWidth * hudScale;
+    const next = currentBoss.nextMilestone ?? 0;
+    milestoneTicks.forEach((tick, i) => {
+      tick.visible = tickFullyVisible;
+      if (!tickFullyVisible) return;
+      const threshold = BOSS_BAR.milestoneThresholds[i];
+      tick.size = vec2(tickWidth, tickHeight);
+      tick.localPos = vec2(-fgMaxWidth / 2 + fgMaxWidth * (1 - threshold), 0);
+      const claimed = i < next;
+      tick.color = claimed
+        ? new Color(0.4, 0.4, 0.4, 0.85)
+        : new Color(1, 0.9, 0.2, 1);
+      tick.lineColor = claimed
+        ? new Color(0.2, 0.2, 0.2, 0.6)
+        : new Color(1, 0.7, 0.1, 1);
+    });
   }
 
   return {
@@ -128,7 +158,8 @@ export function createHudView(parent) {
       }
 
       updateHudOverlay({
-        substrate: getLiveSubstrate(),
+        score: getScore(),
+        multiplier: getProximityMul(),
         gameTime,
         playerHp: player ? player.hp : 0,
         maxHp: playerCfg.hp,

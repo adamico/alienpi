@@ -3,7 +3,6 @@ import { GAME_STATES } from "../config/index.js";
 const {
   TITLE,
   LORE,
-  HOME,
   PLAYING,
   PAUSE,
   POST_RUN,
@@ -27,15 +26,11 @@ export const SCENE_TRANSITIONS = {
     meta: { pauseOnEnter: true },
   },
   [LORE]: {
-    canTransitionTo: [HOME, TUTORIAL],
-    meta: { pauseOnEnter: true },
-  },
-  [HOME]: {
-    canTransitionTo: [PLAYING, TITLE],
+    canTransitionTo: [PLAYING, TUTORIAL],
     meta: { pauseOnEnter: true },
   },
   [TUTORIAL]: {
-    canTransitionTo: [HOME, TITLE],
+    canTransitionTo: [PLAYING, TITLE],
     meta: { pauseOnEnter: false },
   },
   [PLAYING]: {
@@ -43,11 +38,11 @@ export const SCENE_TRANSITIONS = {
     meta: { pauseOnEnter: false },
   },
   [PAUSE]: {
-    canTransitionTo: [PLAYING, HOME, SETTINGS],
+    canTransitionTo: [PLAYING, TITLE, SETTINGS],
     meta: { pauseOnEnter: true },
   },
   [SETTINGS]: {
-    canTransitionTo: [TITLE, HOME, PAUSE, CONTROLS],
+    canTransitionTo: [TITLE, PAUSE, CONTROLS],
     meta: { modal: true, returnWithPop: true },
   },
   [CONTROLS]: {
@@ -59,7 +54,7 @@ export const SCENE_TRANSITIONS = {
     meta: { pauseOnEnter: true },
   },
   [POST_RUN]: {
-    canTransitionTo: [HOME],
+    canTransitionTo: [TITLE],
     meta: { pauseOnEnter: true, minDuration: 1.0 },
   },
   ...(DEV_BUILD

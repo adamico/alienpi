@@ -1,17 +1,10 @@
 /**
  * HTML/CSS overlay for cockpit HUD panels.
  *
- * All text elements (substrate, time, health pips, weapon list) are rendered
- * as absolutely-positioned HTML divs layered over the LittleJS canvas.
- * This lets us use CSS perspective/rotateY to match the angled cockpit art
- * in embed_bg.png without fighting the canvas coordinate system.
- *
- * POSITIONING — all values are in reference px at 1280×720 canvas size.
- * The overlay div matches the canvas's own centering transform so they
- * stay pixel-aligned regardless of browser zoom / window size.
- *
- * Tune the LAYOUT constants to shift text zones over the cockpit screens.
- * Tune PERSP_DEG to adjust the 3-D tilt angle of the panel text.
+ * Score readout (with proximity multiplier sub-line), time, health pips, and
+ * weapon list rendered as absolutely-positioned HTML divs layered over the
+ * LittleJS canvas. CSS perspective matches the angled cockpit art in
+ * embed_bg.png without fighting the canvas coordinate system.
  */
 
 const PIP_FILLED = "■";
@@ -20,13 +13,9 @@ const PIP_EMPTY = "□";
 const WEAPON_ORDER = ["vulcan", "shotgun", "latch"];
 const WEAPON_DOT_COLOR = { vulcan: "#4af", shotgun: "#f64", latch: "#4f8" };
 
-/**
- * Per-element HUD config.
- * Each element has independent rect, fontScale, and perspective controls.
- */
 const ELEMENT_CONFIG = {
-  substrate: {
-    rect: { left: 41, top: 81, width: 266, height: 50 },
+  score: {
+    rect: { left: 41, top: 81, width: 266, height: 70 },
     fontScale: 1.15,
     persp: { deg: 0, dist: "1600px", skew: -8, roll: 14, origin: "left" },
   },
@@ -52,17 +41,9 @@ const ELEMENT_CONFIG = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Module-level state
-// ─────────────────────────────────────────────────────────────────────────────
-
 let overlay = null;
 let els = null;
 let resizeListenerAttached = false;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Public API
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function initHudOverlay(container) {
   if (overlay) return;
@@ -76,13 +57,9 @@ export function getHudOverlayConfig() {
   return structuredClone(ELEMENT_CONFIG);
 }
 
-/**
- * Hot-update element constants from preview without a full restart.
- * @param {{ elements?: object }} opts
- */
 export function setLayoutConstants({ elements } = {}) {
   if (elements) {
-    ["substrate", "health", "weapons", "time", "focus"].forEach((key) => {
+    ["score", "health", "weapons", "time", "focus"].forEach((key) => {
       const incoming = elements[key];
       if (!incoming) return;
       const current = ELEMENT_CONFIG[key];
@@ -101,7 +78,6 @@ export function setLayoutConstants({ elements } = {}) {
       }
     });
   }
-  // Rebuild the overlay in place
   if (overlay) {
     const parent = overlay.parentNode;
     const wasVisible = overlay.style.display !== "none";
@@ -120,23 +96,9 @@ export function setHudOverlayVisible(visible) {
   overlay.style.display = visible ? "block" : "none";
 }
 
-/**
- * Update all overlay elements each frame.
- * @param {{
- *   substrate: number,
- *   gameTime: number,
- *   playerHp: number,
- *   maxHp: number,
- *   weaponLevels: Record<string,number>,
- *   currentWeaponKey: string,
- *   maxLevel: number,
- *   weaponsCfg: object,
- *   focusCharge: number,
- *   focusChargeMax: number,
- * }} data
- */
 export function updateHudOverlay({
-  substrate,
+  score,
+  multiplier,
   gameTime,
   playerHp,
   maxHp,
@@ -149,15 +111,18 @@ export function updateHudOverlay({
 }) {
   if (!els) return;
 
-  // Substrate
-  els.subValue.textContent = fmtNumber(substrate);
+  els.scoreValue.textContent = fmtNumber(score);
 
-  // Time
+  const mul = Math.max(1, multiplier ?? 1);
+  els.multiplierValue.textContent = `×${mul.toFixed(1)}`;
+  // Brighten as multiplier rises.
+  const t = Math.min(1, (mul - 1) / 4);
+  els.multiplierValue.style.color = `rgb(${Math.round(255 * (0.7 + 0.3 * t))}, ${Math.round(255 * (0.85 - 0.4 * t))}, ${Math.round(80 * (1 - t))})`;
+
   const m = Math.floor(gameTime / 60);
   const s = Math.floor(gameTime % 60);
   els.timeValue.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 
-  // Health pips — rebuild only when maxHp changes
   if (els.healthRow.children.length !== maxHp) {
     els.healthRow.innerHTML = "";
     for (let i = 0; i < maxHp; i++) {
@@ -176,14 +141,12 @@ export function updateHudOverlay({
       i < playerHp ? "#e55" : "#3a2020";
   }
 
-  // Focus charge bar
   if (els.focusFg) {
     const max = focusChargeMax > 0 ? focusChargeMax : 1;
     const pct = Math.max(0, Math.min(1, (focusCharge ?? 0) / max));
     els.focusFg.style.width = `${pct * 100}%`;
   }
 
-  // Weapons
   els.weaponRows.forEach(({ row, nameEl, pipsEl }, i) => {
     const key = WEAPON_ORDER[i];
     const level = weaponLevels?.[key] ?? 0;
@@ -204,10 +167,6 @@ export function updateHudOverlay({
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DOM construction
-// ─────────────────────────────────────────────────────────────────────────────
-
 function buildOverlay() {
   const root = document.createElement("div");
   Object.assign(root.style, {
@@ -225,44 +184,66 @@ function buildOverlay() {
     fontFamily: '"Orbitron", "Exo 2", monospace',
   });
 
-  const substrateStyle = elementStyle("substrate");
+  const scoreStyle = elementStyle("score");
   const healthStyle = elementStyle("health");
   const weaponsStyle = elementStyle("weapons");
   const timeStyle = elementStyle("time");
 
-  // ── Left mid screen: substrate + health ─────────────────────────────────
+  // ── Left top screen: score + multiplier ─────────────────────────────────
 
-  const leftSub = zone(ELEMENT_CONFIG.substrate.rect, substrateStyle);
+  const leftScore = zone(ELEMENT_CONFIG.score.rect, scoreStyle);
 
-  const subLine = document.createElement("div");
-  Object.assign(subLine.style, {
+  const scoreLine = document.createElement("div");
+  Object.assign(scoreLine.style, {
     display: "flex",
     alignItems: "baseline",
     gap: "8px",
     padding: "7px 10px 0",
   });
 
-  const subLabel = textEl("SUBSTRATE", {
-    fontSize: scaledPx(9, ELEMENT_CONFIG.substrate.fontScale),
+  const scoreLabel = textEl("SCORE", {
+    fontSize: scaledPx(9, ELEMENT_CONFIG.score.fontScale),
     letterSpacing: "1.5px",
-    color: "#5eda8a",
+    color: "#bbd",
   });
-  subLine.appendChild(subLabel);
+  scoreLine.appendChild(scoreLabel);
 
-  const subValue = textEl("0", {
-    fontSize: scaledPx(17, ELEMENT_CONFIG.substrate.fontScale),
+  const scoreValue = textEl("0", {
+    fontSize: scaledPx(17, ELEMENT_CONFIG.score.fontScale),
     fontWeight: "700",
-    color: "#6fffa0",
+    color: "#e8e8ff",
     lineHeight: "1",
-    textShadow: "0 0 8px #3f8",
+    textShadow: "0 0 8px #88f",
   });
-  subLine.appendChild(subValue);
-  leftSub.appendChild(subLine);
+  scoreLine.appendChild(scoreValue);
+  leftScore.appendChild(scoreLine);
 
-  root.appendChild(leftSub);
+  const multiplierLine = document.createElement("div");
+  Object.assign(multiplierLine.style, {
+    display: "flex",
+    alignItems: "baseline",
+    gap: "6px",
+    padding: "2px 10px 0",
+  });
+  const multiplierLabel = textEl("MULT", {
+    fontSize: scaledPx(8, ELEMENT_CONFIG.score.fontScale),
+    letterSpacing: "1.2px",
+    color: "#998",
+  });
+  multiplierLine.appendChild(multiplierLabel);
+  const multiplierValue = textEl("×1.0", {
+    fontSize: scaledPx(12, ELEMENT_CONFIG.score.fontScale),
+    fontWeight: "700",
+    color: "#ffd96b",
+    lineHeight: "1",
+    textShadow: "0 0 6px #fa3",
+  });
+  multiplierLine.appendChild(multiplierValue);
+  leftScore.appendChild(multiplierLine);
+
+  root.appendChild(leftScore);
 
   const leftMid = zone(ELEMENT_CONFIG.health.rect, healthStyle);
-
   const healthRow = document.createElement("div");
   Object.assign(healthRow.style, {
     display: "flex",
@@ -271,8 +252,6 @@ function buildOverlay() {
   });
   leftMid.appendChild(healthRow);
   root.appendChild(leftMid);
-
-  // ── Left main screen: weapon list ────────────────────────────────────────
 
   const leftMain = zone(ELEMENT_CONFIG.weapons.rect, {
     ...weaponsStyle,
@@ -333,8 +312,6 @@ function buildOverlay() {
 
   root.appendChild(leftMain);
 
-  // ── Right mid screen: time ───────────────────────────────────────────────
-
   const rightMid = zone(ELEMENT_CONFIG.time.rect, {
     ...timeStyle,
     textAlign: "left",
@@ -367,8 +344,6 @@ function buildOverlay() {
 
   root.appendChild(rightMid);
 
-  // ── Right mid screen: focus charge bar ───────────────────────────────────
-
   const focusZone = zone(ELEMENT_CONFIG.focus.rect, elementStyle("focus"));
   const focusBg = document.createElement("div");
   Object.assign(focusBg.style, {
@@ -393,7 +368,14 @@ function buildOverlay() {
   focusZone.appendChild(focusBg);
   root.appendChild(focusZone);
 
-  els = { subValue, healthRow, weaponRows, timeValue, focusFg };
+  els = {
+    scoreValue,
+    multiplierValue,
+    healthRow,
+    weaponRows,
+    timeValue,
+    focusFg,
+  };
   return root;
 }
 
@@ -408,10 +390,6 @@ function applyOverlayScale() {
   const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
   overlay.style.transform = `translate(-50%, -50%) scale(${scale})`;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Style helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 function zone(rect, extraStyle = {}) {
   const d = document.createElement("div");

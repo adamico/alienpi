@@ -17,9 +17,9 @@ export const cycler = {
   // Lock threshold = lockMultiplier * pool.length. After this many cycles
   // the Cycler force-snaps to the consolation state and stops cycling.
   lockMultiplier: 2,
-  consolationState: "bonusSubstrate",
-  bonusSubstrateAmount: 500,
-  pool: ["vulcan", "shotgun", "beam", "bonusSubstrate"],
+  consolationState: "bonusScore",
+  bonusScoreAmount: 500,
+  pool: ["vulcan", "shotgun", "beam", "bonusScore"],
   states: {
     vulcan: {
       kind: "weapon",
@@ -42,10 +42,10 @@ export const cycler = {
       label: "Beam",
       color: rgb(0.2, 0.65, 0.25),
     },
-    bonusSubstrate: {
-      kind: "substrate",
+    bonusScore: {
+      kind: "score",
       letter: "$",
-      label: "Bonus Substrate",
+      label: "Bonus Score",
       color: rgb(0.95, 0.8, 0.25),
     },
   },

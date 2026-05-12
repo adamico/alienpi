@@ -11,7 +11,7 @@ import {
 import { playSfx } from "../audio/soundManager.js";
 import { PulseEffect, spawnFloatingText } from "../visuals/gameEffects.js";
 import { drawLootCell } from "../visuals/lootIcon.js";
-import { addEarnings } from "../game/economy.js";
+import { addScore } from "../game/score.js";
 
 export function cyclerSfxFor(result) {
   if (result === "lock") return soundCyclerLock;
@@ -25,12 +25,12 @@ export function cyclerSfxFor(result) {
  * Drifts down the playfield. Each non-piercing-overlap bullet hit (gated by
  * `cycleCooldownSeconds`) advances the armed state index through `pool` in
  * fixed order. After `lockMultiplier × pool.length` cycles the cycler
- * force-snaps to `consolationState` (bonusSubstrate) and stops cycling.
+ * force-snaps to `consolationState` (bonusScore) and stops cycling.
  *
  * Player collision applies the armed state's effect:
  *   - `weapon` kind: upgrades the named weapon. If already at max, falls
- *     back to the substrate award (Q9 — pickup never wasted).
- *   - `substrate` kind: adds `bonusSubstrateAmount` to in-run earnings.
+ *     back to the score award (pickup never wasted).
+ *   - `score` kind: adds `bonusScoreAmount` to run score.
  */
 export class Cycler extends BaseEntity {
   constructor(pos) {
@@ -165,22 +165,21 @@ export class Cycler extends BaseEntity {
       const level = player.weaponLevels[weaponKey] ?? 0;
       const maxed = level >= playerCfg.weaponSystem.maxLevel;
       if (maxed) {
-        // Q9 fallback: maxed-weapon pickup converts to substrate.
-        this.awardSubstrate();
+        this.awardScore();
       } else {
         player.upgradeWeapon(weaponKey);
       }
       return;
     }
 
-    if (state.kind === "substrate") {
-      this.awardSubstrate();
+    if (state.kind === "score") {
+      this.awardScore();
     }
   }
 
-  awardSubstrate() {
-    const amount = cyclerCfg.bonusSubstrateAmount;
-    addEarnings(amount);
+  awardScore() {
+    const amount = cyclerCfg.bonusScoreAmount;
+    addScore(amount);
     spawnFloatingText(player.pos.add(vec2(0, 1.5)), `+${amount}`, {
       color: rgb(0.95, 0.85, 0.3),
       size: 1.1,

@@ -1,7 +1,6 @@
 import { rgb, Color, timeReal, mouseIsDown } from "../engine.js";
 import { GAME_STATES, strings } from "../config/index.js";
 import { actionDown } from "../input/bindings.js";
-import { resetEconomy } from "../game/economy.js";
 import { resetTutorialProgress } from "../game/tutorialProgress.js";
 import { makeMenuRow } from "./menuView.js";
 import { makePanel } from "./panel.js";
@@ -52,7 +51,6 @@ export function createSettingsScreen(uiRoot, settingsMenu, handlers) {
       return holdingConfirm || holdingPointer;
     },
     onComplete: () => {
-      resetEconomy();
       resetTutorialProgress();
     },
   });

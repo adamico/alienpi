@@ -3,11 +3,10 @@ import {
   getGameTime,
   getGameWon,
   getCurrentBoss,
-  getLastRunDebrief,
 } from "../game/world.js";
 import { GAME_STATES } from "../config/index.js";
 import { createCreditsScreen } from "./creditsScreen.js";
-import { createEconomyScreens } from "./economyScreens.js";
+import { createRunScreens } from "./runScreens.js";
 import { createHudView } from "./hudView.js";
 import { createLoreScreen } from "./storyScreen.js";
 import { createPauseScreen } from "./pauseScreen.js";
@@ -24,7 +23,6 @@ export function getUIContext() {
     gameTime: getGameTime(),
     gameWon: getGameWon(),
     currentBoss: getCurrentBoss(),
-    lastRunDebrief: getLastRunDebrief(),
   };
 }
 
@@ -104,13 +102,10 @@ registerUIView({
 });
 
 registerUIView({
-  id: "economy",
-  create: (uiRoot) => createEconomyScreens(uiRoot),
+  id: "runScreens",
+  create: (uiRoot) => createRunScreens(uiRoot),
   tick: (view, context) =>
-    view.tick(context.gameState, {
-      gameWon: context.gameWon,
-      lastRunDebrief: context.lastRunDebrief,
-    }),
+    view.tick(context.gameState, { gameWon: context.gameWon }),
 });
 
 registerUIView({
