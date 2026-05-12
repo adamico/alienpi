@@ -1,0 +1,1118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Alien Orbit Assault — Postmortem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Anton&family=JetBrains+Mono:wght@400;600;700&family=Source+Serif+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #f3e9d2;
+        --paper-2: #ece0c0;
+        --paper-deep: #ddc99e;
+        --ink: #1a1612;
+        --ink-2: #3a312a;
+        --ink-3: #6e6051;
+        --rule: #1a1612;
+        --red: #c5333b;
+        --red-soft: #e25840;
+        --cyan: #1e7a8c;
+        --cyan-bright: #4dd0e1;
+        --yellow: #d4a017;
+        --gold: #b08624;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Source Serif Pro", Georgia, serif;
+        background: #20140d;
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 24px 0 60px;
+      }
+      .spread {
+        width: 1536px;
+        background:
+      /* paper grain */
+          radial-gradient(
+            circle at 18% 22%,
+            rgba(110, 80, 30, 0.07),
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 80% 60%,
+            rgba(160, 120, 40, 0.06),
+            transparent 40%
+          ),
+          var(--paper);
+        color: var(--ink);
+        position: relative;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+        overflow: hidden;
+      }
+      .spread::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: repeating-radial-gradient(
+          circle at 0 0,
+          rgba(0, 0, 0, 0.018) 0 1px,
+          transparent 1px 2px
+        );
+        mix-blend-mode: multiply;
+        opacity: 0.6;
+      }
+      /* slight folded-paper shadow at center */
+      .spread::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 80px;
+        transform: translateX(-50%);
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(0, 0, 0, 0.05) 30%,
+          rgba(0, 0, 0, 0.07) 50%,
+          rgba(0, 0, 0, 0.05) 70%,
+          transparent 100%
+        );
+        pointer-events: none;
+      }
+
+      /* ===== MASTHEAD STRIP ===== */
+      .masthead {
+        background: var(--ink);
+        color: var(--paper);
+        padding: 10px 36px;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        font-family: "Anton", sans-serif;
+        letter-spacing: 0.14em;
+        font-size: 12px;
+        text-transform: uppercase;
+        border-bottom: 4px double var(--paper);
+        position: relative;
+        z-index: 2;
+      }
+      .masthead .left {
+        text-align: left;
+      }
+      .masthead .right {
+        text-align: right;
+      }
+      .masthead .center {
+        color: var(--red-soft);
+        letter-spacing: 0.22em;
+        font-size: 11px;
+      }
+      .masthead .star {
+        color: var(--yellow);
+        margin: 0 6px;
+      }
+
+      /* ===== TOP: HEADLINE BLOCK ===== */
+      .head-grid {
+        padding: 30px 36px 18px;
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 36px;
+        border-bottom: 1px solid var(--rule);
+        position: relative;
+        z-index: 1;
+      }
+      .eyebrow {
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        font-size: 13px;
+        color: var(--red);
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .eyebrow::before,
+      .eyebrow::after {
+        content: "";
+        flex: 0 0 26px;
+        height: 2px;
+        background: var(--red);
+      }
+      .eyebrow::after {
+        flex: 1;
+      }
+      .headline {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-weight: 400;
+        color: var(--ink);
+        font-size: 110px;
+        line-height: 0.92;
+        letter-spacing: -0.02em;
+        margin: 0 0 12px 0;
+      }
+      .headline em {
+        font-style: italic;
+        color: var(--red);
+      }
+      .headline .game {
+        display: inline-block;
+        font-family: "Anton", sans-serif;
+        font-style: normal;
+        font-weight: 400;
+        font-size: 36px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--paper);
+        background: var(--ink);
+        padding: 4px 14px 2px;
+        transform: rotate(-2deg) translateY(-14px);
+        margin: 0 8px;
+        box-shadow: 6px 6px 0 var(--red);
+        vertical-align: baseline;
+      }
+      .deck {
+        font-family: "Source Serif Pro", Georgia, serif;
+        font-style: italic;
+        font-size: 22px;
+        line-height: 1.35;
+        color: var(--ink-2);
+        margin: 8px 0 0 0;
+        max-width: 920px;
+      }
+      .deck b {
+        font-style: normal;
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .byline {
+        margin-top: 18px;
+        border-top: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+        padding: 10px 0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11.5px;
+        color: var(--ink-2);
+        letter-spacing: 0.04em;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+      }
+      .byline .lbl {
+        color: var(--red);
+        font-weight: 700;
+      }
+      .byline .star {
+        color: var(--gold);
+      }
+
+      /* Issue/cover floats right of headline */
+      .issue-tag {
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        text-align: right;
+        color: var(--ink);
+      }
+      .issue-tag .vol {
+        font-size: 12px;
+        letter-spacing: 0.2em;
+        color: var(--ink-3);
+      }
+      .issue-tag .num {
+        font-size: 90px;
+        line-height: 0.9;
+        letter-spacing: -0.01em;
+        color: var(--red);
+      }
+      .issue-tag .lbl {
+        font-size: 13px;
+        letter-spacing: 0.22em;
+      }
+      .issue-tag .rules {
+        margin: 8px 0;
+        height: 0;
+        border-top: 6px solid var(--ink);
+        border-bottom: 1px solid var(--ink);
+        padding-bottom: 4px;
+      }
+
+      /* ===== ARTICLE BODY ===== */
+      .body-grid {
+        padding: 28px 36px 28px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 360px;
+        gap: 28px;
+        border-bottom: 1px solid var(--rule);
+        position: relative;
+        z-index: 1;
+      }
+      .col {
+        column-rule: 1px solid var(--paper-deep);
+      }
+      .col p {
+        font-size: 14.5px;
+        line-height: 1.55;
+        margin: 0 0 12px 0;
+        color: var(--ink);
+        text-align: justify;
+        hyphens: auto;
+      }
+      .col p b {
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .col p em {
+        font-style: italic;
+        color: var(--red);
+      }
+      .col .dropcap::first-letter {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-size: 78px;
+        float: left;
+        line-height: 0.85;
+        padding: 6px 10px 0 0;
+        color: var(--red);
+      }
+      .col .subhead {
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 14px;
+        color: var(--ink);
+        margin: 18px 0 6px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .col .subhead::before {
+        content: "";
+        width: 18px;
+        height: 8px;
+        background: var(--red);
+        display: inline-block;
+      }
+
+      /* Cover floats in second column */
+      .cover-figure {
+        float: right;
+        width: 230px;
+        margin: 4px -8px 8px 16px;
+        shape-outside: margin-box;
+      }
+      .cover-figure img {
+        width: 100%;
+        display: block;
+        border: 4px solid var(--ink);
+        box-shadow: 8px 8px 0 var(--red);
+      }
+      .cover-figure figcaption {
+        font-family: "Anton", sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        margin-top: 8px;
+        text-align: left;
+        border-top: 1px solid var(--rule);
+        padding-top: 6px;
+      }
+      .cover-figure figcaption b {
+        color: var(--red);
+      }
+
+      /* ===== SIDEBAR ===== */
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .sb-card {
+        background: var(--paper-2);
+        border: 2px solid var(--ink);
+        padding: 16px 16px 14px;
+        position: relative;
+      }
+      .sb-card::before {
+        content: "";
+        position: absolute;
+        left: -2px;
+        top: -2px;
+        right: -2px;
+        height: 8px;
+        background: var(--ink);
+      }
+      .sb-card.red::before {
+        background: var(--red);
+      }
+      .sb-card.cyan::before {
+        background: var(--cyan);
+      }
+      .sb-card.gold::before {
+        background: var(--gold);
+      }
+      .sb-card h3 {
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 18px;
+        margin: 6px 0 10px 0;
+        color: var(--ink);
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 6px;
+      }
+      .sb-card.red h3 {
+        color: var(--red);
+      }
+      .sb-card.cyan h3 {
+        color: var(--cyan);
+      }
+      .sb-card.gold h3 {
+        color: var(--gold);
+      }
+
+      /* THE STACK list */
+      .stack-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .stack-item {
+        display: grid;
+        grid-template-columns: 36px 1fr;
+        gap: 10px;
+        align-items: start;
+      }
+      .stack-item .badge {
+        width: 36px;
+        height: 36px;
+        border: 2px solid var(--ink);
+        background: var(--paper);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 3px 3px 0 var(--ink);
+      }
+      .stack-item .badge svg {
+        width: 20px;
+        height: 20px;
+      }
+      .stack-item .role {
+        font-family: "Anton", sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--red);
+      }
+      .stack-item .name {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-size: 18px;
+        line-height: 1;
+        color: var(--ink);
+        margin: 1px 0 3px;
+      }
+      .stack-item .desc {
+        font-size: 12px;
+        line-height: 1.4;
+        color: var(--ink-2);
+      }
+
+      /* BOX SCORE numbers */
+      .box-score {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 14px;
+      }
+      .box-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        border-bottom: 1px dotted var(--ink-3);
+        padding: 4px 0;
+      }
+      .box-row .lbl {
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 11px;
+        color: var(--ink-2);
+      }
+      .box-row .num {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-size: 22px;
+        color: var(--red);
+        line-height: 1;
+      }
+      .box-row .num small {
+        font-size: 13px;
+        color: var(--ink-2);
+        margin-left: 1px;
+      }
+
+      /* PLAY card */
+      .play-card {
+        background: var(--ink);
+        color: var(--paper);
+        padding: 14px;
+        border: 2px solid var(--ink);
+        box-shadow: 6px 6px 0 var(--red);
+      }
+      .play-card .lbl {
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 12px;
+        color: var(--yellow);
+        margin-bottom: 4px;
+      }
+      .play-card .url {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12.5px;
+        color: var(--paper);
+        word-break: break-all;
+      }
+      .play-card .url::before {
+        content: "›  ";
+        color: var(--red-soft);
+      }
+
+      /* ===== PULL QUOTE ===== */
+      .pullquote {
+        padding: 30px 80px;
+        text-align: center;
+        border-bottom: 1px solid var(--rule);
+        background:
+          linear-gradient(
+            90deg,
+            transparent 0,
+            transparent 45%,
+            rgba(197, 51, 59, 0.06) 50%,
+            transparent 55%,
+            transparent 100%
+          ),
+          var(--paper);
+      }
+      .pullquote::before,
+      .pullquote::after {
+        content: "";
+        display: block;
+        height: 0;
+        border-top: 6px solid var(--ink);
+        border-bottom: 1px solid var(--ink);
+        margin: 0 auto 18px;
+        width: 96px;
+      }
+      .pullquote::after {
+        margin: 18px auto 0;
+      }
+      .pullquote q {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-style: italic;
+        font-size: 44px;
+        line-height: 1.15;
+        color: var(--ink);
+        quotes: "“" "”";
+        display: block;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      .pullquote q::before,
+      .pullquote q::after {
+        color: var(--red);
+        font-size: 80px;
+        line-height: 0;
+        vertical-align: -22px;
+        font-style: normal;
+      }
+      .pullquote q::before {
+        margin-right: 6px;
+      }
+      .pullquote q::after {
+        margin-left: 6px;
+      }
+      .pullquote .attr {
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 13px;
+        color: var(--red);
+        margin-top: 18px;
+      }
+
+      /* ===== BOTTOM FEATURE STRIP ===== */
+      .features {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        border-bottom: 1px solid var(--rule);
+      }
+      .feature {
+        padding: 22px 26px 26px;
+        border-right: 1px solid var(--rule);
+        position: relative;
+      }
+      .feature:last-child {
+        border-right: none;
+      }
+      .feature .num {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-style: italic;
+        font-size: 64px;
+        line-height: 1;
+        color: var(--paper-deep);
+        position: absolute;
+        top: 14px;
+        right: 18px;
+      }
+      .feature h3 {
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 18px;
+        margin: 0 0 4px 0;
+        color: var(--ink);
+      }
+      .feature .kicker {
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 11px;
+        color: var(--red);
+        margin-bottom: 8px;
+      }
+      .feature p {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--ink-2);
+        margin: 0 0 8px 0;
+      }
+      .feature p b {
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .feature code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11.5px;
+        color: var(--cyan);
+        background: rgba(30, 122, 140, 0.08);
+        padding: 1px 4px;
+        border: 1px solid rgba(30, 122, 140, 0.25);
+      }
+
+      /* Tilt diagram */
+      .tilt-diagram {
+        display: grid;
+        grid-template-columns: 1fr 14px 1fr 14px 1fr;
+        gap: 6px;
+        align-items: stretch;
+        margin-top: 12px;
+      }
+      .tilt-box {
+        background: #0e0a18;
+        border: 2px solid var(--ink);
+        height: 92px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 3px 3px 0 var(--ink);
+      }
+      .tilt-box img {
+        height: 90%;
+        image-rendering: pixelated;
+      }
+      .tilt-box.split {
+        background: var(--paper);
+        flex-direction: column;
+        gap: 4px;
+        padding: 6px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .tilt-box.split .row {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        width: 100%;
+        justify-content: flex-start;
+      }
+      .tilt-box.split .row .swatch {
+        height: 9px;
+        border: 1px solid currentColor;
+      }
+      .tilt-box.split .squish {
+        color: var(--cyan);
+      }
+      .tilt-box.split .squish .swatch {
+        width: 9px;
+        background: rgba(30, 122, 140, 0.2);
+      }
+      .tilt-box.split .stretch {
+        color: var(--red);
+      }
+      .tilt-box.split .stretch .swatch {
+        width: 22px;
+        background: rgba(197, 51, 59, 0.18);
+      }
+      .tilt-arr {
+        color: var(--red);
+        font-family: "DM Serif Display";
+        font-size: 26px;
+        align-self: center;
+        text-align: center;
+        line-height: 1;
+      }
+      .tilt-cap {
+        margin-top: 8px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        color: var(--ink-3);
+        text-align: center;
+        letter-spacing: 0.06em;
+      }
+
+      /* Achievements list as printed checklist */
+      .ach-list {
+        list-style: none;
+        padding: 0;
+        margin: 6px 0 0;
+      }
+      .ach-list li {
+        font-size: 13px;
+        line-height: 1.45;
+        padding: 4px 0 4px 22px;
+        position: relative;
+        border-bottom: 1px dotted var(--ink-3);
+        color: var(--ink);
+      }
+      .ach-list li::before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        top: 4px;
+        font-family: "Anton";
+        font-size: 14px;
+        color: var(--red);
+      }
+      .ach-list li b {
+        color: var(--ink);
+        font-weight: 700;
+      }
+
+      /* ===== FOOTER ===== */
+      .colophon {
+        padding: 14px 36px 18px;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 11px;
+        color: var(--ink);
+        background: var(--paper);
+      }
+      .colophon .center {
+        color: var(--red);
+        letter-spacing: 0.22em;
+      }
+      .colophon .right {
+        text-align: right;
+        color: var(--ink-3);
+      }
+      .colophon .heart {
+        color: var(--red);
+      }
+
+      /* small inline icons */
+      .ic {
+        display: inline-block;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spread" data-screen-label="01 Postmortem Spread">
+      <!-- ===== MASTHEAD STRIP ===== -->
+      <div class="masthead">
+        <div class="left">Vol. 4 · Issue 06</div>
+        <div class="center">
+          — Inside the Build <span class="star">★</span> Postmortem Series
+          <span class="star">★</span> Feature —
+        </div>
+        <div class="right">May 2026 · pp. 28 – 29</div>
+      </div>
+
+      <!-- ===== HEADLINE BLOCK ===== -->
+      <div class="head-grid">
+        <div>
+          <p class="eyebrow">Field Notes from a Solo Dev</p>
+          <h1 class="headline">
+            How <em>five AI tools</em> built<br />
+            <span class="game">Alien Orbit Assault</span>
+          </h1>
+          <p class="deck">
+            One developer, five AI tools, one Toaplan-tradition browser shmup.
+            The model can wire the systems; the human still picks the numbers
+            that feel right. Here's where the line lives —
+            <b>and where it doesn't.</b>
+          </p>
+          <div class="byline">
+            <span
+              ><span class="lbl">BUILT WITH</span> &nbsp; VS Code + Copilot
+              &middot; Claude Code &middot; Nano Banana &middot; Suno &middot;
+              LittleJS</span
+            >
+            <span><span class="star">★</span> 5 lives</span>
+            <span><span class="star">★</span> No continues</span>
+            <span><span class="star">★</span> One sitting</span>
+          </div>
+        </div>
+        <div class="issue-tag">
+          <div class="vol">Feature №</div>
+          <div class="num">01</div>
+          <div class="rules"></div>
+          <div class="lbl">The Postmortem</div>
+        </div>
+      </div>
+
+      <!-- ===== BODY: 2-COL ARTICLE + SIDEBAR ===== -->
+      <div class="body-grid">
+        <!-- Column 1 -->
+        <div class="col">
+          <p class="dropcap">
+            ALIEN ORBIT ASSAULT is a vertical shoot-'em-up in the
+            <em>Toaplan tradition</em> — think <b>Truxton</b>, <b>Hellfire</b>,
+            <b>Out Zone</b>. Browser-based, keyboard or pad, no install. Reclaim
+            Earth from Gaia's corrupted orbit while juggling three weapons, a
+            Substrate economy, and a multi-phase Orbiter boss whose 30-second
+            vulnerability window you have to earn down.
+          </p>
+          <p>
+            The brief was small enough to fit on one line: a Toaplan-feel shmup
+            I could ship in a month, in the browser, by myself. The interesting
+            bit isn't the game — it's that I built it without ever opening a
+            sprite editor, a DAW, or really fighting the engine. The whole stack
+            is AI-native. The whole feel is mine.
+          </p>
+          <div class="subhead">The Loop</div>
+          <p>
+            The spine is a single shootable pickup, the <b>Cycler</b>: it drifts
+            down the playfield through four armed states —
+            <em>vulcan, shotgun, beam, bonus substrate</em>. Shoot it to
+            advance, touch it to commit. Miss the timing and it locks to the
+            consolation state. That one pickup replaced an inventory of four
+            colored loot drops on the first back-and-forth riff with Claude.
+          </p>
+        </div>
+
+        <!-- Column 2 (with floated cover) -->
+        <div class="col">
+          <figure class="cover-figure">
+            <img
+              src="assets/cover.png"
+              alt="Alien Orbit Assault — magazine cover"
+            />
+            <figcaption>
+              <b>Above:</b> The lead art is a fictional 1990s gaming-magazine
+              cover, generated in one Nano Banana pass and used as the visual
+              bible for everything else in the game.
+            </figcaption>
+          </figure>
+          <div class="subhead">The Workflow</div>
+          <p>
+            Heavy lifting — multi-file refactors, the Orbiter phase machine, the
+            input <code>Action</code> / <code>Binding</code> layer — went to
+            <b>Claude Code</b>. Light edits and boilerplate stayed in
+            <b>VS Code with Copilot</b> on auto, which keeps the bill honest on
+            one-line fixes.
+          </p>
+          <p>
+            Art was a single fictional magazine cover from <b>Nano Banana</b>;
+            its palette, mood, and ship silhouette anchored every later sprite.
+            Music was three loops from <b>Suno</b> — title, run, boss — picked
+            by ear at cab volume. <b>LittleJS</b> sits underneath: small enough
+            for the model to hold the whole engine in its head, which makes
+            Claude Code dangerously productive against it.
+          </p>
+          <div class="subhead">Where the Human Lives</div>
+          <p>
+            Bullet spread. Ship i-frames. Substrate drop curve. How fast the
+            Orbiter's window should drain on a clean hit. The git history is a
+            long chain of <code>0.18 → 0.19 → 0.185</code> nudges. Each commit
+            looks trivial; together they <em>are</em> the game.
+          </p>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <div class="sb-card red">
+            <h3>The Stack</h3>
+            <div class="stack-list">
+              <div class="stack-item">
+                <div class="badge">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#1a1612"
+                    stroke-width="2"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  >
+                    <path d="M5 7l-3 5 3 5" />
+                    <path d="M19 7l3 5-3 5" />
+                    <path d="M14 5l-4 14" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="role">Code · Light</div>
+                  <div class="name">VS Code + Copilot</div>
+                  <div class="desc">
+                    Auto-model picks the right size for the diff. Inline edits,
+                    refactors, paperwork.
+                  </div>
+                </div>
+              </div>
+              <div class="stack-item">
+                <div class="badge">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#1a1612"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  >
+                    <path
+                      d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <div class="role">Code · Heavy</div>
+                  <div class="name">Claude Code</div>
+                  <div class="desc">
+                    Game-design partner. Cycler loop, Orbiter machine,
+                    multi-file refactors.
+                  </div>
+                </div>
+              </div>
+              <div class="stack-item">
+                <div class="badge">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="#d4a017"
+                    stroke="#1a1612"
+                    stroke-width="1.6"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  >
+                    <path
+                      d="M5 14c0-5 4-9 9-9 1.6 0 3 .5 3 .5s-.4 1.2-.4 2.5C16.6 13 11 18 6 18c-.7 0-1-1-1-2 0-.7 0-1.3 0-2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <div class="role">Art</div>
+                  <div class="name">Nano Banana</div>
+                  <div class="desc">
+                    One magazine cover prompt → entire game's visual language.
+                  </div>
+                </div>
+              </div>
+              <div class="stack-item">
+                <div class="badge">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#1a1612"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  >
+                    <path d="M9 18V5l11-2v13" />
+                    <circle cx="6.5" cy="18" r="2.5" fill="#1a1612" />
+                    <circle cx="17.5" cy="16" r="2.5" fill="#1a1612" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="role">Music</div>
+                  <div class="name">Suno</div>
+                  <div class="desc">
+                    Three loops: title, run, boss. Picked by ear, no DAW
+                    touched.
+                  </div>
+                </div>
+              </div>
+              <div class="stack-item">
+                <div class="badge">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#1a1612"
+                    stroke-width="2"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  >
+                    <rect x="2.5" y="7" width="19" height="11" rx="3.5" />
+                    <path d="M7 12h3M8.5 10.5v3" />
+                    <circle cx="15.5" cy="11.5" r="1" fill="#1a1612" />
+                    <circle cx="17.5" cy="13.5" r="1" fill="#1a1612" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="role">Engine</div>
+                  <div class="name">LittleJS</div>
+                  <div class="desc">
+                    Tiny. Fast. Small enough for the model to hold whole.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sb-card cyan">
+            <h3>Box Score</h3>
+            <div class="box-score">
+              <div class="box-row">
+                <span class="lbl">Lives</span><span class="num">5</span>
+              </div>
+              <div class="box-row">
+                <span class="lbl">Continues</span><span class="num">0</span>
+              </div>
+              <div class="box-row">
+                <span class="lbl">Boss window</span
+                ><span class="num">30<small>s</small></span>
+              </div>
+              <div class="box-row">
+                <span class="lbl">Weapons</span><span class="num">3</span>
+              </div>
+              <div class="box-row">
+                <span class="lbl">Cycler states</span><span class="num">4</span>
+              </div>
+              <div class="box-row">
+                <span class="lbl">Suno tracks</span><span class="num">3</span>
+              </div>
+              <div class="box-row">
+                <span class="lbl">Cover prompts</span><span class="num">1</span>
+              </div>
+              <div class="box-row">
+                <span class="lbl">Frame budget</span
+                ><span class="num">60<small>fps</small></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="play-card">
+            <div class="lbl">▸ Play it now</div>
+            <div class="url">kc00l.itch.io/alien-orbital-assault</div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- ===== PULL QUOTE ===== -->
+      <div class="pullquote">
+        <q
+          >The model can build the system. A human still picks the numbers that
+          feel right.</q
+        >
+        <div class="attr">— from the postmortem</div>
+      </div>
+
+      <!-- ===== BOTTOM FEATURE STRIP ===== -->
+      <div class="features">
+        <div class="feature">
+          <div class="num">01</div>
+          <div class="kicker">Came together easily</div>
+          <h3>What the Tools Got Right</h3>
+          <ul class="ach-list">
+            <li>
+              The <b>Cycler</b> state machine — built right the first try.
+            </li>
+            <li>
+              Input layer with explicit <code>Action</code> /
+              <code>Binding</code> / source. Rebinding shipped clean.
+            </li>
+            <li>Footer hint glyphs swap by source on one component.</li>
+            <li>Substrate ↔ Corruption loop. Wired in an afternoon.</li>
+          </ul>
+        </div>
+
+        <div class="feature">
+          <div class="num">02</div>
+          <div class="kicker">Still needed me</div>
+          <h3>Feel Is Not Generated</h3>
+          <p>
+            Bullet spread, ship i-frames, substrate drop curve, the bleed rate
+            on the Orbiter's 30-second window, screen shake on Latch Beam
+            release.
+          </p>
+          <p>
+            The git log is a long parade of single-number nudges —
+            <code>tweak shotgun spread</code>, then <code>0.18 → 0.19</code>,
+            then <code>0.19 → 0.185</code>. Each commit is trivial. Together
+            they're the whole game.
+          </p>
+        </div>
+
+        <div class="feature">
+          <div class="num">03</div>
+          <div class="kicker">The trick that worked</div>
+          <h3>Faking 3D Tilt with One Sprite</h3>
+          <p>
+            Only the upright ship is in the build. Tilt is faked at draw time:
+            <b>split the sprite down the centerline</b>, squish + darken the
+            half diving into the page, stretch the opposite half. Mirror
+            horizontally for the other direction.
+          </p>
+          <div class="tilt-diagram">
+            <div class="tilt-box">
+              <img src="assets/ship_upright.png" alt="upright" />
+            </div>
+            <div class="tilt-arr">→</div>
+            <div class="tilt-box split">
+              <div class="row squish">
+                <span class="swatch"></span><span>squish + dark</span>
+              </div>
+              <div class="row stretch">
+                <span class="swatch"></span><span>stretch</span>
+              </div>
+            </div>
+            <div class="tilt-arr">→</div>
+            <div class="tilt-box">
+              <img src="assets/ship_tilted_right.png" alt="tilted right" />
+            </div>
+          </div>
+          <div class="tilt-cap">
+            upright → split &amp; scale halves → tilted
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== COLOPHON ===== -->
+      <div class="colophon">
+        <div class="left">
+          <span class="heart">♥</span> Thanks to the AI tools that made this
+          possible
+        </div>
+        <div class="center">— End of Feature —</div>
+        <div class="right">Page 29 · Continued in next issue</div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1543 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Alien Orbit Assault Postmortem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Inline&family=Anton&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #07070d;
+        --bg-2: #0d0e18;
+        --panel: #11121e;
+        --panel-2: #161725;
+        --line: #232539;
+        --ink: #f3ecda;
+        --ink-2: #b9b3a2;
+        --ink-3: #6f6c63;
+        --red: #ef3b3b;
+        --red-2: #ff5757;
+        --cyan: #4dd0e1;
+        --yellow: #ffd23f;
+        --green: #58e07a;
+        --magenta: #e64bbf;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background:
+          radial-gradient(
+            1200px 700px at 25% -10%,
+            #1a0a14 0%,
+            transparent 60%
+          ),
+          radial-gradient(900px 700px at 110% 20%, #061923 0%, transparent 60%),
+          radial-gradient(
+            700px 600px at -10% 110%,
+            #1a0a14 0%,
+            transparent 60%
+          ),
+          var(--bg);
+        color: var(--ink);
+        font-family: "Inter", system-ui, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+      }
+      .poster {
+        width: 1536px;
+        min-height: 1080px;
+        padding: 36px 36px 32px 36px;
+        position: relative;
+        overflow: hidden;
+      }
+      /* subtle starfield + scan */
+      .poster::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          radial-gradient(
+            1px 1px at 12% 18%,
+            rgba(255, 255, 255, 0.45),
+            transparent 50%
+          ),
+          radial-gradient(
+            1px 1px at 28% 70%,
+            rgba(255, 255, 255, 0.35),
+            transparent 50%
+          ),
+          radial-gradient(
+            1px 1px at 64% 30%,
+            rgba(255, 255, 255, 0.4),
+            transparent 50%
+          ),
+          radial-gradient(
+            1px 1px at 80% 60%,
+            rgba(255, 255, 255, 0.3),
+            transparent 50%
+          ),
+          radial-gradient(
+            1px 1px at 92% 12%,
+            rgba(255, 255, 255, 0.35),
+            transparent 50%
+          ),
+          radial-gradient(
+            1px 1px at 50% 90%,
+            rgba(255, 255, 255, 0.35),
+            transparent 50%
+          );
+        opacity: 0.7;
+      }
+      .poster::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.012) 0 2px,
+          transparent 2px 4px
+        );
+        mix-blend-mode: overlay;
+      }
+
+      /* ===== Top Grid ===== */
+      .grid-top {
+        display: grid;
+        grid-template-columns: 340px 1fr 560px;
+        gap: 22px;
+        position: relative;
+        z-index: 1;
+        align-items: stretch;
+      }
+      .grid-top > div {
+        display: flex;
+        flex-direction: column;
+      }
+      .grid-top > div.center {
+        justify-content: stretch;
+      }
+
+      /* Title block */
+      .title-block {
+        container-type: inline-size;
+        container-name: title;
+      }
+      .title-block .eyebrow {
+        font-family: "JetBrains Mono", monospace;
+        color: var(--cyan);
+        letter-spacing: 0.18em;
+        font-size: 11px;
+        text-transform: uppercase;
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .title-block .eyebrow::before {
+        content: "";
+        width: 30px;
+        height: 2px;
+        background: var(--cyan);
+        box-shadow: 0 0 8px var(--cyan);
+      }
+      .title {
+        font-family: "Bungee", system-ui;
+        font-size: clamp(40px, 22cqw, 78px);
+        line-height: 0.92;
+        margin: 0 0 6px 0;
+        letter-spacing: -0.01em;
+        background: linear-gradient(
+          180deg,
+          #ffe27a 0%,
+          #ff7a3a 38%,
+          #ef3b3b 70%,
+          #4dd0e1 100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow:
+          2px 2px 0 #000,
+          4px 4px 0 rgba(0, 0, 0, 0.5);
+        filter: drop-shadow(0 0 24px rgba(239, 59, 59, 0.25));
+        word-break: break-word;
+      }
+      .title .l1 {
+        display: block;
+        font-size: clamp(22px, 13cqw, 46px);
+        white-space: nowrap;
+      }
+      .title .l2 {
+        display: block;
+        font-size: clamp(34px, 20.5cqw, 72px);
+        color: transparent;
+        white-space: nowrap;
+      }
+      .subhead {
+        font-family: "Anton", sans-serif;
+        letter-spacing: 0.03em;
+        color: var(--ink);
+        font-size: 17px;
+        margin: 8px 0 0 0;
+        line-height: 1.25;
+        text-transform: uppercase;
+      }
+      .subhead em {
+        font-style: normal;
+        color: var(--yellow);
+      }
+
+      /* Hero magazine cover */
+      .hero {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow:
+          0 0 0 1px rgba(239, 59, 59, 0.35),
+          0 0 50px rgba(239, 59, 59, 0.18),
+          0 0 80px rgba(77, 208, 225, 0.08);
+        flex: 1 1 auto;
+        width: 100%;
+        min-height: 600px;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        background: #000;
+      }
+      .hero img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: contain;
+        object-position: center center;
+      }
+      .hero .corner {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid var(--cyan);
+        color: var(--cyan);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 2px;
+        backdrop-filter: blur(4px);
+      }
+      .hero .corner.r {
+        left: auto;
+        right: 10px;
+        color: var(--yellow);
+        border-color: var(--yellow);
+      }
+
+      /* Right column blocks */
+      .panel {
+        background: linear-gradient(
+          180deg,
+          var(--panel) 0%,
+          var(--panel-2) 100%
+        );
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px 18px;
+        position: relative;
+      }
+      .panel + .panel {
+        margin-top: 14px;
+      }
+      .panel h3 {
+        font-family: "Anton", sans-serif;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin: 0 0 10px 0;
+        font-size: 18px;
+        color: var(--yellow);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .panel h3.cyan {
+        color: var(--cyan);
+      }
+      .panel h3.red {
+        color: var(--red-2);
+      }
+      .panel h3 .pip {
+        width: 8px;
+        height: 8px;
+        background: currentColor;
+        border-radius: 1px;
+        box-shadow: 0 0 10px currentColor;
+      }
+      .panel ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .panel li {
+        font-size: 13.5px;
+        line-height: 1.45;
+        color: var(--ink);
+        padding: 3px 0;
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .panel li.bullet::before {
+        content: "•";
+        color: var(--ink-3);
+      }
+      .panel li.check::before {
+        content: "✓";
+        color: var(--green);
+        font-weight: 700;
+      }
+      .panel li b {
+        color: var(--yellow);
+        font-weight: 600;
+      }
+      .panel li code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11.5px;
+        color: var(--cyan);
+        background: rgba(77, 208, 225, 0.08);
+        padding: 1px 5px;
+        border-radius: 3px;
+        border: 1px solid rgba(77, 208, 225, 0.18);
+      }
+
+      /* Tool stack — top right */
+      .tool-stack {
+        background: linear-gradient(
+          180deg,
+          rgba(20, 8, 12, 0.65),
+          rgba(8, 12, 20, 0.85)
+        );
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 18px 18px 14px;
+      }
+      .tool-stack .heading {
+        font-family: "Anton", sans-serif;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--ink);
+        font-size: 22px;
+        margin-bottom: 4px;
+      }
+      .tool-stack .heading b {
+        color: var(--red-2);
+      }
+      .tool-stack .sub {
+        font-family: "JetBrains Mono", monospace;
+        color: var(--ink-2);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+      .tools {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+      }
+      .tool {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 4px 8px;
+        background: #0a0b14;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        text-align: center;
+        position: relative;
+      }
+      .tool .ic {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        border: 1px solid var(--line);
+        background: #0e0f1a;
+      }
+      .tool .ic svg {
+        width: 26px;
+        height: 26px;
+      }
+      .tool .nm {
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+      }
+      .tool .role {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 8.5px;
+        color: var(--ink-3);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .tool.code1 .ic {
+        box-shadow: 0 0 18px rgba(255, 121, 58, 0.25);
+        border-color: rgba(255, 121, 58, 0.4);
+      }
+      .tool.code2 .ic {
+        box-shadow: 0 0 18px rgba(77, 160, 225, 0.25);
+        border-color: rgba(77, 160, 225, 0.4);
+      }
+      .tool.art .ic {
+        box-shadow: 0 0 18px rgba(255, 210, 63, 0.25);
+        border-color: rgba(255, 210, 63, 0.4);
+      }
+      .tool.music .ic {
+        box-shadow: 0 0 18px rgba(230, 75, 191, 0.25);
+        border-color: rgba(230, 75, 191, 0.4);
+      }
+      .tool.eng .ic {
+        box-shadow: 0 0 18px rgba(88, 224, 122, 0.25);
+        border-color: rgba(88, 224, 122, 0.4);
+      }
+
+      /* Two-column block (workflow / achievements) */
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      /* Stack panel listing */
+      .stack-row {
+        display: grid;
+        grid-template-columns: 38px 1fr;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+      }
+      .stack-row:last-child {
+        border-bottom: none;
+      }
+      .stack-row .badge {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0c0d18;
+        border: 1px solid var(--line);
+      }
+      .stack-row .badge svg {
+        width: 22px;
+        height: 22px;
+      }
+      .stack-row .label {
+        font-family: "Anton", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 14px;
+        color: var(--ink);
+      }
+      .stack-row .label b {
+        color: var(--yellow);
+      }
+      .stack-row .desc {
+        color: var(--ink-2);
+        font-size: 12.5px;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+      .stack-row.orange .badge {
+        box-shadow: 0 0 18px rgba(255, 121, 58, 0.25);
+        border-color: rgba(255, 121, 58, 0.45);
+      }
+      .stack-row.blue .badge {
+        box-shadow: 0 0 18px rgba(77, 160, 225, 0.25);
+        border-color: rgba(77, 160, 225, 0.45);
+      }
+      .stack-row.yellow .badge {
+        box-shadow: 0 0 18px rgba(255, 210, 63, 0.25);
+        border-color: rgba(255, 210, 63, 0.45);
+      }
+      .stack-row.pink .badge {
+        box-shadow: 0 0 18px rgba(230, 75, 191, 0.25);
+        border-color: rgba(230, 75, 191, 0.45);
+      }
+      .stack-row.green .badge {
+        box-shadow: 0 0 18px rgba(88, 224, 122, 0.25);
+        border-color: rgba(88, 224, 122, 0.45);
+      }
+
+      /* Art trick — vertical card on the far right */
+      .art-trick {
+        text-align: left;
+      }
+      .art-trick .quote {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11.5px;
+        line-height: 1.55;
+        color: var(--ink);
+        background: #0a0b14;
+        border: 1px dashed rgba(77, 208, 225, 0.35);
+        border-radius: 6px;
+        padding: 10px 12px;
+        margin: 8px 0;
+      }
+      .art-trick .quote::before {
+        content: "› ";
+        color: var(--cyan);
+      }
+      .art-trick .arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 12px;
+      }
+      .art-trick .arrow .box {
+        width: 88px;
+        height: 100px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #0a0b14;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .art-trick .arrow .box.ref {
+        background: repeating-linear-gradient(
+          135deg,
+          #1a1925 0 6px,
+          #0c0d18 6px 12px
+        );
+      }
+      .art-trick .arrow .arr {
+        color: var(--yellow);
+        font-family: "Anton";
+        font-size: 22px;
+      }
+
+      /* THE GAME card under title */
+      .game-card {
+        margin-top: 18px;
+      }
+      .game-card .blurb {
+        color: var(--ink);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .game-card .blurb b {
+        color: var(--cyan);
+      }
+      .game-card .blurb em {
+        color: var(--yellow);
+        font-style: normal;
+        font-weight: 600;
+      }
+      .feature-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .feat {
+        display: grid;
+        grid-template-columns: 36px 1fr;
+        gap: 10px;
+        align-items: start;
+      }
+      .feat .ic {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+        background: #0e0f1a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .feat .ic svg {
+        width: 20px;
+        height: 20px;
+      }
+      .feat .ic.cyan {
+        box-shadow: 0 0 16px rgba(77, 208, 225, 0.35);
+        border-color: rgba(77, 208, 225, 0.45);
+      }
+      .feat .ic.red {
+        box-shadow: 0 0 16px rgba(239, 59, 59, 0.35);
+        border-color: rgba(239, 59, 59, 0.45);
+      }
+      .feat .ic.mag {
+        box-shadow: 0 0 16px rgba(230, 75, 191, 0.35);
+        border-color: rgba(230, 75, 191, 0.45);
+      }
+      .feat .ttl {
+        font-family: "Anton";
+        text-transform: uppercase;
+        font-size: 13px;
+        letter-spacing: 0.04em;
+        color: var(--ink);
+      }
+      .feat .txt {
+        color: var(--ink-2);
+        font-size: 12px;
+        line-height: 1.4;
+        margin-top: 2px;
+      }
+
+      .play {
+        margin-top: 16px;
+        padding: 14px 14px;
+        border: 1px solid rgba(230, 75, 191, 0.45);
+        border-radius: 10px;
+        background: linear-gradient(
+          180deg,
+          rgba(230, 75, 191, 0.12),
+          rgba(230, 75, 191, 0.02)
+        );
+        box-shadow: 0 0 30px rgba(230, 75, 191, 0.15) inset;
+      }
+      .play .lbl {
+        font-family: "Anton";
+        font-size: 22px;
+        letter-spacing: 0.04em;
+        color: var(--magenta);
+        text-transform: uppercase;
+        text-shadow: 0 0 14px rgba(230, 75, 191, 0.6);
+      }
+      .play .url {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--ink);
+        margin-top: 4px;
+      }
+
+      /* Stat tile grid (Numbers panel) */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .stat {
+        background: #0a0b14;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 8px 8px;
+        text-align: center;
+        position: relative;
+      }
+      .stat .num {
+        font-family: "Bungee", sans-serif;
+        font-size: 26px;
+        line-height: 1;
+        color: var(--ink);
+        text-shadow: 0 0 10px currentColor;
+      }
+      .stat .num.cyan {
+        color: #4dd0e1;
+      }
+      .stat .num.yellow {
+        color: #ffd23f;
+      }
+      .stat .num.red {
+        color: #ff5757;
+      }
+      .stat .num.green {
+        color: #58e07a;
+      }
+      .stat .num small {
+        font-family: "Anton";
+        font-size: 13px;
+        opacity: 0.8;
+        margin-left: 1px;
+      }
+      .stat .lbl {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        margin-top: 4px;
+      }
+
+      .stack-band {
+        margin-top: 22px;
+        display: grid;
+        grid-template-columns: 1fr 460px;
+        gap: 16px;
+        position: relative;
+        z-index: 1;
+      }
+      .stack-panel h3,
+      .art-trick-panel h3 {
+        font-size: 18px;
+      }
+      .stack-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px 18px;
+      }
+      .stack-grid .stack-row {
+        grid-template-columns: 38px 1fr;
+        border-bottom: none;
+        padding: 4px 0 6px;
+      }
+      .stack-grid .stack-row .desc {
+        font-size: 11.5px;
+        line-height: 1.4;
+      }
+      .stack-grid .stack-row .label {
+        font-size: 12.5px;
+      }
+      .art-trick-panel .art-blurb {
+        font-size: 12.5px;
+        line-height: 1.5;
+        color: var(--ink-2);
+        margin: 0 0 12px 0;
+      }
+      .art-trick-panel .art-blurb b {
+        color: var(--yellow);
+        font-weight: 600;
+      }
+      .art-trick-panel .art-blurb em {
+        color: var(--cyan);
+        font-style: normal;
+        font-weight: 600;
+      }
+      .art-arrow {
+        display: grid;
+        grid-template-columns: 1fr 16px 1fr 16px 1fr;
+        gap: 6px;
+        align-items: stretch;
+      }
+      .art-box {
+        height: 96px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #0a0b14;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+      }
+      .art-box.ref {
+        background: repeating-linear-gradient(
+          135deg,
+          #1a1925 0 6px,
+          #0c0d18 6px 12px
+        );
+      }
+      .art-box.ref2 {
+        background:
+          radial-gradient(
+            circle at 30% 40%,
+            rgba(239, 59, 59, 0.5),
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 70% 70%,
+            rgba(77, 208, 225, 0.4),
+            transparent 55%
+          ),
+          #0c0d18;
+      }
+      .art-box.hero-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
+      }
+      .art-box.sprite {
+        background: #000;
+      }
+      .art-box.sprite img {
+        width: auto;
+        height: 88%;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        display: block;
+      }
+      .art-box.split {
+        background: linear-gradient(
+          90deg,
+          rgba(77, 208, 225, 0.08),
+          transparent 50%,
+          rgba(255, 87, 87, 0.08)
+        );
+        flex-direction: column;
+        gap: 4px;
+        padding: 6px;
+      }
+      .art-box.split .row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .art-box.split .row .swatch {
+        height: 10px;
+        border: 1px solid currentColor;
+        border-radius: 1px;
+      }
+      .art-box.split .squish {
+        color: #4dd0e1;
+      }
+      .art-box.split .squish .swatch {
+        width: 10px;
+        background: rgba(77, 208, 225, 0.2);
+      }
+      .art-box.split .stretch {
+        color: #ff5757;
+      }
+      .art-box.split .stretch .swatch {
+        width: 22px;
+        background: rgba(255, 87, 87, 0.18);
+      }
+      .art-cap {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+      }
+      .art-arr {
+        color: var(--yellow);
+        font-family: "Anton";
+        font-size: 22px;
+        align-self: center;
+        text-align: center;
+      }
+      .art-foot {
+        margin: 10px 0 0 0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--ink-3);
+        text-align: center;
+        letter-spacing: 0.04em;
+      }
+
+      /* ===== Bottom Cards Row ===== */
+      .grid-bottom {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        position: relative;
+        z-index: 1;
+      }
+      .card {
+        background: linear-gradient(180deg, var(--panel), var(--panel-2));
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px 16px 14px;
+        position: relative;
+        min-height: 200px;
+      }
+      .card h4 {
+        font-family: "Anton";
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin: 0 0 10px 0;
+        font-size: 20px;
+        line-height: 1.1;
+        color: var(--ink);
+      }
+      .card.c1 h4 {
+        color: var(--cyan);
+      }
+      .card.c2 h4 {
+        color: var(--green);
+      }
+      .card.c3 h4 {
+        color: var(--yellow);
+      }
+      .card.c4 h4 {
+        color: var(--red-2);
+      }
+      .card p {
+        margin: 0 0 8px 0;
+        color: var(--ink-2);
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .card p b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .card .vis {
+        position: absolute;
+        right: 14px;
+        bottom: 12px;
+        opacity: 0.9;
+      }
+      .card ul {
+        margin: 4px 0 0;
+        padding-left: 18px;
+        color: var(--ink-2);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+      .card ul li b {
+        color: var(--yellow);
+        font-weight: 600;
+      }
+      .card code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--cyan);
+        background: rgba(77, 208, 225, 0.08);
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+
+      .footnote {
+        margin-top: 18px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--ink-3);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+        position: relative;
+        z-index: 1;
+      }
+      .footnote .heart {
+        color: var(--red-2);
+      }
+      .footnote span b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      /* small scribble */
+      .scribble path {
+        fill: none;
+        stroke: var(--cyan);
+        stroke-width: 1.2;
+        stroke-linecap: round;
+      }
+    </style>
+  </head>
+  <body style="background-color: rgb(36, 36, 39)">
+    <div class="poster" data-screen-label="01 Postmortem">
+      <!-- TOP GRID ================================================== -->
+      <div class="grid-top">
+        <!-- LEFT: Title + The Game -->
+        <div>
+          <div class="title-block">
+            <!-- <p class="eyebrow">Postmortem · Build log · Vol. 1</p> -->
+            <h1 class="title">
+              <span class="l1">Alien Orbit</span>
+              <span class="l2">Assault</span>
+            </h1>
+            <p class="subhead">
+              How I shipped a Toaplan-style shmup using five AI tools and
+              <em>a lot</em> of hand-tuning.
+            </p>
+          </div>
+
+          <div class="panel game-card">
+            <h3 class="cyan"><span class="pip"></span>The Game</h3>
+            <p class="blurb">
+              A browser-based vertical shmup in the <b>Toaplan</b> tradition.
+              Think <em>Truxton</em>, <em>Hellfire</em>, <em>Out Zone</em>. You
+              take Earth back from <b>Gaia's</b> corrupted orbit using three
+              weapons and a <em>Substrate</em> economy. The final
+              <em>Orbiter</em> boss has multiple phases, and its base only opens
+              for <b>30 seconds</b>. You have to fight to make that window
+              appear. <b>5 lives. No continues.</b>
+            </p>
+
+            <div class="feature-row">
+              <div class="feat">
+                <div class="ic cyan">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#4dd0e1"
+                    stroke-width="1.6"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path
+                      d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <div class="ttl">Vertical Shmup</div>
+                  <div class="txt">
+                    Toaplan-style scroll, fixed forward arc. No install.
+                    Keyboard or gamepad.
+                  </div>
+                </div>
+              </div>
+              <div class="feat">
+                <div class="ic red">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#ef3b3b"
+                    stroke-width="1.6"
+                  >
+                    <path d="M12 3l8 5v8l-8 5-8-5V8z" />
+                    <circle cx="12" cy="12" r="2.5" fill="#ef3b3b" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="ttl">Cycler &amp; Substrate Loop</div>
+                  <div class="txt">
+                    One drifting pickup, four states. Shoot it to cycle, touch
+                    it to keep.
+                  </div>
+                </div>
+              </div>
+              <div class="feat">
+                <div class="ic mag">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#e64bbf"
+                    stroke-width="1.6"
+                  >
+                    <path d="M4 20h16M6 16l3-8 3 6 3-10 3 12" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="ttl">Built for the leaderboard</div>
+                  <div class="txt">
+                    One-sitting runs. Chase the score. No saves.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="play">
+              <div class="lbl">Play it now</div>
+              <div class="url">https://kc00l.itch.io/alien-orbital-assault</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CENTER: Magazine cover hero -->
+        <div class="center">
+          <div class="hero">
+            <!-- <span class="corner">ISSUE 06 · IN-GAME COVER</span>
+          <span class="corner r">NANO BANANA · 1 PASS</span> -->
+            <img
+              src="assets/cover.png"
+              alt="Alien Orbit Assault, magazine-style cover art"
+            />
+          </div>
+        </div>
+
+        <!-- RIGHT: Tool stack + workflow + achievements + art trick -->
+        <div>
+          <div class="tool-stack">
+            <div class="heading">Postmortem: <b>Alien Orbit Assault</b></div>
+            <div class="sub">
+              vscode + claude code + nano banana + suno + littlejs
+            </div>
+
+            <div class="tools">
+              <!-- VSCode + Copilot -->
+              <div class="tool code2">
+                <div class="ic">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#4da0e1"
+                    stroke-width="1.8"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  >
+                    <path d="M5 7l-3 5 3 5" />
+                    <path d="M19 7l3 5-3 5" />
+                    <path d="M14 5l-4 14" />
+                  </svg>
+                </div>
+                <div class="nm">VS Code</div>
+                <div class="role">+ Copilot · Auto</div>
+              </div>
+              <!-- Claude Code -->
+              <div class="tool code1">
+                <div class="ic">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#ff7a3a"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                  >
+                    <path
+                      d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"
+                    />
+                  </svg>
+                </div>
+                <div class="nm">Claude Code</div>
+                <div class="role">Heavy lifting</div>
+              </div>
+              <!-- Nano Banana -->
+              <div class="tool art">
+                <div class="ic">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#ffd23f"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M5 14c0-5 4-9 9-9 1.6 0 3 .5 3 .5s-.4 1.2-.4 2.5C16.6 13 11 18 6 18c-.7 0-1-1-1-2 0-.7 0-1.3 0-2z"
+                      fill="#ffd23f"
+                      fill-opacity=".15"
+                    />
+                    <path d="M16.6 8c1 0 2-.5 2.4-1.5" />
+                  </svg>
+                </div>
+                <div class="nm">Nano Banana</div>
+                <div class="role">Image gen</div>
+              </div>
+              <!-- Suno -->
+              <div class="tool music">
+                <div class="ic">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#e64bbf"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                  >
+                    <path d="M9 18V5l11-2v13" />
+                    <circle cx="6.5" cy="18" r="2.5" fill="#e64bbf" />
+                    <circle cx="17.5" cy="16" r="2.5" fill="#e64bbf" />
+                  </svg>
+                </div>
+                <div class="nm">Suno</div>
+                <div class="role">Soundtrack</div>
+              </div>
+              <!-- LittleJS -->
+              <div class="tool eng">
+                <div class="ic">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#58e07a"
+                    stroke-width="1.8"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  >
+                    <rect x="2.5" y="7" width="19" height="11" rx="3.5" />
+                    <path d="M7 12h3M8.5 10.5v3" />
+                    <circle cx="15.5" cy="11.5" r="1" fill="#58e07a" />
+                    <circle cx="17.5" cy="13.5" r="1" fill="#58e07a" />
+                  </svg>
+                </div>
+                <div class="nm">LittleJS</div>
+                <div class="role">Engine</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="two-col" style="margin-top: 14px">
+            <div class="panel">
+              <h3><span class="pip"></span>Workflow Overview</h3>
+              <ul>
+                <li class="bullet">
+                  Write the loop in plain English with Claude
+                </li>
+                <li class="bullet">
+                  Heavy systems &amp; design → <b>Claude Code</b>
+                </li>
+                <li class="bullet">
+                  Light edits &amp; boilerplate → <b>Copilot Auto</b>
+                </li>
+                <li class="bullet">
+                  Visuals → <b>Nano Banana</b>, with prompts written by Claude
+                </li>
+                <li class="bullet">Music → <b>Suno</b>, picked by ear</li>
+                <li class="bullet">Tune the feel by hand. Always.</li>
+              </ul>
+            </div>
+
+            <div class="panel">
+              <h3 class="cyan"><span class="pip"></span>Key Achievements</h3>
+              <ul>
+                <li class="check">Toaplan-style vertical shmup in browser</li>
+                <li class="check">Cycler pickup with 4 powerup states</li>
+                <li class="check">Substrate ↔ Corruption economy loop</li>
+                <li class="check">3 weapons: Vulcan, Shotgun, Latch Beam</li>
+                <li class="check">Multi-phase Orbiter boss + tells</li>
+                <li class="check">
+                  Unified <code>action</code> / <code>binding</code> input layer
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top: 14px">
+            <h3 class="red"><span class="pip"></span>Game by the Numbers</h3>
+            <div class="stats-grid">
+              <div class="stat">
+                <div class="num red">5</div>
+                <div class="lbl">Lives</div>
+              </div>
+              <div class="stat">
+                <div class="num yellow">30<small>s</small></div>
+                <div class="lbl">Boss window</div>
+              </div>
+              <div class="stat">
+                <div class="num cyan">3</div>
+                <div class="lbl">Weapons</div>
+              </div>
+              <div class="stat">
+                <div class="num green">4</div>
+                <div class="lbl">Cycler states</div>
+              </div>
+              <div class="stat">
+                <div class="num yellow">3</div>
+                <div class="lbl">Suno tracks</div>
+              </div>
+              <div class="stat">
+                <div class="num cyan">0</div>
+                <div class="lbl">Continues</div>
+              </div>
+              <div class="stat">
+                <div class="num red">1</div>
+                <div class="lbl">Cover prompt</div>
+              </div>
+              <div class="stat">
+                <div class="num green">60<small>fps</small></div>
+                <div class="lbl">LittleJS</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FULL-WIDTH STACK ROW ===================================== -->
+      <div class="stack-band">
+        <div class="panel stack-panel">
+          <h3 class="red">
+            <span class="pip"></span>AI-Powered Development Stack
+          </h3>
+          <div class="stack-grid">
+            <div class="stack-row blue">
+              <div class="badge">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#4da0e1"
+                  stroke-width="1.8"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                >
+                  <path d="M5 7l-3 5 3 5" />
+                  <path d="M19 7l3 5-3 5" />
+                  <path d="M14 5l-4 14" />
+                </svg>
+              </div>
+              <div>
+                <div class="label">
+                  CODE (light) · <b>VS Code + Copilot Auto</b>
+                </div>
+                <div class="desc">
+                  Inline edits, refactors, the boring boilerplate. Auto mode
+                  picks a small model for small diffs, so I'm not paying for
+                  deep thinking on a one-line fix.
+                </div>
+              </div>
+            </div>
+
+            <div class="stack-row orange">
+              <div class="badge">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ff7a3a"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                >
+                  <path
+                    d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"
+                  />
+                </svg>
+              </div>
+              <div>
+                <div class="label">CODE (heavy) · <b>Claude Code</b></div>
+                <div class="desc">
+                  My game-design partner. It built the Cycler loop, the Orbiter
+                  phase machine, and the input <code>Binding</code> layer, and
+                  ran most of the multi-file refactors.
+                </div>
+              </div>
+            </div>
+
+            <div class="stack-row yellow">
+              <div class="badge">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ffd23f"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M5 14c0-5 4-9 9-9 1.6 0 3 .5 3 .5s-.4 1.2-.4 2.5C16.6 13 11 18 6 18c-.7 0-1-1-1-2 0-.7 0-1.3 0-2z"
+                    fill="#ffd23f"
+                    fill-opacity=".15"
+                  />
+                </svg>
+              </div>
+              <div>
+                <div class="label">ART · <b>Nano Banana</b></div>
+                <div class="desc">
+                  Sprites, cover art, in-game posters. Claude wrote the prompts
+                  using the game's own words (Substrate, Orbiter, Cycler), and
+                  the style locked in quickly.
+                </div>
+              </div>
+            </div>
+
+            <div class="stack-row pink">
+              <div class="badge">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#e64bbf"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                >
+                  <path d="M9 18V5l11-2v13" />
+                  <circle cx="6.5" cy="18" r="2.5" fill="#e64bbf" />
+                  <circle cx="17.5" cy="16" r="2.5" fill="#e64bbf" />
+                </svg>
+              </div>
+              <div>
+                <div class="label">MUSIC · <b>Suno</b></div>
+                <div class="desc">
+                  Three loops: title, gameplay, boss. Five passes each. I kept
+                  the take that hit hardest at low volume. Sound effects are
+                  still procedural through LittleJS's built-in ZzFX-style synth.
+                </div>
+              </div>
+            </div>
+
+            <div class="stack-row green">
+              <div class="badge">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#58e07a"
+                  stroke-width="1.8"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                >
+                  <rect x="2.5" y="7" width="19" height="11" rx="3.5" />
+                  <path d="M7 12h3M8.5 10.5v3" />
+                  <circle cx="15.5" cy="11.5" r="1" fill="#58e07a" />
+                  <circle cx="17.5" cy="13.5" r="1" fill="#58e07a" />
+                </svg>
+              </div>
+              <div>
+                <div class="label">ENGINE · <b>LittleJS</b></div>
+                <div class="desc">
+                  Tiny, fast, zero-config. The whole engine is small enough that
+                  Claude can hold all of it in context at once, which makes it
+                  surprisingly productive here.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel art-trick-panel">
+          <h3 class="cyan">
+            <span class="pip"></span>The Art Trick That Worked
+          </h3>
+          <p class="art-blurb">
+            There is only one ship sprite in the build: the upright one. The
+            tilt is faked at draw time. <b>Split the sprite down the middle</b>,
+            then <em>squish and darken</em> the half that is diving away and
+            <em>stretch</em> the other half. Flip it horizontally for the
+            opposite direction. Free 3D-looking rotation with no extra art.
+          </p>
+          <div class="art-arrow">
+            <div class="art-box sprite">
+              <img src="assets/ship_upright.png" alt="upright sprite" />
+            </div>
+            <div class="art-arr">→</div>
+            <div class="art-box split">
+              <div class="row squish">
+                <span class="swatch"></span><span>squish + dark</span>
+              </div>
+              <div class="row stretch">
+                <span class="swatch"></span><span>stretch</span>
+              </div>
+            </div>
+            <div class="art-arr">→</div>
+            <div class="art-box sprite">
+              <img src="assets/ship_tilted_right.png" alt="tilted right" />
+            </div>
+          </div>
+          <p class="art-foot">
+            upright → split and scale the halves → tilted. mirror x for left.
+          </p>
+        </div>
+      </div>
+
+      <!-- BOTTOM CARDS ============================================== -->
+      <div class="grid-bottom">
+        <div class="card c1">
+          <h4>Co-developed,<br />not just code-generated</h4>
+          <p>
+            The best ideas came from talking it through. The
+            <b>Cycler</b> replaced a four-colour loot drop because Claude pushed
+            back on inventory bloat: "what if shooting it cycles, and touching
+            it commits?" Done.
+          </p>
+          <p>
+            I asked design questions about spawn rhythm, bullet density, and how
+            readable the safe lane was. Claude played the role of a genre
+            expert, checking my pacing, attack cues, and reward curves.
+          </p>
+          <svg class="vis" width="80" height="50" viewBox="0 0 80 50">
+            <circle
+              cx="14"
+              cy="25"
+              r="8"
+              fill="none"
+              stroke="#4dd0e1"
+              stroke-width="1.6"
+            />
+            <circle cx="14" cy="25" r="3" fill="#4dd0e1" />
+            <path
+              d="M22 25 L36 25"
+              stroke="#4dd0e1"
+              stroke-width="1.5"
+              stroke-dasharray="2 3"
+            />
+            <circle
+              cx="44"
+              cy="25"
+              r="8"
+              fill="none"
+              stroke="#ffd23f"
+              stroke-width="1.6"
+            />
+            <circle cx="44" cy="25" r="3" fill="#ffd23f" />
+            <path
+              d="M52 25 L66 25"
+              stroke="#ffd23f"
+              stroke-width="1.5"
+              stroke-dasharray="2 3"
+            />
+            <circle cx="74" cy="25" r="4" fill="#e64bbf" />
+          </svg>
+        </div>
+
+        <div class="card c2">
+          <h4>Came together easily</h4>
+          <ul>
+            <li>
+              <b>Cycler state machine.</b> Four states, one shootable, one
+              consolation lock. Built right on the first try.
+            </li>
+            <li>
+              <b>Input layer.</b> The
+              <code>Action</code>/<code>Binding</code>/<code>Input source</code>
+              glossary went straight into the model context. Rebinding shipped
+              clean.
+            </li>
+            <li>
+              <b>Footer hints.</b> One component, swaps icons based on the input
+              source.
+            </li>
+          </ul>
+        </div>
+
+        <div class="card c3">
+          <h4>Still needed me: feel</h4>
+          <p>
+            Bullet spread. Ship dash i-frames. The Substrate drop curve. How
+            fast the Orbiter's 30-second window should drain when you get hit.
+            Screen shake on Latch Beam release.
+          </p>
+          <p>
+            The git history is a long chain of single-number nudges.
+            <code>tweak shotgun spread</code>, then <code>0.18 → 0.19</code>,
+            then <code>0.19 → 0.185</code>. Each commit looks trivial on its
+            own. Together they are the whole game. The model can build the
+            system, but a human still picks the numbers that feel right.
+          </p>
+        </div>
+
+        <div class="card c4">
+          <h4>The polish tail is brutal</h4>
+          <p>
+            The last stretch was not new features. It was a long parade of small
+            fixes that only matter once you notice them. Audio glitches, odd
+            input states, layout overflows, and frame-perfect race conditions.
+          </p>
+          <p style="margin-top: 6px">
+            All small. <b>None optional.</b> Plan for it.
+          </p>
+          <p
+            style="
+              margin-top: 10px;
+              font-family: &quot;JetBrains Mono&quot;, monospace;
+              font-size: 11px;
+              color: var(--ink-3);
+            "
+          >
+            Drop your real commit titles here ↓
+          </p>
+        </div>
+      </div>
+
+      <!-- FOOTNOTE ============================================== -->
+      <div class="footnote">
+        <span
+          ><span class="heart">♥</span> Huge thanks to the AI tools that made
+          this possible.</span
+        >
+        <span
+          >Co-development, not code generation.
+          <b>The feel is still mine.</b></span
+        >
+        <span
+          >Happy to talk workflow, Claude Code, Nano Banana, or LittleJS.</span
+        >
+      </div>
+    </div>
+  </body>
+</html>
