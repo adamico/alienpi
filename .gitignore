@@ -1,7 +1,17 @@
 node_modules/
-.DS_Store
 dist/
 *.zip
 .env
 .claude/
+
+# macOS metadata
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.DocumentRevisions-V100
+.TemporaryItems
+Icon?
