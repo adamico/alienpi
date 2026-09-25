@@ -1,4 +1,4 @@
-# Alien Orbit Assault
+# Alien Orbital Assault
 
 A browser-based vertical shoot-'em-up in the Toaplan tradition: three weapons, one shootable powerup, and a multi-phase boss, all built on the [LittleJS](https://github.com/KilledByAPixel/LittleJS) engine.
 
