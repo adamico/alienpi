@@ -1,0 +1,71 @@
+MIT License
+
+Copyright (c) 2026 Andrea D'Amico
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
+SCOPE: WHAT THE MIT LICENSE ABOVE COVERS
+--------------------------------------------------------------------------------
+
+The MIT License above applies to the source code in this repository only
+(game.js, src/, scripts/, build.sh, index.html and configuration files).
+
+It does NOT apply to the media files in public/assets/ or marketing/. Those
+are covered by the terms below. No license to them is granted except where a
+third-party license says otherwise.
+
+Music (public/assets/sounds/*-music.mp3, "Lasermelon Boss.mp3")
+  Generated with Suno (https://suno.com) on a paid plan. Suno's rights in
+  the output are assigned to Andrea D'Amico under Suno's Terms of Service.
+  Lyrics (c) 2026 Andrea D'Amico, all rights reserved. No license is granted
+  to reuse the audio, to the extent any rights in it exist. AI-generated
+  audio may not be protected by copyright in some jurisdictions.
+
+Voice clips (public/assets/sounds/vulcan.mp3, shotgun.mp3, beam.mp3,
+maxed.mp3, unlocked.mp3, upgraded.mp3)
+  Synthetic speech generated with Google text-to-speech. No license is
+  granted to reuse these files, to the extent any rights in them exist.
+
+AI-generated art (sprites, backgrounds, cover and marketing images)
+  Generated with Google Gemini (Nano Banana), with minor manual edits by
+  Andrea D'Amico. The images carry Google's SynthID watermark. Any rights in
+  the human edits are reserved. No license is granted to reuse these files,
+  to the extent any rights in them exist.
+
+Kenney.nl assets
+  From Kenney (https://kenney.nl), released under CC0 1.0 Universal
+  (public domain).
+
+Fonts (public/assets/fonts/)
+  Orbitron, Exo 2, Titillium Web, Audiowide, Michroma and Rajdhani are
+  copyright of their respective authors and licensed under the SIL Open Font
+  License 1.1 (https://openfontlicense.org). The full license text for each
+  font is in public/assets/fonts/OFL-<FontName>.txt.
+
+Service logos (public/assets/social/)
+  Bluesky, Discord, GitHub and itch.io logos are trademarks of their
+  respective owners, used only to link to those services.
+
+--------------------------------------------------------------------------------
+THIRD-PARTY CODE
+--------------------------------------------------------------------------------
+
+LittleJS (https://github.com/KilledByAPixel/LittleJS)
+  Copyright (c) 2021 Frank Force. MIT License. Included in release builds.

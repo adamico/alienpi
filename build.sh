@@ -31,6 +31,10 @@ npx esbuild game.js --bundle --minify --format=esm --define:DEV_BUILD=false --ou
 echo "📄 Copying index.html..."
 cp index.html dist/index.html
 
+# LICENSE carries the MIT notice for the bundled LittleJS code and the asset terms
+echo "📜 Copying LICENSE..."
+cp LICENSE dist/LICENSE
+
 echo "🖼️ Copying assets..."
 # We use cp -R to copy the public directory and its contents
 cp -R public dist/

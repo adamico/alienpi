@@ -57,3 +57,7 @@ Open http://localhost:8080/index.html. A local server is required because the ga
 npx eslint .      # lint
 npm run build     # bundle with esbuild into dist/ and alienpi-release.zip
 ```
+
+## License
+
+Code is released under the [MIT License](LICENSE). Art, music, voice clips and fonts are not covered by MIT; see [LICENSE](LICENSE) for their terms.
